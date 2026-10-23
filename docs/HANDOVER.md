@@ -79,6 +79,7 @@ Unit tests cannot cover Bluetooth pairing, vJoy, ViGEm, SendInput, or BeamNG in 
   - There is no foreground service: leaving the app lets go of held controls.
   - The app's text is English only.
   - Some phones lack Bluetooth HID.
+- Planned features are in [ROADMAP.md](ROADMAP.md).
 - Ideas that came up during review but are not built:
   - A foreground service, so play can continue in the background.
   - Localisation.

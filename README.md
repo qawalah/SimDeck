@@ -31,7 +31,7 @@ Bluetooth on the PC for the Bluetooth route; the same Wi-Fi network for the comp
 | Protocol | `protocol/PROTOCOL.md` | The shared, versioned phone / PC / mod protocol. |
 
 Install and usage: [docs/INSTALL.md](docs/INSTALL.md). Full end-to-end check: [docs/SMOKE_TEST.md](docs/SMOKE_TEST.md). Taking over development: [docs/HANDOVER.md](docs/HANDOVER.md).
-What changed: [docs/RELEASE_NOTES.md](docs/RELEASE_NOTES.md). Companion build details: `windows/README.md`.
+What changed: [docs/RELEASE_NOTES.md](docs/RELEASE_NOTES.md). What's planned: [docs/ROADMAP.md](docs/ROADMAP.md). Companion build details: `windows/README.md`.
 
 ## License
 
