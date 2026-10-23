@@ -234,6 +234,109 @@ local function cruiseState()
   return on, target
 end
 
+-- ============= VEHICLE FEATURES =============
+-- Things this vehicle has beyond the standard car functions, found from the running vehicle itself so they
+-- work whatever the game's action files look like: coupler groups (doors, tailgates, hitches, latches that
+-- have a toggleGroup) and hydraulic inputs (the electrics a hydro reads: beds, blades, booms, outriggers).
+
+-- hydro inputs that are the normal driving controls, not vehicle features
+local DRIVING_INPUTS = {
+  steering = true, steering_input = true, throttle = true, throttle_input = true, brake = true, brake_input = true,
+  clutch = true, clutch_input = true, parkingbrake = true, parkingbrake_input = true, steeringUnassisted = true,
+}
+
+local hydroSources = {}       -- inputSource names found by the last scan, reported in state as hydro.<name>
+
+local function prettyName(name)
+  local s = tostring(name):gsub("[_%.]", " "):gsub("(%l)(%u)", "%1 %2"):gsub("%s+", " ")
+  s = s:gsub("^%s+", ""):gsub("%s+$", "")
+  return (s:sub(1, 1):upper() .. s:sub(2))
+end
+
+-- a real controller exports the function; getControllerSafe-style stand-ins answer every key
+local function realFunction(c, fname)
+  if type(c) ~= "table" then return false end
+  local ok, real = pcall(function()
+    return type(c[fname]) == "function" and type(c.__simdeckProbe_noSuchKey) ~= "function"
+  end)
+  return ok and real
+end
+
+local function scanFeatures()
+  local couplers, found, enabled = {}, {}, {}
+  if controller and type(controller.getAllControllers) == "function" then
+    local ok, all = pcall(controller.getAllControllers)
+    if ok and type(all) == "table" then
+      local names = {}
+      for name, c in pairs(all) do
+        if type(name) == "string" and realFunction(c, "toggleGroup") then table.insert(names, name) end
+      end
+      table.sort(names)
+      for _, name in ipairs(names) do
+        table.insert(couplers, { name = name, title = prettyName(name:gsub("[Cc]oupler[s]?$", ""):gsub("[Cc]ontrol$", "")) })
+      end
+    end
+  end
+  local seen = {}
+  local function addHydro(src)
+    if type(src) == "string" and src ~= "" and not seen[src] and not DRIVING_INPUTS[src] and not src:find("^steering") then
+      seen[src] = true
+      table.insert(found, { src = src, title = prettyName(src) })
+    end
+  end
+  if v and type(v.data) == "table" and type(v.data.hydros) == "table" then
+    for _, h in pairs(v.data.hydros) do if type(h) == "table" then addHydro(h.inputSource) end end
+  end
+  local hydroModule = rawget(_G, "hydros")
+  if type(hydroModule) == "table" and type(hydroModule.hydros) == "table" then
+    for _, h in pairs(hydroModule.hydros) do if type(h) == "table" then addHydro(h.inputSource) end end
+  end
+  table.sort(found, function(a, b) return a.src < b.src end)
+  hydroSources = {}
+  for _, h in ipairs(found) do table.insert(hydroSources, h.src) end
+  -- interaction actions enabled by this vehicle's parts (jbeam "actionsEnabled"), any shape
+  if v and type(v.data) == "table" and type(v.data.actionsEnabled) == "table" then
+    local seenId = {}
+    local function walk(t, depth)
+      if depth > 3 then return end
+      for k, val in pairs(t) do
+        if type(val) == "string" and k ~= "partOrigin" and not seenId[val] then seenId[val] = true; table.insert(enabled, val)
+        elseif type(val) == "table" then walk(val, depth + 1) end
+      end
+    end
+    walk(v.data.actionsEnabled, 0)
+  end
+  return { couplers = couplers, hydros = found, enabled = enabled }
+end
+
+local function sendFeatures()
+  local ok, scan = pcall(scanFeatures)
+  if not ok then
+    log('W', 'simdeck', 'feature scan failed: ' .. tostring(scan))
+    scan = { couplers = {}, hydros = {}, enabled = {}, error = tostring(scan) }
+  end
+  obj:queueGameEngineLua(string.format("if simdeckLink then simdeckLink.onVehicleFeatures(%d, %q) end",
+    obj:getID(), jsonEncode(scan)))
+end
+
+local function toggleCoupler(name)
+  local c
+  if controller and type(controller.getController) == "function" then
+    local ok, r = pcall(controller.getController, name)
+    if ok then c = r end
+  end
+  if realFunction(c, "toggleGroup") then
+    try(c.toggleGroup)
+  else
+    log('W', 'simdeck', 'coupler not found: ' .. tostring(name))
+  end
+end
+
+local function setHydro(src, value)
+  if type(src) ~= "string" then return end
+  electrics.values[src] = math.max(-1, math.min(1, tonumber(value) or 0))
+end
+
 -- ============= STATE =============
 
 -- P/R/N/D/S/M as the phone expects. Manual gearboxes report a number (as a number or a string),
@@ -336,6 +439,9 @@ local function collectState()
   s["speed"] = round(tonumber(e.wheelspeed) or tonumber(e.airspeed) or 0, 0.1)
   s["rpm"] = round(tonumber(e.rpm) or 0, 10)
   if type(e.fuel) == "number" then s["fuel"] = round(e.fuel, 0.01) end
+  for _, src in ipairs(hydroSources) do
+    if type(e[src]) == "number" then s["hydro." .. src] = round(e[src], 0.01) end
+  end
   return s
 end
 
@@ -589,8 +695,10 @@ local oneShots = {
 
 -- Entry point from simdeckLink. mode is "toggle", "set", "once", or "direct"
 -- (a toggle that skips the game's action, used when that action is missing).
-local function command(name, mode, value)
+local function command(name, mode, value, arg)
   value = tonumber(value) or 1
+  if name == "coupler" then toggleCoupler(arg); sendFrames = SEND_FRAMES return end
+  if name == "hydro" then setHydro(arg, value); sendFrames = SEND_FRAMES return end
   if not features then scanVehicle() end
   local f = features_onoff[name]
   if f then
@@ -666,9 +774,11 @@ M.onExtensionLoaded = onExtensionLoaded
 M.setActive = setActive
 M.requestFull = requestFull
 M.command = command
+M.requestFeatures = sendFeatures
 
 -- exposed for the offline tests
 M._collectState = collectState
 M._scanVehicle = scanVehicle
+M._scanFeatures = scanFeatures
 
 return M

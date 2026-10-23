@@ -94,9 +94,19 @@ ve.powertrain = { getDevices = function()
   return { differential_F = diffF, differential_R = diffR, transfercase = transfer, rangebox = rangebox, gearbox = gearbox,
     mainEngine = { type = "combustionEngine" } }
 end }
+local tailgateToggles = 0
+local tailgateCoupler = { typeName = "advancedCouplerControl", toggleGroup = function() tailgateToggles = tailgateToggles + 1 end }
 ve.controller = {
-  getAllControllers = function() return carHasEsc and { esc = escCtrl, other = { typeName = "shiftLogic" } } or { other = { typeName = "shiftLogic" } } end,
-  getController = function(name) if name == "esc" and carHasEsc then return escCtrl end return nil end,
+  getAllControllers = function()
+    local all = carHasEsc and { esc = escCtrl, other = { typeName = "shiftLogic" } } or { other = { typeName = "shiftLogic" } }
+    all.tailgateCoupler = tailgateCoupler
+    return all
+  end,
+  getController = function(name)
+    if name == "esc" and carHasEsc then return escCtrl end
+    if name == "tailgateCoupler" then return tailgateCoupler end
+    return nil
+  end,
   -- like BeamNG's safe getter: a stand-in that answers every key with a no-op function
   getControllerSafe = function(name) return setmetatable({}, { __index = function() return function() end end }) end,
   mainController = {
@@ -121,7 +131,9 @@ ve._G = ve
 -- in the game, code loaded in vehicle Lua runs in that VM's globals; here that is the ve table
 ve.loadstring = function(code) local fn, err = loadstring(code); if fn then setfenv(fn, ve) end; return fn, err end
 -- vehicle data the mod searches for fog lights and light bars
-ve.v = { data = { props = { { func = "lowbeam" }, { func = "fog" } }, glowMap = { lightbar_mat = { simpleFunction = { lightbar = 1 } } } } }
+ve.v = { data = { props = { { func = "lowbeam" }, { func = "fog" } }, glowMap = { lightbar_mat = { simpleFunction = { lightbar = 1 } } },
+  hydros = { { id1 = "a", inputSource = "dump_bed" }, { inputSource = "steering" }, { inputSource = "dump_bed" }, { inputSource = "outrigger_L" } },
+  actionsEnabled = { { id = "common:hood", partOrigin = "pickup_body" } } } }
 local deviceModeCalls = {}
 ve.powertrain.setDeviceMode = function(name, mode)
   table.insert(deviceModeCalls, name)
@@ -218,6 +230,22 @@ local actionFiles = {
     ui_only = { ctx = "ui", onDown = "testHits.ui = true" },
   },
 }
+-- vehicle-specific actions of the "pickup" (car 7): its own input actions, its interaction map, and the
+-- common interaction map (only the enabled entries may be offered)
+actionFiles["/vehicles/pickup/input_actions.json"] = {
+  bed_tilt = { order = 2, isCentered = true, title = "ui.inputActions.pickup.bed_tilt.title", onChange = "electrics.values.bedTilt = VALUE" },
+  toggle_tailgate = { order = 1, title = "Tailgate", onDown = "electrics.values.tailgateHits = (electrics.values.tailgateHits or 0) + 1" },
+}
+actionFiles["/vehicles/pickup/pickup.interaction.json"] = {
+  door_RL = { order = 3, title = "Rear left door", onDown = "electrics.values.doorRL = 1" },
+}
+actionFiles["/vehicles/common/common.interaction.json"] = {
+  actions = {
+    hood = { order = 4, title = "Hood", onDown = "electrics.values.hood = 1" },
+    cargo_net = { order = 5, title = "Cargo net", onDown = "electrics.values.net = 1" },
+  },
+}
+ge.translateLanguage = function(key, fallback) if key == "ui.inputActions.pickup.bed_tilt.title" then return "Tilt bed" end return fallback end
 ge._G = ge
 ge.testHits = {}
 -- in the game, action code runs in the global GE environment; here that is the ge table
@@ -225,7 +253,11 @@ ge.loadstring = function(code) local fn, err = loadstring(code); if fn then setf
 ge.FS = {
   findFiles = function(_, dir, pattern)
     local out = {}
-    for path in pairs(actionFiles) do if path:sub(1, #dir) == dir then table.insert(out, path) end end
+    local lp = "^" .. pattern:gsub("[%.%-]", "%%%0"):gsub("%*", ".*") .. "$"
+    for path in pairs(actionFiles) do
+      local base = path:match("[^/]+$")
+      if path:sub(1, #dir) == dir and base:match(lp) then table.insert(out, path) end
+    end
     return out
   end,
   fileExists = function(_, p) return files[p] ~= nil end,
@@ -515,6 +547,69 @@ pump(6)
 local gotFull = false
 for i = before + 1, #inbox do if inbox[i].type == "state" and inbox[i].full then gotFull = true end end
 check(gotFull, "state.request answered with a full snapshot")
+
+
+-- ============= VEHICLE FEATURES =============
+do
+  inbox = {}
+  sendToMod({ type = "state.request" })
+  pump(10)
+  local f = lastOfType("features")
+  check(f ~= nil and f.vehicle == "pickup", "features message for the vehicle")
+  local byId = {}
+  for _, it in ipairs(f and f.list or {}) do byId[it.id] = it end
+  check(byId["action.toggle_tailgate"] and byId["action.toggle_tailgate"].kind == "button" and byId["action.toggle_tailgate"].source == "input_actions",
+    "vehicle input action found (button)")
+  check(byId["action.bed_tilt"] and byId["action.bed_tilt"].kind == "axis" and byId["action.bed_tilt"].title == "Tilt bed", "centered onChange action is an axis, title translated")
+  check(byId["action.door_RL"] and byId["action.door_RL"].source == "interaction", "interaction action from the vehicle folder")
+  check(byId["action.hood"] ~= nil, "enabled common interaction action offered (nested map, common: prefix)")
+  check(byId["action.cargo_net"] == nil, "common interaction action not enabled on this car is left out")
+  check(byId["coupler.tailgateCoupler.toggle"] and byId["coupler.tailgateCoupler.toggle"].title == "Tailgate", "coupler group found in vehicle Lua")
+  check(byId["hydro.dump_bed"] and byId["hydro.dump_bed"].kind == "axis" and byId["hydro.outrigger_L"], "hydraulic inputs found")
+  check(byId["hydro.steering"] == nil, "driving inputs are not offered as hydraulics")
+  check(byId["action.toggle_slow_motion"] == nil, "global actions are not vehicle features")
+  local ordered = f and f.list or {}
+  check(ordered[1] and ordered[1].id == "action.toggle_tailgate", "vehicle actions in their game order")
+  local d = f and f.diag or {}
+  check(d.sources and d.sources.input_actions == 2 and d.sources.interaction == 1 and d.couplers == 1 and d.hydros == 2,
+    "diagnostics count every source")
+  local acts = lastOfType("actions")
+  local names = {}
+  for _, a in ipairs(acts and acts.list or {}) do names[a.name] = a end
+  check(names.toggle_slow_motion and names.toggle_tailgate and names.toggle_tailgate.vehicle == true, "action list for the editor, vehicle ones marked")
+  check(names.ui_only == nil, "deprecated ui actions not listed")
+
+  -- running them
+  command("action.toggle_tailgate", 1)
+  command("action.toggle_tailgate", 0)
+  check(e.tailgateHits == 1, "vehicle input action runs in vehicle Lua")
+  command("action.door_RL", 1)
+  command("action.door_RL", 0)
+  check(e.doorRL == 1, "interaction action runs")
+  command("action.bed_tilt", -0.6)
+  check(e.bedTilt == -0.6, "analog value passes through to onChange (centered keeps the sign)")
+  command("action.bed_tilt", 0.25)
+  check(e.bedTilt == 0.25, "analog value follows the slider")
+  command("action.bed_tilt", 0)
+  check(e.bedTilt == 0, "analog action back to rest")
+  command("coupler.tailgateCoupler.toggle", 1)
+  check(tailgateToggles == 1, "coupler toggles its group")
+  command("hydro.dump_bed", 0.8)
+  check(e.dump_bed == 0.8 and merged()["hydro.dump_bed"] == 0.8, "hydraulic input set and reported in state")
+  command("hydro.dump_bed", 3)
+  check(e.dump_bed == 1, "hydraulic input clamped")
+  -- a held hydraulic lets go when the companion goes away
+  command("hydro.outrigger_L", -1)
+  check(e.outrigger_L == -1, "outrigger moving")
+  link.handleCommand("hydro.outrigger_L", -1)
+  local veh7 = ge.be:getObjectByID(7)
+  -- simulate the release path used on disconnect / vehicle switch
+  local before = e.outrigger_L
+  link.handleCommand("hydro.outrigger_L", 0)
+  pump(4)
+  check(before == -1 and e.outrigger_L == 0, "hydraulic released with 0")
+  check(link.report() >= 7, "report() lists the features")
+end
 
 -- leaving the vehicle drops vehicle keys
 playerId = -1

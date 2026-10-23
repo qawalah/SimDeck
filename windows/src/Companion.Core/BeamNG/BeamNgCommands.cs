@@ -25,7 +25,8 @@ public static class BeamNgCommands
 
     /// <summary>Commands that mean "pressed" while 1 and must be released with 0.</summary>
     public static bool IsHeld(string command) =>
-        LevelCommands.Contains(command) || command.StartsWith("action.", StringComparison.Ordinal);
+        LevelCommands.Contains(command) || command.StartsWith("action.", StringComparison.Ordinal) ||
+        command.StartsWith("hydro.", StringComparison.Ordinal);
 
     /// <param name="modCommands">The list the mod reported, used to recognise setters it added.</param>
     public static CommandStyle Classify(string command, IReadOnlyCollection<string>? modCommands = null)
@@ -35,6 +36,8 @@ public static class BeamNgCommands
         if (LevelCommands.Contains(command) || Setters.Contains(command)) return CommandStyle.Level;
         // Raw BeamNG input actions ("action.look_back") are held like a key: press and release both go through.
         if (command.StartsWith("action.", StringComparison.Ordinal)) return CommandStyle.Level;
+        // A vehicle's hydraulic input (hydro.<inputSource>) follows the control's value, -1..1, and goes to 0 on release.
+        if (command.StartsWith("hydro.", StringComparison.Ordinal)) return CommandStyle.Level;
         if (modCommands != null && modCommands.Contains(command + ".toggle")) return CommandStyle.Level;
         return CommandStyle.Edge; // one-shots: reset, gear.up, camera.next, ...
     }

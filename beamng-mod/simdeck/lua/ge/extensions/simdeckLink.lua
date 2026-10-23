@@ -12,7 +12,7 @@ if not socketOk then
 end
 
 local PROTOCOL_VERSION = 1
-local MOD_VERSION = "1.0.0"
+local MOD_VERSION = "1.1.0"
 local HOST = "127.0.0.1"
 local PORT = 47803
 local RETRY_INTERVAL = 3      -- seconds between connection attempts
@@ -48,6 +48,8 @@ local socketWarned = false    -- "could not create a socket" is logged once
 local gameTimer = 0
 
 local heldActions = {}        -- [actionName] = true while an action.* or hold command is down
+local actionLevel = {}        -- [action.* command] = last value sent to it (analog or 1), nil at rest
+local analogCommands = {}     -- action.* commands that ever got an analog value: run with the direct filter
 local actions = nil           -- action definitions read from the game's files
 local actionsVehicle = nil    -- vehicle directory the vehicle-specific actions were read for
 
@@ -119,25 +121,72 @@ end
 
 local DEPRECATED_CTX = { ui = true, ts = true, slua = true }
 
-local function addDefs(data, into, defaultCtx)
-  if type(data) ~= "table" then return end
-  for name, def in pairs(data) do
-    if type(name) == "string" and type(def) == "table" then
-      def._ctx = def.ctx or defaultCtx
-      def._ctxExplicit = def.ctx ~= nil
-      into[name] = def
-    end
-  end
+-- what the last scan found, for the phone's diagnostics and simdeckLink.report()
+local actionDiag = { sources = {}, errors = {} }
+
+local function looksLikeAction(def)
+  return type(def) == "table" and (type(def.onDown) == "string" or type(def.onUp) == "string" or type(def.onChange) == "string")
 end
 
-local function readActionFiles(dir, pattern, into, defaultCtx)
-  if not (FS and FS.findFiles) then return end
-  local ok, files = pcall(FS.findFiles, FS, dir, pattern, 0, true, false)
-  if not ok or type(files) ~= "table" then return end
-  for _, file in ipairs(files) do
-    local okRead, data = pcall(jsonReadFile, file)
-    if okRead then addDefs(data, into, defaultCtx) end
+-- source: where the definition came from (game, global, input_actions, interaction, interaction_common)
+local function addDefs(data, into, defaultCtx, source, vehicle, nameFilter)
+  if type(data) ~= "table" then return 0 end
+  local n = 0
+  for name, def in pairs(data) do
+    if type(name) == "string" and looksLikeAction(def) then
+      if not nameFilter or nameFilter(name) then
+        def._ctx = def.ctx or defaultCtx
+        def._ctxExplicit = def.ctx ~= nil
+        def._source = source
+        def._vehicle = vehicle or nil
+        into[name] = def
+        n = n + 1
+      end
+    elseif type(name) == "string" and type(def) == "table" and not looksLikeAction(def) then
+      -- interaction maps may group actions one level down ({ "actions": { name = def } })
+      for name2, def2 in pairs(def) do
+        if type(name2) == "string" and looksLikeAction(def2) and (not nameFilter or nameFilter(name2)) then
+          def2._ctx = def2.ctx or defaultCtx
+          def2._ctxExplicit = def2.ctx ~= nil
+          def2._source = source
+          def2._vehicle = vehicle or nil
+          into[name2] = def2
+          n = n + 1
+        end
+      end
+    end
   end
+  return n
+end
+
+-- every file matching pattern under dir; depth 0 first, then recursive, so both FS behaviours are covered
+local function findFiles(dir, pattern, recursive)
+  local out, seen = {}, {}
+  if not (FS and FS.findFiles) then return out end
+  for _, depth in ipairs(recursive and { 0, -1 } or { 0 }) do
+    local ok, files = pcall(FS.findFiles, FS, dir, pattern, depth, true, false)
+    if ok and type(files) == "table" then
+      for _, f in ipairs(files) do
+        if type(f) == "string" and not seen[f] then seen[f] = true; table.insert(out, f) end
+      end
+    elseif not ok then
+      table.insert(actionDiag.errors, "findFiles " .. dir .. pattern .. ": " .. tostring(files))
+    end
+  end
+  return out
+end
+
+local function readActionFiles(dir, pattern, into, defaultCtx, source, vehicle, recursive, nameFilter)
+  local n = 0
+  for _, file in ipairs(findFiles(dir, pattern, recursive)) do
+    local okRead, data = pcall(jsonReadFile, file)
+    if okRead then
+      n = n + addDefs(data, into, defaultCtx, source, vehicle, nameFilter)
+    else
+      table.insert(actionDiag.errors, "read " .. file .. ": " .. tostring(data))
+    end
+  end
+  return n
 end
 
 local function playerVehicle()
@@ -154,31 +203,55 @@ end
 -- the input system's own merged list, if this game version exposes one
 local function activeActionsFromGame()
   local mod = rawget(_G, "core_input_actions")
-  if type(mod) ~= "table" or type(mod.getActiveActions) ~= "function" then return nil end
-  local ok, list = pcall(mod.getActiveActions)
-  if not ok or type(list) ~= "table" or next(list) == nil then return nil end
-  return list
+  if type(mod) ~= "table" then return nil end
+  for _, fname in ipairs({ "getActiveActions", "getActions" }) do
+    if type(mod[fname]) == "function" then
+      local ok, list = pcall(mod[fname])
+      if ok and type(list) == "table" and next(list) ~= nil then return list end
+    end
+  end
+  return nil
 end
+
+-- interaction actions the vehicle enables (reported by vehicle Lua from its jbeam "actionsEnabled"), nil = unknown
+local enabledInteractions = nil
 
 local function loadActions()
   local veh = playerVehicle()
   local dir = vehicleDir(veh)
   if actions and actionsVehicle == dir then return actions end
   local list = {}
-  readActionFiles("/lua/ge/extensions/core/input/actions/", "*.json", list, "tlua")
-  readActionFiles("/vehicles/common/", "input_actions*.json", list, "vlua")
-  if dir then readActionFiles("/vehicles/" .. dir .. "/", "input_actions*.json", list, "vlua") end
+  actionDiag = { vehicle = dir, sources = {}, errors = {} }
+  local src = actionDiag.sources
+  src.global = readActionFiles("/lua/ge/extensions/core/input/actions/", "*.json", list, "tlua", "global", false, true)
+  src.common = readActionFiles("/vehicles/common/", "input_actions*.json", list, "vlua", "input_actions", true, false)
+  if dir then
+    src.input_actions = readActionFiles("/vehicles/" .. dir .. "/", "input_actions*.json", list, "vlua", "input_actions", true, true)
+    -- Triggers2 interaction maps (doors, tailgates, ...). Vehicle folder: every action; the common folder
+    -- only the ones this vehicle enables, since it holds actions for every car.
+    src.interaction = readActionFiles("/vehicles/" .. dir .. "/", "*.interaction.json", list, "vlua", "interaction", true, true)
+    if enabledInteractions and next(enabledInteractions) then
+      src.interaction_common = readActionFiles("/vehicles/common/", "*.interaction.json", list, "vlua", "interaction", true, true,
+        function(name) return enabledInteractions[name] or enabledInteractions["common:" .. name] end)
+    end
+  end
   -- the game's merged list wins where it has an entry; its ctx is already resolved
   local fromGame = activeActionsFromGame()
+  src.game = 0
   if fromGame then
     for name, def in pairs(fromGame) do
       if type(name) == "string" and type(def) == "table" then
         local known = list[name]
         local copy = {}
         for k, val in pairs(def) do copy[k] = val end -- never write into the game's live tables
-        copy._ctx = def.ctx or (known and known._ctx) or (def.vehicle and "vlua") or "tlua"
+        local vehicleSpecific = (known and known._vehicle) or def.vehicle ~= nil or def.cat == "vehicle_specific"
+          or (type(def.actionMap) == "string" and def.actionMap:find("Vehicle") ~= nil)
+        copy._ctx = def.ctx or (known and known._ctx) or (vehicleSpecific and "vlua") or "tlua"
         copy._ctxExplicit = def.ctx ~= nil or (known and known._ctxExplicit) or false
+        copy._vehicle = vehicleSpecific or nil
+        copy._source = known and known._source or "game"
         list[name] = copy
+        src.game = src.game + 1
       end
     end
   end
@@ -187,9 +260,9 @@ local function loadActions()
   return actions
 end
 
-local function substitute(code, value, vid)
+local function substitute(code, value, vid, filter)
   local subs = {
-    VALUE = tostring(value), FILTERTYPE = "0", PLAYER = "0", VEHICLEID = tostring(vid or -1),
+    VALUE = tostring(value), FILTERTYPE = tostring(filter or 0), PLAYER = "0", VEHICLEID = tostring(vid or -1),
     ANGLE = "0", LOCKTYPE = "0", OSCLOCKHP = "0",
   }
   return (code:gsub("%f[%w_]([%u]+)%f[^%w_]", function(word) return subs[word] end))
@@ -262,10 +335,10 @@ local function hasAction(name)
   return def ~= nil and not DEPRECATED_CTX[def._ctx]
 end
 
-local function vehicleCommandTo(veh, name, mode, value)
+local function vehicleCommandTo(veh, name, mode, value, arg)
   if not veh then return end
-  veh:queueLuaCommand(string.format("local m = extensions.simdeckVehicle if m then m.command(%q, %q, %s) end",
-    name, mode, tostring(tonumber(value) or 1)))
+  veh:queueLuaCommand(string.format("local m = extensions.simdeckVehicle if m then m.command(%q, %q, %s, %s) end",
+    name, mode, tostring(tonumber(value) or 1), arg and string.format("%q", arg) or "nil"))
 end
 
 local function vehicleDirect(feature)
@@ -274,7 +347,9 @@ end
 
 -- value 1 = press, 0 = release. Returns false if the action is missing or failed right away.
 -- opts: a feature name (from vehicle Lua: toggle that feature directly if the action can't run),
--- or a table { onFail = function, vehicle = vehicle object to run in instead of the player's }.
+-- or a table { onFail = function, vehicle = vehicle object to run in instead of the player's,
+-- prev = the value before this one (analog: onChange gets the raw value, onDown/onUp fire on the edges),
+-- analog = true to use the direct input filter }.
 -- onFail runs once, either now or when vehicle Lua reports the failure.
 local function runAction(name, value, opts)
   if type(opts) == "string" then
@@ -289,19 +364,26 @@ local function runAction(name, value, opts)
     return false
   end
   value = tonumber(value) or 1
-  local down = value >= 0.5
+  local levelled = opts.prev ~= nil
+  local prev = levelled and (tonumber(opts.prev) or 0) or ((math.abs(value) >= 0.5) and 0 or 1)
+  local down, wasDown = math.abs(value) >= 0.5, math.abs(prev) >= 0.5
   local veh = opts.vehicle
   if not opts.fixedVehicle then veh = veh or playerVehicle() end
   local vid = veh and veh:getID() or -1
   local snippets = {}
-  if down and type(def.onDown) == "string" then table.insert(snippets, def.onDown) end
-  if not down and type(def.onUp) == "string" then table.insert(snippets, def.onUp) end
-  if type(def.onChange) == "string" then table.insert(snippets, def.onChange) end
+  if down and not wasDown and type(def.onDown) == "string" then table.insert(snippets, { def.onDown, 1 }) end
+  if wasDown and not down and type(def.onUp) == "string" then table.insert(snippets, { def.onUp, 0 }) end
+  if type(def.onChange) == "string" then
+    local v = levelled and value or (down and 1 or 0)
+    if def.isCentered then v = math.max(-1, math.min(1, v)) else v = math.max(0, math.min(1, v)) end
+    table.insert(snippets, { def.onChange, v })
+  end
   if #snippets == 0 then return true end -- nothing to do for this edge is not a failure
   local token = registerFail(opts.onFail)
   local ran = false
-  for _, code in ipairs(snippets) do
-    if runCode(def._ctx, substitute(code, down and 1 or 0, vid), def._ctxExplicit, veh, token) then ran = true end
+  local filter = opts.analog and 2 or 0
+  for _, sn in ipairs(snippets) do
+    if runCode(def._ctx, substitute(sn[1], sn[2], vid, filter), def._ctxExplicit, veh, token) then ran = true end
   end
   if not ran and token then onActionFailed(token) end
   return ran
@@ -310,6 +392,126 @@ end
 local function tapAction(name, onFail)
   if runAction(name, 1, { onFail = onFail }) then runAction(name, 0) return true end
   return false
+end
+
+-- ============= VEHICLE FEATURES =============
+-- Everything the current vehicle offers beyond the standard car functions: its own input actions
+-- (input_actions*.json), its interaction actions (doors, tailgates... from *.interaction.json), the game's
+-- merged action list, plus what vehicle Lua finds directly: coupler groups and hydraulic inputs. Reported to
+-- the phone as one list, so it can build a page for whatever is being driven, with a diagnostics block
+-- that says which source found what.
+
+local vehicleScan = nil       -- last report from vehicle Lua: { couplers = {...}, hydros = {...}, enabled = {...} }
+local sendFeatures            -- defined below
+
+local function prettyName(name)
+  local s = tostring(name):gsub("[_%.]", " "):gsub("(%l)(%u)", "%1 %2"):gsub("%s+", " ")
+  s = s:gsub("^%s+", ""):gsub("%s+$", "")
+  return (s:sub(1, 1):upper() .. s:sub(2))
+end
+
+local function translate(key, fallback)
+  if type(key) ~= "string" or key == "" then return fallback end
+  if not key:find("^ui%.") then return key end
+  local tl = rawget(_G, "translateLanguage")
+  if type(tl) == "function" then
+    local ok, t = pcall(tl, key, fallback, true)
+    if ok and type(t) == "string" and t ~= "" and t ~= key then return t end
+  end
+  return fallback
+end
+
+local function actionKind(def)
+  if type(def.onDown) == "string" or type(def.onUp) == "string" then return "button" end
+  if def.isCentered then return "axis" end
+  return "hold"
+end
+
+local function buildFeatures()
+  local acts = loadActions()
+  local names = {}
+  for name, def in pairs(acts) do
+    if def._vehicle and not DEPRECATED_CTX[def._ctx] then table.insert(names, name) end
+  end
+  table.sort(names, function(a, b)
+    local oa, ob = tonumber(acts[a].order) or 1e9, tonumber(acts[b].order) or 1e9
+    if oa ~= ob then return oa < ob end
+    return a < b
+  end)
+  local list = {}
+  for _, name in ipairs(names) do
+    local def = acts[name]
+    table.insert(list, { id = "action." .. name, title = translate(def.title, prettyName(name)), kind = actionKind(def),
+      centered = def.isCentered == true or nil, source = def._source or "game", cat = def.cat })
+  end
+  local scan = vehicleScan or {}
+  for _, c in ipairs(scan.couplers or {}) do
+    table.insert(list, { id = "coupler." .. c.name .. ".toggle", title = c.title or prettyName(c.name), kind = "button",
+      source = "coupler", stateKey = c.stateKey })
+  end
+  for _, h in ipairs(scan.hydros or {}) do
+    table.insert(list, { id = "hydro." .. h.src, title = h.title or prettyName(h.src), kind = "axis", centered = true,
+      source = "hydro", stateKey = "hydro." .. h.src })
+  end
+  local errors = {}
+  for i = 1, math.min(5, #actionDiag.errors) do errors[i] = actionDiag.errors[i] end
+  local enabledCount = 0
+  for _ in pairs(enabledInteractions or {}) do enabledCount = enabledCount + 1 end
+  local diag = {
+    vehicle = actionDiag.vehicle or "none", sources = actionDiag.sources, couplers = #(scan.couplers or {}),
+    hydros = #(scan.hydros or {}), enabledInteractions = enabledCount, vehicleScan = vehicleScan ~= nil,
+    gameList = activeActionsFromGame() ~= nil, errors = errors, modVersion = MOD_VERSION,
+  }
+  return list, diag
+end
+
+sendFeatures = function()
+  local list, diag = buildFeatures()
+  send({ type = "features", vehicle = actionsVehicle or "", list = list, diag = diag })
+  local src = diag.sources or {}
+  logI(string.format("vehicle features for %s: %d (input_actions=%s interaction=%s common=%s game=%s couplers=%d hydros=%d)",
+    tostring(diag.vehicle), #list, tostring(src.input_actions or 0), tostring(src.interaction or 0),
+    tostring(src.interaction_common or 0), tostring(src.game or 0), diag.couplers, diag.hydros))
+end
+
+-- every runnable action, for the phone editor's action browser
+local function sendActionList()
+  local acts = loadActions()
+  local list = {}
+  for name, def in pairs(acts) do
+    if not DEPRECATED_CTX[def._ctx] then
+      table.insert(list, { name = name, title = translate(def.title, prettyName(name)), cat = def.cat or (def._vehicle and "vehicle_specific" or ""),
+        vehicle = def._vehicle or nil, axis = (type(def.onChange) == "string" and def.onDown == nil) or nil })
+    end
+  end
+  table.sort(list, function(a, b) return a.name < b.name end)
+  send({ type = "actions", vehicle = actionsVehicle or "", list = list })
+end
+
+-- called from vehicle Lua with what it found on the car (couplers, hydros, enabled interaction actions)
+local function onVehicleFeatures(id, json)
+  if id ~= be:getPlayerVehicleID(0) then return end
+  local scan = decode(json) or {}
+  local enabled = {}
+  for _, name in ipairs(scan.enabled or {}) do if type(name) == "string" then enabled[name] = true end end
+  local before = 0
+  for _ in pairs(enabledInteractions or {}) do before = before + 1 end
+  local now = 0
+  for _ in pairs(enabled) do now = now + 1 end
+  enabledInteractions = enabled
+  if now ~= before then actions = nil end -- the common interaction maps depend on it
+  vehicleScan = scan
+  sendFeatures()
+  sendActionList()
+end
+
+-- console helper: simdeckLink.report() lists what the mod found for the current vehicle
+local function report()
+  actions = nil
+  local list, diag = buildFeatures()
+  logI("report for " .. tostring(diag.vehicle) .. ": " .. jsonEncode(diag))
+  for _, f in ipairs(list) do logI(string.format("  %-40s %-6s %-12s %s", f.id, f.kind, f.source, f.title)) end
+  return #list
 end
 
 -- ============= STATE =============
@@ -400,13 +602,15 @@ attachVehicle = function()
     vehicleKeys = {}
     readGameState()
     sendFull()
+    vehicleScan = nil
+    send({ type = "features", vehicle = "", list = {}, diag = { vehicle = "none", modVersion = MOD_VERSION } })
     return
   end
   fullPending = true
   local id = veh:getID()
   attachTries = (id == attachedId) and attachTries + 1 or 1
   attachedId = id
-  veh:queueLuaCommand("local m = extensions.simdeckVehicle if not m then extensions.load('simdeckVehicle') m = extensions.simdeckVehicle end if m then m.requestFull() end")
+  veh:queueLuaCommand("local m = extensions.simdeckVehicle if not m then extensions.load('simdeckVehicle') m = extensions.simdeckVehicle end if m then m.requestFull() if m.requestFeatures then m.requestFeatures() end end")
 end
 
 local function requestFullState()
@@ -416,8 +620,8 @@ end
 
 -- ============= COMMANDS =============
 
-local function vehicleCommand(name, mode, value)
-  vehicleCommandTo(playerVehicle(), name, mode, value)
+local function vehicleCommand(name, mode, value, arg)
+  vehicleCommandTo(playerVehicle(), name, mode, value, arg)
 end
 
 local function setPause(on)
@@ -536,15 +740,35 @@ local function handleCommand(command, value)
   value = tonumber(value) or 1
   logI("command " .. command .. " " .. tostring(value))
 
-  -- action.<beamngActionName>: press / release any BeamNG input action
-  local actionName = command:match("^action%.([%w_]+)$")
+  -- action.<beamngActionName>: press / release any BeamNG input action, or drive it with an analog value
+  local actionName = command:match("^action%.([%w_:%-]+)$")
   if actionName then
-    local down = value >= 0.5
-    if not down and not heldActions[command] then return end
-    -- a second press without a release in between: release first so the action sees a fresh press
-    if down and heldActions[command] then runAction(actionName, 0) end
-    heldActions[command] = down or nil
-    runAction(actionName, down and 1 or 0)
+    local prev = actionLevel[command] or 0
+    if value ~= 0 and value ~= 1 then analogCommands[command] = true end
+    if value == 0 and prev == 0 then return end -- a release with nothing held
+    if value == 1 and prev == 1 then
+      -- a second press without a release in between: release first so the action sees a fresh press
+      runAction(actionName, 0, { prev = 1 })
+      prev = 0
+    end
+    actionLevel[command] = value ~= 0 and value or nil
+    heldActions[command] = value ~= 0 or nil
+    runAction(actionName, value, { prev = prev, analog = analogCommands[command] })
+    return
+  end
+
+  -- coupler.<controller>.toggle: a vehicle's coupler group (doors, tailgates, hitches), straight in vehicle Lua
+  local coupler = command:match("^coupler%.(.+)%.toggle$")
+  if coupler then
+    vehicleCommand("coupler", "once", 1, coupler)
+    return
+  end
+
+  -- hydro.<inputSource>: a hydraulic's input (beds, blades, booms, cranes); value -1..1, 0 stops it
+  local hydro = command:match("^hydro%.(.+)$")
+  if hydro then
+    heldActions[command] = value ~= 0 and "vehicle" or nil
+    vehicleCommand("hydro", "once", value, hydro)
     return
   end
 
@@ -737,17 +961,21 @@ end
 releaseHeld = function(veh)
   for name, route in pairs(heldActions) do
     local def = oneShots[name]
-    local actionName = name:match("^action%.([%w_]+)$")
-    if route == "vehicle" then
+    local actionName = name:match("^action%.([%w_:%-]+)$")
+    local hydro = name:match("^hydro%.(.+)$")
+    if hydro then
+      if veh then pcall(vehicleCommandTo, veh, "hydro", "once", 0, hydro) end
+    elseif route == "vehicle" then
       if veh then pcall(vehicleCommandTo, veh, name, "once", 0) end
     elseif actionName or (def and def.action) then
       -- the game's action may address "the player's vehicle" (game engine Lua), which after a switch is
       -- the new car, so commands with a vehicle route also release directly in the given car
-      pcall(runAction, actionName or def.action, 0, { vehicle = veh, fixedVehicle = true })
+      pcall(runAction, actionName or def.action, 0, { vehicle = veh, fixedVehicle = true, prev = actionLevel[name] })
       if def and def.vehicle and veh then pcall(vehicleCommandTo, veh, name, "once", 0) end
     end
   end
   heldActions = {}
+  actionLevel = {}
 end
 
 local function onConnected()
@@ -883,14 +1111,19 @@ local function onVehicleSwitched(oldId, newId)
   if old then old:queueLuaCommand("local m = extensions.simdeckVehicle if m then m.setActive(false) end") end
   vehicleId = nil
   actions = nil
+  vehicleScan = nil
+  enabledInteractions = nil
   if status == "connected" then attachVehicle() end
 end
 
 local function onVehicleSpawned(id)
   if id == be:getPlayerVehicleID(0) then
     heldActions = {} -- the vehicle was replaced, its Lua (and anything it held) is gone
+    actionLevel = {}
     vehicleId = nil
     actions = nil
+    vehicleScan = nil
+    enabledInteractions = nil
     if status == "connected" then attachVehicle() end
   end
 end
@@ -898,6 +1131,7 @@ end
 -- the level is going away with every vehicle in it: forget them, nothing is left to release
 local function onClientEndMission()
   heldActions = {}
+  actionLevel = {}
   vehicleId = nil
   attachedId = nil
   attachTries = 0
@@ -924,6 +1158,8 @@ M.onClientEndMission = onClientEndMission
 M.onExtensionUnloaded = onExtensionUnloaded
 
 M.onVehicleState = onVehicleState
+M.onVehicleFeatures = onVehicleFeatures
+M.report = report
 M.runAction = runAction
 M.onActionFailed = onActionFailed
 M.handleCommand = handleCommand

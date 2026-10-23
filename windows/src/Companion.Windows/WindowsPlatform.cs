@@ -21,6 +21,7 @@ public static class WindowsPlatform
     {
         Identity = new HidDeviceIdentity(),
         BluetoothPads = new WindowsBluetoothPads(),
+        ForegroundApp = ForegroundWindow.ExeName,
         PlatformMdns = c => new WindowsMdns(c.ServerName, ProtocolInfo.MdnsService, (ushort)c.WsPort,
             new Dictionary<string, string> { ["v"] = ProtocolInfo.Version.ToString(), ["name"] = c.ServerName, ["udp"] = c.UdpPort.ToString() }),
     };

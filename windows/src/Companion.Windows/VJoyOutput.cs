@@ -107,6 +107,22 @@ public sealed class VJoyOutput : IVJoyOutput, IDisposable
         }
     }
 
+    /// <summary>Button count and enabled axes as set in "Configure vJoy"; readable without taking the device.</summary>
+    public VJoyDeviceInfo? Describe(int device)
+    {
+        lock (_gate)
+        {
+            if (!Available || device is < 1 or > 16) return null;
+            try
+            {
+                int buttons = GetVJDButtonNumber((uint)device);
+                var axes = AxisUsage.Where(kv => GetVJDAxisExist((uint)device, kv.Value)).Select(kv => kv.Key).ToList();
+                return new VJoyDeviceInfo(device, buttons, axes);
+            }
+            catch (Exception) { return null; }
+        }
+    }
+
     /// <summary>Takes the device on first use; false when another program got it first.</summary>
     bool Owned(int id)
     {

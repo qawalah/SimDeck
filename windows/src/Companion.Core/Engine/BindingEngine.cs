@@ -309,7 +309,8 @@ public sealed class BindingEngine
                             // (flash-to-pass). A latched setter is the user's intent and is never zeroed.
                             if (BeamNgCommands.IsHeld(a.Command) || b.Kind == ControlKind.Momentary)
                             {
-                                if (value > 0) { if (!st.HeldCommands.Contains(a.Command)) st.HeldCommands.Add(a.Command); }
+                                // A bipolar slider (an analog action or a hydraulic) is held on either side of zero.
+                                if (value != 0) { if (!st.HeldCommands.Contains(a.Command)) st.HeldCommands.Add(a.Command); }
                                 else st.HeldCommands.Remove(a.Command);
                             }
                         }

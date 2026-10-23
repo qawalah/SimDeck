@@ -33,6 +33,8 @@ public sealed class HostOptions
     public IBluetoothPads BluetoothPads { get; init; } = new NoBluetoothPads();
     /// <summary>How often the Bluetooth pad scan runs, on its own background task.</summary>
     public TimeSpan BluetoothScanInterval { get; init; } = TimeSpan.FromSeconds(2);
+    /// <summary>The executable of the window in front (e.g. "BeamNG.drive.x64.exe"), for automatic profile switching. Null: not reported.</summary>
+    public Func<string?>? ForegroundApp { get; init; }
 }
 
 /// <summary>
@@ -55,6 +57,9 @@ public sealed class CompanionHost : IDisposable
     readonly Dictionary<string, JsonNode?> _outgaugePending = new();
     readonly ConcurrentDictionary<string, ServiceStatus> _status = new();
     IReadOnlyList<string> _beamngCommands = Array.Empty<string>();
+    JsonObject? _beamngFeatures;   // last "beamng.features" message, sent to phones that connect later
+    JsonObject? _beamngActions;    // last "beamng.actions" message
+    string? _foreground;
     long _lastOutGaugeMs = long.MinValue / 2, _lastOutGaugeFlushMs;
     bool _outgaugeWasActive;
     long _lastOutGaugeAnyMs = long.MinValue / 2;
@@ -161,6 +166,8 @@ public sealed class CompanionHost : IDisposable
             link.ConnectionChanged += _ => { if (!link.Connected) OnBeamNgDisconnected(); PushCapabilities(); StatusChanged?.Invoke(); };
             link.StateReceived += OnBeamNgState;
             link.CommandsReceived += OnBeamNgCommands;
+            link.FeaturesReceived += OnBeamNgFeatures;
+            link.ActionsReceived += OnBeamNgActions;
             // Relayed unchanged (ok, written, message, ...); a malformed "ok" only affects the log level.
             link.BindingsResult += r =>
             {
@@ -228,6 +235,7 @@ public sealed class CompanionHost : IDisposable
             StatusChanged?.Invoke();
         }
 
+        if (_tickCount % 10 == 0) PollForeground();
         // Drivers can be installed or a vJoy device enabled while we run.
         if (++_tickCount % 50 == 0)
         {
@@ -338,10 +346,83 @@ public sealed class CompanionHost : IDisposable
             ["keyboard"] = Router.Keyboard.Available,
             ["vjoy"] = Router.VJoy.Available && Router.VJoy.Devices.Count > 0,
             ["vjoyDevices"] = devices,
+            ["vjoyInfo"] = VJoyInfo(),
             ["vigem"] = Router.XInput.Available,
             ["beamng"] = BeamNg?.Connected == true,
             ["outgauge"] = OutGaugeActive,
         };
+    }
+
+    JsonArray VJoyInfo()
+    {
+        var arr = new JsonArray();
+        if (!Router.VJoy.Available) return arr;
+        foreach (var d in Router.VJoy.Devices)
+        {
+            VJoyDeviceInfo? info = null;
+            try { info = Router.VJoy.Describe(d); } catch { }
+            if (info == null) continue;
+            arr.Add(new JsonObject
+            {
+                ["device"] = info.Device, ["buttons"] = info.Buttons,
+                ["axes"] = new JsonArray(info.Axes.Select(a => (JsonNode?)JsonValue.Create(a)).ToArray()),
+            });
+        }
+        return arr;
+    }
+
+    /// <summary>
+    /// Compares what a profile needs from vJoy with how the devices are configured. vJoy drops buttons above the
+    /// device's button count and axes that are not ticked in "Configure vJoy" without any error, which looks like
+    /// "the buttons do nothing" (the default device has only 8 buttons). Returns one message per problem.
+    /// </summary>
+    public List<string> CheckVJoy(IEnumerable<Binding> bindings)
+    {
+        var problems = new List<string>();
+        var maxButton = new Dictionary<int, int>();
+        var axes = new Dictionary<int, SortedSet<string>>();
+        foreach (var b in bindings)
+        {
+            if (b.RoutedOverHid) continue;
+            foreach (var a in new[] { b.Action, b.Cw, b.Ccw }.Concat(b.Positions))
+            {
+                if (a.Type == ActionType.VJoyButton) maxButton[a.Device] = Math.Max(maxButton.GetValueOrDefault(a.Device), a.Button);
+                else if (a.Type == ActionType.VJoyAxis)
+                {
+                    if (!axes.TryGetValue(a.Device, out var set)) axes[a.Device] = set = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+                    set.Add(a.Axis.ToUpperInvariant());
+                }
+            }
+        }
+        var devices = maxButton.Keys.Concat(axes.Keys).Distinct().OrderBy(d => d).ToList();
+        if (devices.Count == 0) return problems;
+        if (!Router.VJoy.Available)
+        {
+            problems.Add("This profile uses vJoy buttons or axes, but vJoy is not installed on this PC. Install vJoy, or pair the phone over Bluetooth (SimDeck Pad) instead.");
+            return problems;
+        }
+        foreach (var d in devices)
+        {
+            if (!Router.VJoy.Devices.Contains(d))
+            {
+                problems.Add($"vJoy device {d} is not enabled (or another program is using it). Enable it in \"Configure vJoy\".");
+                continue;
+            }
+            VJoyDeviceInfo? info = null;
+            try { info = Router.VJoy.Describe(d); } catch { }
+            if (info == null) continue;
+            if (maxButton.TryGetValue(d, out var need) && need > info.Buttons)
+                problems.Add($"vJoy device {d} has {info.Buttons} buttons, but this profile uses buttons up to {need}: buttons {info.Buttons + 1}-{need} do nothing. " +
+                             $"Open \"Configure vJoy\", set device {d} to {Math.Max(32, need)} buttons, apply, then reconnect the phone.");
+            if (axes.TryGetValue(d, out var used))
+            {
+                var missing = used.Where(a => !info.Axes.Contains(a, StringComparer.OrdinalIgnoreCase)).ToList();
+                if (missing.Count > 0)
+                    problems.Add($"vJoy device {d} has no {string.Join(", ", missing)} axis, so those sliders and joysticks do nothing. " +
+                                 "Open \"Configure vJoy\", tick all 8 axes for the device, apply, then reconnect the phone.");
+            }
+        }
+        return problems;
     }
 
     readonly object _capsGate = new();
@@ -531,6 +612,9 @@ public sealed class CompanionHost : IDisposable
         Log("info", $"{deviceName} connected from {addr}");
         SessionsChanged?.Invoke();
         if (_beamngCommands.Count > 0) session.Send(CommandsMessage());
+        if (_beamngFeatures is { } bf) session.Send((JsonObject)bf.DeepClone());
+        if (_beamngActions is { } ba) session.Send((JsonObject)ba.DeepClone());
+        if (_foreground is { } fg) session.Send(ForegroundMessage(fg));
         return session;
     }
 
@@ -586,6 +670,16 @@ public sealed class CompanionHost : IDisposable
         ack["count"] = bindings.Count;
         s.Send(ack);
 
+        foreach (var problem in CheckVJoy(bindings))
+        {
+            Log("warn", problem);
+            var n = JsonExt.Msg("notice");
+            n["level"] = "warn";
+            n["code"] = "vjoy_config";
+            n["message"] = problem;
+            s.Send(n);
+        }
+
         int hid = bindings.Count(b => b.RoutedOverHid);
         Log("info", $"{s.DeviceName} loaded profile \"{profileId}\" ({bindings.Count} controls{(hid > 0 ? $", {hid} over Bluetooth HID" : "")})");
         foreach (var w in warnings.Take(10)) Log("warn", $"Profile {profileId}: {w}");
@@ -602,6 +696,7 @@ public sealed class CompanionHost : IDisposable
         {
             s.Send(StateMessage("beamng", Snapshot(_beamngState), full: true));
             if (_beamngCommands.Count > 0) s.Send(CommandsMessage());
+            if (_beamngFeatures is { } bf) s.Send((JsonObject)bf.DeepClone());
         }
         else if (OutGaugeActive)
             s.Send(StateMessage("outgauge", Snapshot(_outgaugeState), full: true));
@@ -702,6 +797,55 @@ public sealed class CompanionHost : IDisposable
     {
         lock (_stateGate) _beamngState.Clear();
         _beamngCommands = Array.Empty<string>();
+        if (_beamngFeatures != null)
+        {
+            _beamngFeatures = null;
+            var empty = JsonExt.Msg("beamng.features");
+            empty["vehicle"] = "";
+            empty["list"] = new JsonArray();
+            Broadcast(empty);
+        }
+        _beamngActions = null;
+    }
+
+    /// <summary>The mod's vehicle feature list, relayed as "beamng.features" (PROTOCOL.md, Vehicle features).</summary>
+    void OnBeamNgFeatures(JsonObject m)
+    {
+        var relay = JsonExt.Msg("beamng.features");
+        relay["vehicle"] = m["vehicle"]?.DeepClone();
+        relay["list"] = m["list"] is JsonArray l ? l.DeepClone() : new JsonArray();
+        if (m["diag"] is JsonObject d) relay["diag"] = d.DeepClone();
+        _beamngFeatures = relay;
+        Broadcast(relay);
+        int count = (relay["list"] as JsonArray)?.Count ?? 0;
+        var diag = m["diag"]?.ToJsonString() ?? "";
+        Log("info", $"BeamNG vehicle {m["vehicle"]?.ToString() ?? "?"}: {count} vehicle features {diag}");
+    }
+
+    void OnBeamNgActions(JsonObject m)
+    {
+        var relay = JsonExt.Msg("beamng.actions");
+        relay["vehicle"] = m["vehicle"]?.DeepClone();
+        relay["list"] = m["list"] is JsonArray l ? l.DeepClone() : new JsonArray();
+        _beamngActions = relay;
+        Broadcast(relay);
+    }
+
+    static JsonObject ForegroundMessage(string exe)
+    {
+        var m = JsonExt.Msg("foreground");
+        m["exe"] = exe;
+        return m;
+    }
+
+    void PollForeground()
+    {
+        if (_options.ForegroundApp is not { } probe) return;
+        string? exe = null;
+        try { exe = probe(); } catch { }
+        if (string.IsNullOrEmpty(exe) || exe == _foreground) return;
+        _foreground = exe;
+        Broadcast(ForegroundMessage(exe));
     }
 
     /// <summary>

@@ -37,6 +37,10 @@ public sealed class BeamNgLink : ICommandSink, IDisposable
     public event Action<JsonObject, bool>? StateReceived;
     public event Action<IReadOnlyList<string>>? CommandsReceived;
     public event Action<JsonObject>? BindingsResult;
+    /// <summary>The current vehicle's features (vehicle actions, couplers, hydraulics) with the mod's diagnostics.</summary>
+    public event Action<JsonObject>? FeaturesReceived;
+    /// <summary>Every BeamNG input action the mod can run, for the phone's action browser.</summary>
+    public event Action<JsonObject>? ActionsReceived;
     public event Action<string>? Log;
 
     public int Port => ((IPEndPoint)_listener.LocalEndpoint).Port;
@@ -153,6 +157,12 @@ public sealed class BeamNgLink : ICommandSink, IDisposable
                 break;
             case "bindings.result":
                 if (JsonNode.Parse(line) is JsonObject r) BindingsResult?.Invoke(r);
+                break;
+            case "features":
+                if (JsonNode.Parse(line) is JsonObject f) FeaturesReceived?.Invoke(f);
+                break;
+            case "actions":
+                if (JsonNode.Parse(line) is JsonObject a) ActionsReceived?.Invoke(a);
                 break;
         }
     }

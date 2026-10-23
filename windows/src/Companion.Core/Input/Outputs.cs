@@ -7,9 +7,15 @@ public interface IKeyboardOutput
     void Send(ScanKey key, bool down);
 }
 
+/// <summary>How a vJoy device is configured in "Configure vJoy": its button count and enabled axes.</summary>
+public sealed record VJoyDeviceInfo(int Device, int Buttons, IReadOnlyList<string> Axes);
+
 /// <summary>A vJoy virtual joystick driver (devices 1-16, buttons 1-128, 8 axes).</summary>
 public interface IVJoyOutput
 {
+    /// <summary>The device's configuration, or null when it can't be read (no driver, test doubles).</summary>
+    VJoyDeviceInfo? Describe(int device) => null;
+
     bool Available { get; }
     IReadOnlyList<int> Devices { get; }
     /// <summary>Re-checks the driver; returns true when the set of devices changed.</summary>
@@ -60,6 +66,9 @@ public sealed class RecordingOutputs : IKeyboardOutput, IVJoyOutput, IXInputOutp
     readonly object _gate = new();
     readonly List<string> _log = new();
     public Action<string>? OnEvent { get; set; }
+    /// <summary>What <see cref="IVJoyOutput.Describe"/> answers; null by default (configuration unknown).</summary>
+    public Func<int, VJoyDeviceInfo?>? Describer { get; set; }
+    VJoyDeviceInfo? IVJoyOutput.Describe(int device) => Describer?.Invoke(device);
 
     public IReadOnlyList<string> Log { get { lock (_gate) return _log.ToList(); } }
     public void Clear() { lock (_gate) _log.Clear(); }
