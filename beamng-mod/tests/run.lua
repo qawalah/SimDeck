@@ -232,6 +232,7 @@ local actionFiles = {
 }
 -- vehicle-specific actions of the "pickup" (car 7): its own input actions, its interaction map, and the
 -- common interaction map (only the enabled entries may be offered)
+actionFiles["/vehicles/pickup/info.json"] = { Type = "Car", Name = "D-Series", ["Body Style"] = "Pickup" }
 actionFiles["/vehicles/pickup/input_actions.json"] = {
   bed_tilt = { order = 2, isCentered = true, title = "ui.inputActions.pickup.bed_tilt.title", onChange = "electrics.values.bedTilt = VALUE" },
   toggle_tailgate = { order = 1, title = "Tailgate", onDown = "electrics.values.tailgateHits = (electrics.values.tailgateHits or 0) + 1" },
@@ -556,6 +557,14 @@ do
   pump(10)
   local f = lastOfType("features")
   check(f ~= nil and f.vehicle == "pickup", "features message for the vehicle")
+  check(f ~= nil and f.category == "car", "vehicle category from info.json (a pickup is a car)")
+  local cls = link._classify
+  check(cls({ "truck", "semi truck" }) == "truck" and cls({ "car", "bus" }) == "bus" and cls({ "excavator" }) == "machine",
+    "category keywords: truck, bus, machine")
+  check(cls({ "car", "pickup", "off-road" }) == "offroad" and cls({ "car", "race" }) == "race" and cls({ "trailer" }) == "trailer",
+    "category keywords: off-road, race, trailer")
+  check(cls({ "truck", "pickup" }) == "car", "a pickup truck is not a commercial truck")
+  check(cls({ "trophy truck" }) == "offroad", "a trophy truck is an off-roader")
   local byId = {}
   for _, it in ipairs(f and f.list or {}) do byId[it.id] = it end
   check(byId["action.toggle_tailgate"] and byId["action.toggle_tailgate"].kind == "button" and byId["action.toggle_tailgate"].source == "input_actions",

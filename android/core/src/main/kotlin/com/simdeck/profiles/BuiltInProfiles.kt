@@ -11,6 +11,10 @@ import com.simdeck.model.OutputRoute
 import com.simdeck.model.Page
 import com.simdeck.model.Position
 import com.simdeck.model.Profile
+import com.simdeck.model.PanelGroup
+import com.simdeck.model.Station
+import com.simdeck.model.Band
+import com.simdeck.model.Themes
 
 /**
  * Profiles that ship with the app. Icon ids come from ui/icons/IconLibrary.kt; state keys and
@@ -292,7 +296,7 @@ object BuiltInProfiles {
             ),
         )
         return Profile(
-            id = BEAMNG_ID, name = "BeamNG.drive", game = GameId.BEAMNG, builtIn = true,
+            id = BEAMNG_ID, name = "BeamNG.drive", game = GameId.BEAMNG, builtIn = true, theme = null, themeFollowsVehicle = true,
             pages = listOf(drive, drivetrain, vehicle, more, world, analog), output = OutputRoute.COMPANION,
             processNames = BEAMNG_EXE,
             description = "Every vehicle function with live lights from the game, plus a Vehicle page that fills itself with what " +
@@ -349,7 +353,7 @@ object BuiltInProfiles {
             ),
         )
         return Profile(
-            id = BEAMNG_PAD_ID, name = "BeamNG.drive (Bluetooth pad)", game = GameId.BEAMNG, builtIn = true,
+            id = BEAMNG_PAD_ID, name = "BeamNG.drive (Bluetooth pad)", game = GameId.BEAMNG, builtIn = true, theme = null, themeFollowsVehicle = true,
             pages = listOf(page), output = OutputRoute.AUTO, processNames = BEAMNG_EXE,
             description = "Every control is a gamepad button. Tap \"Bind in game\" in the editor once (needs the mod) or bind them in BeamNG's Controls menu.",
         )
@@ -391,7 +395,7 @@ object BuiltInProfiles {
             ),
         )
         return Profile(
-            id = MUDRUNNER_ID, name = "MudRunner", game = GameId.MUDRUNNER, builtIn = true,
+            id = MUDRUNNER_ID, name = "MudRunner", game = GameId.MUDRUNNER, builtIn = true, theme = Themes.OVERLAND,
             pages = listOf(page, crane), output = OutputRoute.AUTO, processNames = listOf("MudRunner.exe"),
             description = "Diff lock, AWD, winch, gears, handbrake, map and camera on MudRunner's default keys. Edit any key to match your bindings.",
         )
@@ -409,8 +413,8 @@ object BuiltInProfiles {
     // plough's spreader), since each machine is bound on its own. Every button is 32 or below,
     // the most many DirectInput games and the Windows SimDecks panel can see.
 
-    private fun stick(id: String, label: String, icon: String?, x: Int, y: Int, xAxis: String, yAxis: String, accent: Accent = Accent.AMBER) =
-        Control(id, ControlType.JOYSTICK, label, icon, x, y, 2, 2, accent, Action.VJoyAxis(1, xAxis), actionY = Action.VJoyAxis(1, yAxis))
+    private fun stick(id: String, label: String, icon: String?, x: Int, y: Int, xAxis: String, yAxis: String, accent: Accent = Accent.AMBER, ends: List<String> = emptyList()) =
+        Control(id, ControlType.JOYSTICK, label, icon, x, y, 2, 2, accent, Action.VJoyAxis(1, xAxis), actionY = Action.VJoyAxis(1, yAxis), ends = ends)
 
     private fun direction(id: String, x: Int, y: Int) =
         Control(id, ControlType.SWITCH, "Direction", "direction", x, y, 3, 1, Accent.CYAN,
@@ -419,8 +423,9 @@ object BuiltInProfiles {
     fun bulldozer(): Profile {
         val dozer = Page(
             id = "dz_main", name = "Dozer", columns = 8, rows = 4,
+            panels = listOf(PanelGroup("LEFT CONSOLE", 0, 0, 2, 4), PanelGroup("DASH", 2, 0, 4, 4), PanelGroup("RIGHT CONSOLE", 6, 0, 2, 4)),
             controls = listOf(
-                stick("dz_drive", "Drive / steer", "tracks", 0, 0, "X", "Y", Accent.GREEN),
+                stick("dz_drive", "Drive / steer", "tracks", 0, 0, "X", "Y", Accent.GREEN, ends = listOf("LEFT", "RIGHT", "REV", "FWD")),
                 throttle("dz_throttle", 0, 2, h = 2),
                 momentary("dz_gear_up", "Gear up", "gear_up", 1, 2, btn(8)),
                 momentary("dz_gear_down", "Gear down", "gear_down", 1, 3, btn(7)),
@@ -435,14 +440,14 @@ object BuiltInProfiles {
                 latching("dz_autoshift", "Auto shift", "gearbox", 3, 3, btn(16), Accent.GREEN),
                 momentary("dz_cam", "Camera", "camera_cycle", 4, 3, btn(11)),
                 lever("dz_ripper", "Ripper", "ripper", 5, 0, "SL1", Accent.AMBER),
-                stick("dz_blade", "Blade lift / tilt", "blade", 6, 0, "RY", "RX"),
+                stick("dz_blade", "Blade lift / tilt", "blade", 6, 0, "RY", "RX", ends = listOf("TILT L", "TILT R", "RAISE", "LOWER")),
                 lever("dz_angle", "Blade angle", "blade_angle", 6, 2, "RZ", w = 2, h = 1),
                 momentary("dz_shank", "Ripper pin", "ripper", 6, 3, btn(10), Accent.AMBER),
                 momentary("dz_rear_cam", "Rear view", "look_back", 7, 3, btn(12)),
             ),
         )
         return Profile(
-            id = BULLDOZER_ID, name = "Bulldozer", game = GameId.CUSTOM, builtIn = true,
+            id = BULLDOZER_ID, name = "Bulldozer", game = GameId.CUSTOM, builtIn = true, theme = Themes.HEAVY,
             pages = listOf(dozer), output = OutputRoute.AUTO,
             description = "A dozer cab: drive joystick on the left, blade joystick on the right, ripper and blade-angle levers, throttle and switchgear. " +
                 "Bind once in the game's controls menu (turn on the Bind helper in the editor so each stick axis is captured on its own). " +
@@ -453,6 +458,7 @@ object BuiltInProfiles {
     fun utility(): Profile {
         val loader = Page(
             id = "ut_loader", name = "Loader", columns = 8, rows = 4,
+            panels = listOf(PanelGroup("LEFT CONSOLE", 0, 0, 2, 4), PanelGroup("DASH", 2, 0, 4, 4), PanelGroup("RIGHT CONSOLE", 6, 0, 2, 4)),
             controls = listOf(
                 stick("ld_drive", "Drive / steer", "arrow_up", 0, 0, "X", "Y", Accent.GREEN),
                 throttle("ld_throttle", 0, 2, h = 2),
@@ -472,21 +478,22 @@ object BuiltInProfiles {
                 latching("ld_work", "Work lights", "work_light", 5, 2, btn(5), Accent.AMBER),
                 direction("ld_direction", 2, 3),
                 momentary("ld_kickdown", "Kickdown", "gear_down", 5, 3, btn(18)),
-                stick("ld_bucket", "Boom / bucket", "bucket", 6, 0, "RY", "RX"),
+                stick("ld_bucket", "Boom / bucket", "bucket", 6, 0, "RY", "RX", ends = listOf("CURL", "DUMP", "RAISE", "LOWER")),
                 stick("ld_aux", "Attachment", "quick_coupler", 6, 2, "RZ", "SL1", Accent.CYAN),
             ),
         )
         val excavator = Page(
             id = "ut_excavator", name = "Excavator", columns = 8, rows = 4,
+            panels = listOf(PanelGroup("LEFT CONSOLE", 0, 0, 4, 4), PanelGroup("DASH", 4, 0, 2, 4), PanelGroup("RIGHT CONSOLE", 6, 0, 2, 4)),
             controls = listOf(
                 lever("ex_left", "Left track", "tracks", 0, 0, "Y", Accent.GREEN),
                 lever("ex_right", "Right track", "tracks", 1, 0, "Z", Accent.GREEN),
-                stick("ex_left_stick", "Swing / stick", "swing", 2, 0, "X", "RY"),
+                stick("ex_left_stick", "Swing / stick", "swing", 2, 0, "X", "RY", ends = listOf("SWING L", "SWING R", "STICK IN", "STICK OUT")),
                 momentary("ex_start", "Start", "starter", 4, 0, btn(1), Accent.RED),
                 momentary("ex_horn", "Horn", "horn", 5, 0, btn(2)),
                 latching("ex_beacon", "Beacon", "beacon", 4, 1, btn(3), Accent.AMBER),
                 latching("ex_lights", "Lights", "low_beam", 5, 1, btn(4), Accent.GREEN),
-                stick("ex_right_stick", "Boom / bucket", "boom", 6, 0, "SL1", "RX"),
+                stick("ex_right_stick", "Boom / bucket", "boom", 6, 0, "SL1", "RX", ends = listOf("CURL", "DUMP", "BOOM UP", "BOOM DOWN")),
                 latching("ex_work", "Work lights", "work_light", 2, 2, btn(5), Accent.AMBER),
                 momentary("ex_hammer", "Hammer", "bucket", 3, 2, btn(20), Accent.RED),
                 latching("ex_coupler", "Coupler", "quick_coupler", 4, 2, btn(19), Accent.AMBER),
@@ -499,8 +506,9 @@ object BuiltInProfiles {
         )
         val crane = Page(
             id = "ut_crane", name = "Crane", columns = 8, rows = 4,
+            panels = listOf(PanelGroup("LEFT CONSOLE", 0, 0, 2, 4), PanelGroup("DASH", 2, 0, 4, 4), PanelGroup("RIGHT CONSOLE", 6, 0, 2, 4)),
             controls = listOf(
-                stick("cr_left_stick", "Slew / hoist", "hook", 0, 0, "X", "SL1"),
+                stick("cr_left_stick", "Slew / hoist", "hook", 0, 0, "X", "SL1", ends = listOf("SLEW L", "SLEW R", "HOIST UP", "LOWER")),
                 stick("cr_drive", "Drive / steer", "arrow_up", 0, 2, "Z", "Y", Accent.GREEN),
                 momentary("cr_out_out", "Outriggers out", "outriggers", 2, 0, btn(21), Accent.AMBER),
                 momentary("cr_out_in", "Outriggers in", "outriggers", 3, 0, btn(22)),
@@ -515,7 +523,7 @@ object BuiltInProfiles {
                 momentary("cr_cam", "Camera", "camera_cycle", 4, 2, btn(11)),
                 momentary("cr_hook_cam", "Hook view", "camera", 5, 2, btn(10)),
                 lever("cr_rotate", "Hook rotate", "hook", 2, 3, "RZ", Accent.NEUTRAL, w = 4, h = 1),
-                stick("cr_right_stick", "Boom / extend", "boom", 6, 0, "RY", "RX"),
+                stick("cr_right_stick", "Boom / extend", "boom", 6, 0, "RY", "RX", ends = listOf("RETRACT", "EXTEND", "BOOM UP", "BOOM DOWN")),
                 throttle("cr_throttle", 6, 2, h = 2),
                 latching("cr_work", "Work lights", "work_light", 7, 2, btn(5), Accent.AMBER),
                 momentary("cr_rear_cam", "Rear view", "look_back", 7, 3, btn(12)),
@@ -523,6 +531,7 @@ object BuiltInProfiles {
         )
         val plough = Page(
             id = "ut_plough", name = "Plough & tow", columns = 8, rows = 4,
+            panels = listOf(PanelGroup("LEFT CONSOLE", 0, 0, 2, 4), PanelGroup("DASH", 2, 0, 4, 4), PanelGroup("RIGHT CONSOLE", 6, 0, 2, 4)),
             controls = listOf(
                 stick("pl_plough", "Plough lift / angle", "plough", 0, 0, "Z", "RX"),
                 Control("pl_rate", ControlType.ROTARY, "Spread rate", "spreader", 0, 2, 2, 2, Accent.CYAN, cw = btn(25), ccw = btn(26)),
@@ -544,7 +553,7 @@ object BuiltInProfiles {
             ),
         )
         return Profile(
-            id = UTILITY_ID, name = "Utility vehicles", game = GameId.CUSTOM, builtIn = true,
+            id = UTILITY_ID, name = "Utility vehicles", game = GameId.CUSTOM, builtIn = true, theme = Themes.HEAVY,
             pages = listOf(loader, excavator, crane, plough), output = OutputRoute.AUTO,
             description = "Wheel loader, excavator (ISO joysticks), mobile crane, snow plough and tow truck, a page each. Bind once in the game's controls menu " +
                 "(Bind helper on, so each stick axis is captured on its own). With vJoy, set device 1 to 32 buttons and all 8 axes in Configure vJoy. " +
@@ -588,7 +597,7 @@ object BuiltInProfiles {
             },
         )
         return Profile(
-            id = SNOWRUNNER_ID, name = "SnowRunner", game = GameId.SNOWRUNNER, builtIn = true,
+            id = SNOWRUNNER_ID, name = "SnowRunner", game = GameId.SNOWRUNNER, builtIn = true, theme = Themes.OVERLAND,
             pages = listOf(drive, addons), output = OutputRoute.AUTO, processNames = listOf("SnowRunner.exe"),
             description = "AWD, diff lock, winch, engine, lights and the 8 add-on actions on SnowRunner's default keys. Gearbox positions are gamepad buttons 1-11: bind them once in Options > Controls.",
         )
@@ -623,7 +632,7 @@ object BuiltInProfiles {
             ),
         )
         return Profile(
-            id = EXPEDITIONS_ID, name = "Expeditions: A MudRunner Game", game = GameId.EXPEDITIONS, builtIn = true,
+            id = EXPEDITIONS_ID, name = "Expeditions: A MudRunner Game", game = GameId.EXPEDITIONS, builtIn = true, theme = Themes.OVERLAND,
             pages = listOf(p), output = OutputRoute.AUTO, processNames = listOf("Expeditions.exe", "ExpeditionsMudRunner.exe"),
             description = "Every control is a gamepad button (1-23), so it works with any in-game layout: in Options > Controls pick an action and press the SimDeck button once.",
         )
@@ -672,7 +681,7 @@ object BuiltInProfiles {
             },
         )
         return Profile(
-            id = id, name = name, game = game, builtIn = true, pages = listOf(cab, cams), output = OutputRoute.AUTO, processNames = listOf(exe),
+            id = id, name = name, game = game, builtIn = true, theme = Themes.COMMERCIAL, pages = listOf(cab, cams), output = OutputRoute.AUTO, processNames = listOf(exe),
             description = "Lights, signals, beacon, cruise, engine and trailer on the game's default keys. Retarder, diff lock, lift axles, range and splitter are gamepad buttons 1-10: bind them once in Options > Controls.",
         )
     }
@@ -715,7 +724,7 @@ object BuiltInProfiles {
         val loader = Page(
             id = "fs_loader", name = "Loader", columns = 8, rows = 4,
             controls = listOf(
-                stick("fs_arm", "Front loader", "bucket", 0, 0, "RX", "RY"),
+                stick("fs_arm", "Front loader", "bucket", 0, 0, "RX", "RY", ends = listOf("CURL", "DUMP", "RAISE", "LOWER")),
                 stick("fs_drive", "Drive / steer", "steering", 0, 2, "X", "Y", Accent.GREEN),
                 throttle("fs_throttle", 2, 0),
                 lever("fs_aux", "3rd function", "quick_coupler", 3, 0, "RZ"),
@@ -726,7 +735,7 @@ object BuiltInProfiles {
             ),
         )
         return Profile(
-            id = FS25_ID, name = "Farming Simulator 25", game = GameId.FS25, builtIn = true,
+            id = FS25_ID, name = "Farming Simulator 25", game = GameId.FS25, builtIn = true, theme = Themes.AGRICULTURE,
             pages = listOf(tractor, loader), output = OutputRoute.AUTO,
             processNames = listOf("FarmingSimulator2025.exe", "FarmingSimulator2025Game.exe"),
             description = "Tractor and implement controls as gamepad buttons 1-30 and axes. Bind them once in Options > Controls (Bind helper on for the loader stick).",
@@ -759,7 +768,7 @@ object BuiltInProfiles {
             ),
         )
         return Profile(
-            id = ACC_ID, name = "Assetto Corsa Competizione", game = GameId.ACC, builtIn = true,
+            id = ACC_ID, name = "Assetto Corsa Competizione", game = GameId.ACC, builtIn = true, theme = Themes.MOTORSPORT,
             pages = listOf(box), output = OutputRoute.AUTO, processNames = listOf("AC2-Win64-Shipping.exe"),
             description = "A race button box: ignition (covered), starter, pit limiter, lights, and TC / ABS / engine map / brake bias rotaries. Gamepad buttons 1-25: bind them once in Controls.",
         )
@@ -768,14 +777,18 @@ object BuiltInProfiles {
     fun msfs(): Profile {
         val cockpit = Page(
             id = "msfs_cockpit", name = "Cockpit", columns = 8, rows = 4,
+            panels = listOf(
+                PanelGroup("GEAR", 0, 0, 1, 2), PanelGroup("ENGINE & ELEC", 2, 0, 6, 1), PanelGroup("EXT LIGHTS", 2, 1, 5, 1),
+                PanelGroup("AUTOPILOT", 0, 2, 7, 1), PanelGroup("VIEWS", 0, 3, 5, 1),
+            ),
             controls = listOf(
-                Control("msfs_gear", ControlType.LATCHING, "Gear", "landing_gear", 0, 0, 1, 2, Accent.GREEN, btn(1), guard = true),
+                Control("msfs_gear", ControlType.LATCHING, "Gear", "landing_gear", 0, 0, 1, 2, Accent.GREEN, btn(1), skin = "gear-lever", legends = listOf("UP", "DOWN")),
                 rocker("msfs_flaps", "Flaps", "flaps", 1, 0, btn(2), btn(3)),
                 latching("msfs_spoilers", "Spoilers", "flaps", 2, 0, btn(4), Accent.AMBER),
                 latching("msfs_pbrake", "Park brake", "parking_brake", 3, 0, btn(5), Accent.RED),
-                latching("msfs_battery", "Battery", "battery", 4, 0, btn(6), Accent.GREEN),
+                latching("msfs_battery", "Battery", "battery", 4, 0, btn(6), Accent.CYAN).copy(legends = listOf("FAULT", "OFF")),
                 latching("msfs_avionics", "Avionics", "power", 5, 0, btn(7), Accent.GREEN),
-                latching("msfs_fuelpump", "Fuel pump", "fuel", 6, 0, btn(8), Accent.AMBER),
+                latching("msfs_fuelpump", "Fuel pump", "fuel", 6, 0, btn(8), Accent.CYAN).copy(legends = listOf("LO PR", "ON")),
                 momentary("msfs_starter", "Starter", "starter", 7, 0, btn(9), Accent.RED),
                 latching("msfs_nav", "Nav", "beacon_air", 2, 1, btn(10), Accent.GREEN),
                 latching("msfs_beacon", "Beacon", "beacon", 3, 1, btn(11), Accent.RED),
@@ -783,7 +796,7 @@ object BuiltInProfiles {
                 latching("msfs_taxi", "Taxi", "low_beam", 5, 1, btn(13), Accent.GREEN),
                 latching("msfs_landing", "Landing", "high_beam", 6, 1, btn(14), Accent.BLUE),
                 rocker("msfs_trim", "Trim", "swing", 7, 1, btn(15), btn(16)),
-                latching("msfs_ap", "AP master", "autopilot", 0, 2, btn(17), Accent.AMBER, w = 2),
+                latching("msfs_ap", "AP master", "autopilot", 0, 2, btn(17), Accent.GREEN, w = 2).copy(legends = listOf("", "ON")),
                 latching("msfs_hdg", "HDG", "navigation", 2, 2, btn(18), Accent.CYAN),
                 latching("msfs_alt", "ALT", "arrow_up", 3, 2, btn(19), Accent.CYAN),
                 latching("msfs_navm", "NAV", "map", 4, 2, btn(20), Accent.CYAN),
@@ -798,8 +811,9 @@ object BuiltInProfiles {
         )
         val levers = Page(
             id = "msfs_levers", name = "Levers", columns = 8, rows = 4,
+            panels = listOf(PanelGroup("PEDESTAL", 0, 0, 4, 4), PanelGroup("FLIGHT CONTROLS", 4, 0, 4, 3)),
             controls = listOf(
-                throttle("msfs_throttle", 0, 0, "Z"),
+                throttle("msfs_throttle", 0, 0, "Z").copy(stations = listOf(Station(0f, "IDLE"), Station(0.62f, "CL"), Station(0.82f, "FLX"), Station(1f, "TOGA"))),
                 Control("msfs_prop", ControlType.SLIDER, "Prop", "swing", 1, 0, 1, 4, Accent.BLUE, Action.VJoyAxis(1, "SL0", AxisRange.UNIPOLAR), range = AxisRange.UNIPOLAR),
                 Control("msfs_mixture", ControlType.SLIDER, "Mixture", "fuel", 2, 0, 1, 4, Accent.RED, Action.VJoyAxis(1, "SL1", AxisRange.UNIPOLAR), range = AxisRange.UNIPOLAR),
                 Control("msfs_flaps_ax", ControlType.SLIDER, "Flaps", "flaps", 3, 0, 1, 4, Accent.CYAN, Action.VJoyAxis(1, "RZ", AxisRange.UNIPOLAR), range = AxisRange.UNIPOLAR, detents = 4),
@@ -809,7 +823,7 @@ object BuiltInProfiles {
             ),
         )
         return Profile(
-            id = MSFS_ID, name = "Microsoft Flight Simulator", game = GameId.MSFS, builtIn = true,
+            id = MSFS_ID, name = "Microsoft Flight Simulator", game = GameId.MSFS, builtIn = true, theme = Themes.AIRLINER,
             pages = listOf(cockpit, levers), output = OutputRoute.AUTO, processNames = listOf("FlightSimulator.exe", "FlightSimulator2024.exe"),
             description = "Gear (covered), flaps, lights, autopilot and engine switches as gamepad buttons 1-27; throttle, prop, mixture and flap levers on axes. Bind them once in Controls Options.",
         )

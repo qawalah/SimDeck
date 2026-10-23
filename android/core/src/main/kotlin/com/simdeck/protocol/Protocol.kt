@@ -211,7 +211,7 @@ object Protocol {
             VehicleFeature(id, f.s("title") ?: id, f.s("kind") ?: "button", f.b("centered"), f.s("source") ?: "", f.s("stateKey"))
         } ?: emptyList()
         val diag = (o["diag"] as? JsonObject)?.let { d -> flatten(d, "") } ?: emptyList()
-        return VehicleFeatures(o.s("vehicle") ?: "", list, diag)
+        return VehicleFeatures(o.s("vehicle") ?: "", list, diag, o.s("category") ?: "")
     }
 
     private fun flatten(e: JsonElement, prefix: String): List<String> = when (e) {

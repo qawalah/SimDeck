@@ -815,11 +815,13 @@ public sealed class CompanionHost : IDisposable
         relay["vehicle"] = m["vehicle"]?.DeepClone();
         relay["list"] = m["list"] is JsonArray l ? l.DeepClone() : new JsonArray();
         if (m["diag"] is JsonObject d) relay["diag"] = d.DeepClone();
+        // The vehicle's category (car, truck, machine, offroad, race...) picks the phone's theme (THEMES.md).
+        if (m["category"] is JsonNode cat) relay["category"] = cat.DeepClone();
         _beamngFeatures = relay;
         Broadcast(relay);
         int count = (relay["list"] as JsonArray)?.Count ?? 0;
         var diag = m["diag"]?.ToJsonString() ?? "";
-        Log("info", $"BeamNG vehicle {m["vehicle"]?.ToString() ?? "?"}: {count} vehicle features {diag}");
+        Log("info", $"BeamNG vehicle {m["vehicle"]?.ToString() ?? "?"} ({m["category"]?.ToString() ?? "no category"}): {count} vehicle features {diag}");
     }
 
     void OnBeamNgActions(JsonObject m)

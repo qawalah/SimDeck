@@ -33,6 +33,10 @@ data class Profile(
     val schema: Int = 1,
     /** Game executables (e.g. "BeamNG.drive.x64.exe"): the app switches to this profile when one is in front. */
     val processNames: List<String> = emptyList(),
+    /** Equipment theme of the play surface ([Themes] ids, docs/THEMES.md). Null = the house Race theme. */
+    val theme: String? = null,
+    /** BeamNG: pick the theme from the category of the vehicle being driven ([Themes.forVehicle]). */
+    val themeFollowsVehicle: Boolean = false,
 )
 
 /** Where a profile's inputs go. Game commands (BeamNG) and XInput always need the companion. */
@@ -60,6 +64,10 @@ data class Page(
      * controls are ignored.
      */
     val auto: String? = null,
+    /** Overrides the profile's theme for this page. */
+    val theme: String? = null,
+    /** Named panel groups drawn behind the controls (cockpit lightplates, cab console bays), in grid cells. */
+    val panels: List<PanelGroup> = emptyList(),
 ) {
     companion object {
         const val AUTO_BEAMNG_VEHICLE = "beamng.vehicle"
@@ -152,6 +160,19 @@ data class Control(
     val unit: String? = null,
     /** PAGE: "next", "prev" or a page id. */
     val pageTarget: String? = null,
+    /** Look of this control ([Skins] ids); null = the theme's default for the control type. */
+    val skin: String? = null,
+    /** Lens legends for lit pushbuttons and rocker lamp windows: first = upper (fault / status), second = lower (state). */
+    val legends: List<String> = emptyList(),
+    /** End labels: sliders and rockers [low, high]; joysticks [left, right, back, forward]. */
+    val ends: List<String> = emptyList(),
+    /** SLIDER: named positions on the travel, drawn and felt as detents (the value is not snapped). */
+    val stations: List<Station> = emptyList(),
+    /** GAUGE: coloured ranges on the scale. */
+    val bands: List<Band> = emptyList(),
+    /** GAUGE: scale limits for dial and bar gauges, in displayed units. */
+    val min: Double? = null,
+    val max: Double? = null,
 )
 
 /**
@@ -212,6 +233,18 @@ object Joystick {
         return null
     }
 }
+
+/** A titled area of a page, drawn by the theme as a lightplate, console bay or switch row. */
+@Serializable
+data class PanelGroup(val title: String = "", val x: Int = 0, val y: Int = 0, val w: Int = 1, val h: Int = 1)
+
+/** A named point on a slider's travel (IDLE, CL, TOGA): drawn on the scale, felt as a detent. [at] is 0..1 of the travel. */
+@Serializable
+data class Station(val at: Float, val label: String = "")
+
+/** A coloured range on a gauge, in the gauge's displayed units. [color]: green, amber, red, cyan, white. */
+@Serializable
+data class Band(val from: Double, val to: Double, val color: String = "green")
 
 @Serializable
 data class Position(

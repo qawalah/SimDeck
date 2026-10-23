@@ -3,7 +3,7 @@
        InformationalVersion from it; the exe's file properties, the Settings footer and the tray read it.
        A release build can override it with -p:Version=1.0.1. -->
   <PropertyGroup>
-    <VersionPrefix>1.1.0</VersionPrefix>
+    <VersionPrefix>1.2.0</VersionPrefix>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <Product>SimDeck Companion</Product>
     <Company>SimDeck</Company>

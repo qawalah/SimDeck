@@ -23,6 +23,8 @@ data class VehicleFeatures(
     val list: List<VehicleFeature> = emptyList(),
     /** The mod's diagnostics block as one readable line per entry (which source found what). */
     val diagnostics: List<String> = emptyList(),
+    /** car, truck, bus, machine, tractor, offroad, race, trailer or prop: picks the theme when the profile follows the vehicle. */
+    val category: String = "",
 )
 
 /** A BeamNG input action the mod can run, for the editor's action browser. */

@@ -12,7 +12,7 @@ if not socketOk then
 end
 
 local PROTOCOL_VERSION = 1
-local MOD_VERSION = "1.1.0"
+local MOD_VERSION = "1.2.0"
 local HOST = "127.0.0.1"
 local PORT = 47803
 local RETRY_INTERVAL = 3      -- seconds between connection attempts
@@ -198,6 +198,68 @@ local function vehicleDir(veh)
   local ok, name = pcall(function() return veh:getJBeamFilename() end)
   if ok and type(name) == "string" and name ~= "" then return name end
   return nil
+end
+
+-- ============= VEHICLE CATEGORY (picks the phone's theme, THEMES.md) =============
+-- Words from the vehicle's info files (and the game's vehicle details when available), classified by keyword.
+local categoryCache = {}
+
+local function addWords(into, t, keys)
+  if type(t) ~= "table" then return end
+  for _, k in ipairs(keys) do
+    local v = t[k]
+    if type(v) == "string" then table.insert(into, v:lower()) end
+  end
+end
+
+local INFO_KEYS = { "Type", "Body Style", "Config Type", "Name", "Configuration", "Description" }
+
+local function classify(words)
+  local hay = " " .. table.concat(words, " | ") .. " "
+  local function has(...)
+    for _, w in ipairs({ ... }) do if hay:find(w, 1, true) then return true end end
+    return false
+  end
+  if has("trailer") then return "trailer" end
+  if has(" prop ", "| prop |", "type: prop") then return "prop" end
+  if has("excavator", "loader", "dozer", "bulldozer", "crane", "forklift", "digger", "backhoe", "skid steer", "construction") then return "machine" end
+  if has("farm tractor", "agricultur", "harvester") then return "tractor" end
+  if has("trophy truck", "crawler", "baja") then return "offroad" end
+  if has("bus", "coach") then return "bus" end
+  if (has("truck", "semi", "lorry", "tanker", "box van") and not has("pickup", "pick-up")) then return "truck" end
+  if has("race", "racing", "drift", "rally", "gt3", "gt ", "track", "formula", "time attack", "drag") then return "race" end
+  if has("off-road", "offroad", "off road", "crawler", "rock", "baja", "overland", "lifted", "trophy truck", "desert") then return "offroad" end
+  return "car"
+end
+
+local function vehicleCategory(veh, dir)
+  if not dir then return "" end
+  local cfg = ""
+  pcall(function()
+    local pc = veh and veh.partConfig
+    if type(pc) == "string" then cfg = pc end
+  end)
+  local key = dir .. "|" .. cfg
+  if categoryCache[key] then return categoryCache[key] end
+  local words = {}
+  local okInfo, info = pcall(jsonReadFile, "/vehicles/" .. dir .. "/info.json")
+  if okInfo then addWords(words, info, INFO_KEYS) end
+  local cfgName = cfg:match("([^/]+)%.pc$")
+  if cfgName then
+    local okC, cinfo = pcall(jsonReadFile, "/vehicles/" .. dir .. "/info_" .. cfgName .. ".json")
+    if okC then addWords(words, cinfo, INFO_KEYS) end
+  end
+  local vehicles = rawget(_G, "core_vehicles")
+  if type(vehicles) == "table" and type(vehicles.getCurrentVehicleDetails) == "function" then
+    local okD, d = pcall(vehicles.getCurrentVehicleDetails)
+    if okD and type(d) == "table" then
+      addWords(words, d.model, INFO_KEYS)
+      addWords(words, d.configs, INFO_KEYS)
+    end
+  end
+  local cat = classify(words)
+  categoryCache[key] = cat
+  return cat
 end
 
 -- the input system's own merged list, if this game version exposes one
@@ -467,10 +529,12 @@ end
 
 sendFeatures = function()
   local list, diag = buildFeatures()
-  send({ type = "features", vehicle = actionsVehicle or "", list = list, diag = diag })
+  local category = vehicleCategory(playerVehicle(), actionsVehicle)
+  diag.category = category
+  send({ type = "features", vehicle = actionsVehicle or "", category = category, list = list, diag = diag })
   local src = diag.sources or {}
-  logI(string.format("vehicle features for %s: %d (input_actions=%s interaction=%s common=%s game=%s couplers=%d hydros=%d)",
-    tostring(diag.vehicle), #list, tostring(src.input_actions or 0), tostring(src.interaction or 0),
+  logI(string.format("vehicle features for %s (%s): %d (input_actions=%s interaction=%s common=%s game=%s couplers=%d hydros=%d)",
+    tostring(diag.vehicle), tostring(category), #list, tostring(src.input_actions or 0), tostring(src.interaction or 0),
     tostring(src.interaction_common or 0), tostring(src.game or 0), diag.couplers, diag.hydros))
 end
 
@@ -1160,6 +1224,7 @@ M.onExtensionUnloaded = onExtensionUnloaded
 M.onVehicleState = onVehicleState
 M.onVehicleFeatures = onVehicleFeatures
 M.report = report
+M._classify = classify
 M.runAction = runAction
 M.onActionFailed = onActionFailed
 M.handleCommand = handleCommand

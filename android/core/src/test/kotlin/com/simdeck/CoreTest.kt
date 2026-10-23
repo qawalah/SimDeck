@@ -374,7 +374,7 @@ class CoreTest {
 
     @Test fun r6_4_newerSchemaIsRefusedBeforeDecoding() {
         val text = ProfileJson.export(BuiltInProfiles.bulldozer())
-            .replace("\"schema\": 2", "\"schema\": ${ProfileJson.SCHEMA + 1}").replace("\"joystick\"", "\"hologram\"")
+            .replace(Regex("\"schema\": \\d+"), "\"schema\": ${ProfileJson.SCHEMA + 1}").replace("\"joystick\"", "\"hologram\"")
         val e = runCatching { ProfileJson.import(text) }.exceptionOrNull()
         assertNotNull(e)
         assertTrue("newer version" in (e.message ?: ""), "got: ${e.message}")
@@ -414,7 +414,10 @@ class CoreTest {
     }
 
     @Test fun joystickProfilesExportAsSchema2AndKeepActionY() {
-        val p = BuiltInProfiles.utility()
+        // Without its 1.2 theme fields the utility profile is a plain joystick profile.
+        val p = BuiltInProfiles.utility().let { u ->
+            u.copy(theme = null, pages = u.pages.map { pg -> pg.copy(panels = emptyList(), controls = pg.controls.map { it.copy(ends = emptyList()) }) })
+        }
         val text = ProfileJson.export(p)
         assertTrue("\"schema\": 2" in text, "joystick profile is schema 2")
         assertTrue("\"schema\": 1" in ProfileJson.export(BuiltInProfiles.keyboard()), "no joystick: schema 1")

@@ -148,11 +148,12 @@ public sealed class SimDeckFeatureTests : IDisposable
         var r = new StreamReader(mod.GetStream());
         await r.ReadLineAsync(); // state.request
         await w.WriteLineAsync("""{"v":1,"type":"hello","role":"beamng","modVersion":"1.1.0"}""");
-        await w.WriteLineAsync("""{"v":1,"type":"features","vehicle":"pickup","list":[{"id":"action.bed_tilt","title":"Tilt bed","kind":"axis","centered":true,"source":"input_actions"},{"id":"hydro.dump_bed","title":"Dump bed","kind":"axis","source":"hydro"}],"diag":{"vehicle":"pickup","couplers":0}}""");
+        await w.WriteLineAsync("""{"v":1,"type":"features","vehicle":"pickup","category":"car","list":[{"id":"action.bed_tilt","title":"Tilt bed","kind":"axis","centered":true,"source":"input_actions"},{"id":"hydro.dump_bed","title":"Dump bed","kind":"axis","source":"hydro"}],"diag":{"vehicle":"pickup","couplers":0}}""");
         var f = await p.Expect("beamng.features");
         Assert.Equal("pickup", (string?)f["vehicle"]);
         Assert.Equal(2, f["list"]!.AsArray().Count);
         Assert.Equal("pickup", (string?)f["diag"]!["vehicle"]);
+        Assert.Equal("car", (string?)f["category"]);
         await w.WriteLineAsync("""{"v":1,"type":"actions","vehicle":"pickup","list":[{"name":"toggle_tailgate","title":"Tailgate","vehicle":true}]}""");
         Assert.Single((await p.Expect("beamng.actions"))["list"]!.AsArray());
 

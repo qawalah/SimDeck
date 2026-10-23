@@ -20,9 +20,11 @@ import java.util.UUID
 object ProfileJson {
     /**
      * Newest schema this app reads. 2 added the joystick control and Control.actionY. 3 (SimDeck 1.1) added rockers,
-     * gauges, lamps, page switches, safety covers, slider detents, auto pages and Profile.processNames.
+     * gauges, lamps, page switches, safety covers, slider detents, auto pages and Profile.processNames. 4 (SimDeck 1.2)
+     * added equipment themes: Profile.theme and themeFollowsVehicle, Page.theme and panels, and the control fields skin,
+     * legends, ends, stations, bands, min and max.
      */
-    const val SCHEMA = 3
+    const val SCHEMA = 4
 
     /**
      * A profile is written with the oldest schema that can hold it, so a profile without
@@ -34,7 +36,10 @@ object ProfileJson {
         val controls = profile.pages.flatMap { it.controls }
         val v3 = profile.processNames.isNotEmpty() || profile.pages.any { it.auto != null } || profile.game !in setOf(GameId.BEAMNG, GameId.MUDRUNNER, GameId.CUSTOM) ||
             controls.any { it.type.ordinal > ControlType.JOYSTICK.ordinal || it.guard || it.detents > 1 }
+        val v4 = profile.theme != null || profile.themeFollowsVehicle || profile.pages.any { it.theme != null || it.panels.isNotEmpty() } ||
+            controls.any { it.skin != null || it.legends.isNotEmpty() || it.ends.isNotEmpty() || it.stations.isNotEmpty() || it.bands.isNotEmpty() || it.min != null || it.max != null }
         return when {
+            v4 -> 4
             v3 -> 3
             controls.any { it.type == ControlType.JOYSTICK } -> 2
             else -> 1
@@ -148,10 +153,16 @@ object LayoutOps {
                 columns = page.columns.coerceIn(MIN_COLUMNS, MAX_COLUMNS),
                 rows = page.rows.coerceIn(MIN_ROWS, MAX_ROWS),
             )
-            pg.copy(controls = pg.controls.map { c ->
-                val id = if (c.id.isBlank() || !seenControls.add(c.id)) newControlId().also { seenControls += it } else c.id
-                clamp(c.copy(id = id), pg)
-            })
+            pg.copy(
+                controls = pg.controls.map { c ->
+                    val id = if (c.id.isBlank() || !seenControls.add(c.id)) newControlId().also { seenControls += it } else c.id
+                    clamp(c.copy(id = id, stations = c.stations.map { it.copy(at = it.at.coerceIn(0f, 1f)) }.take(12), legends = c.legends.take(2), ends = c.ends.take(4)), pg)
+                },
+                panels = pg.panels.take(16).map { g ->
+                    val w = g.w.coerceIn(1, pg.columns); val h = g.h.coerceIn(1, pg.rows)
+                    g.copy(w = w, h = h, x = g.x.coerceIn(0, pg.columns - w), y = g.y.coerceIn(0, pg.rows - h), title = g.title.take(24))
+                },
+            )
         })
     }
 
