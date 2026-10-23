@@ -160,6 +160,14 @@ internal fun PilotJoystick(
                                     var vy = -(p.y - r) / throwPx
                                     val m = hypot(vx, vy)
                                     if (m > 1f) { vx /= m; vy /= m }
+                                    if (skin == "hat") {
+                                        // A four-way hat (eight with diagonals): each axis is fully on or off.
+                                        if (m < 0.45f) { vx = 0f; vy = 0f } else {
+                                            val sector = Math.round(Math.toDegrees(kotlin.math.atan2(vy, vx).toDouble()) / 45.0).toInt()
+                                            val a = Math.toRadians(sector * 45.0)
+                                            vx = Math.round(kotlin.math.cos(a)).toFloat(); vy = Math.round(kotlin.math.sin(a)).toFloat()
+                                        }
+                                    }
                                     val outside = hypot(vx, vy) > DeadZone
                                     if (outside && !wasOff) haptic()
                                     wasOff = outside

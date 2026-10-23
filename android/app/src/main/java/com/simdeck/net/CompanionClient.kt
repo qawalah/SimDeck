@@ -478,6 +478,11 @@ class Settings(context: Context) {
         get() = prefs.getString("clip", null)
         set(v) = prefs.edit().putString("clip", v).apply()
 
+    /** Control sounds on themed pages (click, clack, thunk). Off by default. */
+    var controlSounds: Boolean
+        get() = prefs.getBoolean("controlSounds", false)
+        set(v) = prefs.edit().putBoolean("controlSounds", v).apply()
+
     /** Panel lighting of themed pages: auto, day or night. */
     var lighting: String
         get() = prefs.getString("lighting", "AUTO") ?: "AUTO"

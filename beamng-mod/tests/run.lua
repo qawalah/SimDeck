@@ -156,6 +156,9 @@ ve.obj = {
   getID = function() return 7 end,
   queueGameEngineLua = function(_, code) table.insert(geQueue, code) end,
   requestReset = function(_, kind) table.insert(calls, { "requestReset", kind }) end,
+  -- nose 5 degrees up, level side to side
+  getDirectionVector = function() return { x = 0, y = math.cos(math.rad(5)), z = math.sin(math.rad(5)) } end,
+  getDirectionVectorUp = function() return { x = 0, y = -math.sin(math.rad(5)), z = math.cos(math.rad(5)) } end,
 }
 
 -- ============= GAME ENGINE VM =============
@@ -558,6 +561,7 @@ do
   local f = lastOfType("features")
   check(f ~= nil and f.vehicle == "pickup", "features message for the vehicle")
   check(f ~= nil and f.category == "car", "vehicle category from info.json (a pickup is a car)")
+  check(merged()["pitch"] == 5 and merged()["roll"] == 0, "attitude for the inclinometer: pitch and roll in degrees")
   local cls = link._classify
   check(cls({ "truck", "semi truck" }) == "truck" and cls({ "car", "bus" }) == "bus" and cls({ "excavator" }) == "machine",
     "category keywords: truck, bus, machine")

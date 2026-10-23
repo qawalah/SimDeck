@@ -231,12 +231,13 @@ val LocalSimTheme = staticCompositionLocalOf { simTheme(Themes.RACE, false) }
 @Composable
 fun rememberThemeHaptic(feel: Feel): () -> Unit {
     val view = LocalView.current
-    return remember(view, feel) {
+    val sound = LocalSimSound.current
+    return remember(view, feel, sound) {
         val type = when (feel) {
             Feel.LIGHT -> HapticFeedbackConstants.KEYBOARD_TAP
             Feel.FIRM -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) HapticFeedbackConstants.CONFIRM else HapticFeedbackConstants.VIRTUAL_KEY
             Feel.HEAVY -> HapticFeedbackConstants.LONG_PRESS
         }
-        { view.performHapticFeedback(type) }
+        { view.performHapticFeedback(type); sound?.invoke(feel) }
     }
 }

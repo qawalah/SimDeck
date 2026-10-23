@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.contentDescription
@@ -246,6 +247,53 @@ fun SkinGauge(skin: String, control: Control, indicator: IndicatorState?, modifi
                 val ls = t.legendStyle(9.sp)
                 drawLegend(tm, control.label.uppercase(), ls, t.legendMuted, size.width / 2, size.height - 13.dp.toPx(), size.width)
             }
+            "inclinometer" -> {
+                // A vehicle seen from behind (roll) or from the side (pitch), tilted by the game's angle on a marked arc.
+                val pitch = (control.feedbackKey ?: "").contains("pitch")
+                val r = min(size.width, size.height) / 2 * 0.94f
+                val c = Offset(size.width / 2, size.height / 2)
+                drawCircle(Color.Black.copy(alpha = 0.55f), r, c + Offset(0f, 3.dp.toPx()))
+                drawCircle(Brush.sweepGradient(listOf(Color(0xFF6B6F75), Color(0xFF2B2E32), Color(0xFF9A9EA4), Color(0xFF2B2E32), Color(0xFF6B6F75)), c), r, c)
+                val face = r * 0.9f
+                // Sky over ground, the horizon level.
+                drawCircle(Color(0xFF0C1218), face, c)
+                drawArc(Color(0xFF2A2116), 0f, 180f, true, c - Offset(face, face), Size(face * 2, face * 2))
+                val limit = (control.max ?: 45.0).coerceAtLeast(10.0)
+                for (deg in listOf(-30, -20, -10, 0, 10, 20, 30)) {
+                    if (kotlin.math.abs(deg) > limit) continue
+                    val a = Math.toRadians(-90.0 + deg)
+                    val d = Offset(cos(a).toFloat(), sin(a).toFloat())
+                    val col = when { kotlin.math.abs(deg) >= 30 -> t.lamp(Accent.RED); kotlin.math.abs(deg) >= 20 -> t.lamp(Accent.AMBER); else -> Color(0xFFEDEDED) }
+                    drawLine(col, c + d * (face * 0.8f), c + d * (face * 0.96f), 2.dp.toPx())
+                }
+                val angle = (value ?: 0.0).coerceIn(-limit, limit).toFloat() * (if (pitch) -1f else 1f)
+                val w = face * 1.1f; val h = face * 0.42f
+                rotate(angle, c) {
+                    val body = Path().apply {
+                        if (pitch) {
+                            // Side view, nose to the right.
+                            moveTo(c.x - w / 2, c.y + h * 0.25f); lineTo(c.x - w / 2, c.y - h * 0.2f); lineTo(c.x - w * 0.15f, c.y - h * 0.2f)
+                            lineTo(c.x - w * 0.05f, c.y - h * 0.65f); lineTo(c.x + w * 0.22f, c.y - h * 0.65f); lineTo(c.x + w * 0.32f, c.y - h * 0.2f)
+                            lineTo(c.x + w / 2, c.y - h * 0.1f); lineTo(c.x + w / 2, c.y + h * 0.25f); close()
+                        } else {
+                            // Rear view: body, cab, two wheels.
+                            moveTo(c.x - w / 2, c.y + h * 0.2f); lineTo(c.x - w / 2, c.y - h * 0.2f); lineTo(c.x - w * 0.3f, c.y - h * 0.25f)
+                            lineTo(c.x - w * 0.22f, c.y - h * 0.7f); lineTo(c.x + w * 0.22f, c.y - h * 0.7f); lineTo(c.x + w * 0.3f, c.y - h * 0.25f)
+                            lineTo(c.x + w / 2, c.y - h * 0.2f); lineTo(c.x + w / 2, c.y + h * 0.2f); close()
+                        }
+                    }
+                    val col = if (live) t.lamp(control.accent) else Color(0xFF8D9196)
+                    drawPath(body, col)
+                    val wr = h * 0.28f
+                    drawCircle(Color(0xFF111111), wr, Offset(c.x - w * 0.3f, c.y + h * 0.3f))
+                    drawCircle(Color(0xFF111111), wr, Offset(c.x + w * 0.3f, c.y + h * 0.3f))
+                }
+                drawLine(Color(0xFFEDEDED).copy(alpha = 0.5f), Offset(c.x - face, c.y), Offset(c.x + face, c.y), 1.dp.toPx())
+                val vs = t.readoutStyle((face / density / 4.8f).coerceIn(9f, 18f).sp)
+                drawLegend(tm, (if (value == null) "--" else text) + "°", vs, if (live) Color.White else Color(0xFF8D9196), c.x, c.y + face * 0.45f, face)
+                val ls = t.legendStyle((face / density / 7.5f).coerceIn(7f, 11f).sp)
+                drawLegend(tm, control.label.uppercase(), ls, Color(0xFFBFC3C8), c.x, c.y - face * 0.85f + 2.dp.toPx(), face)
+            }
             "shift-lights" -> {
                 val n = 10
                 val frac = value?.let { ((it - lo) / (hi - lo)).coerceIn(0.0, 1.0) } ?: 0.0
@@ -276,18 +324,20 @@ fun SkinLamp(skin: String, control: Control, indicator: IndicatorState?, modifie
     val lit = indicator?.lit == true
     var acked by remember { mutableStateOf(false) }
     LaunchedEffect(lit) { if (!lit) acked = false }
-    val flashing = skin == "master" && lit && !acked
+    val isMaster = skin == "master" || skin == "master-warning"
+    val flashing = isMaster && lit && !acked
     val blink = rememberBlink(flashing)
     val painter = IconLibrary[control.icon]?.let { rememberVectorPainter(it) }
     Canvas(
         modifier
             .semantics { contentDescription = control.label; stateDescription = if (lit) "On" else "Off" }
-            .then(if (skin == "master") Modifier.pointerInput(Unit) { awaitEachGesture { awaitFirstDown(); acked = true } } else Modifier),
+            .then(if (isMaster) Modifier.pointerInput(Unit) { awaitEachGesture { awaitFirstDown(); acked = true } } else Modifier),
     ) {
-        val lamp = t.lamp(control.accent)
+        // Master caution is always amber and master warning always red, whatever accent the control has.
+        val lamp = when (skin) { "master" -> t.lamp(Accent.AMBER); "master-warning" -> t.lamp(Accent.RED); else -> t.lamp(control.accent) }
         val level = if (flashing) 0.35f + 0.65f * blink else 1f
         when (skin) {
-            "annunciator", "master" -> {
+            "annunciator", "master", "master-warning" -> {
                 val pad = 3.dp.toPx()
                 val r = Rect(pad, pad, size.width - pad, size.height - pad)
                 drawRoundRect(Color.Black.copy(alpha = 0.5f), r.topLeft + Offset(0f, 2.dp.toPx()), r.size, CornerRadius(3.dp.toPx()))
@@ -297,8 +347,12 @@ fun SkinLamp(skin: String, control: Control, indicator: IndicatorState?, modifie
                 if (lit) drawRoundRect(lamp.copy(alpha = 0.22f * level), lens.topLeft, lens.size, CornerRadius(2.dp.toPx()))
                 // Dark cockpit at night: an unlit legend all but disappears.
                 val ink = if (lit) lamp.copy(alpha = level) else Color.White.copy(alpha = if (t.night) 0.07f else 0.2f)
-                val text = (if (skin == "master") "MASTER\n" else "") + control.label.uppercase()
-                val st = t.legendStyle((lens.height / density / (if (skin == "master") 4.2f else 3.2f)).coerceIn(8f, 15f).sp)
+                val text = when (skin) {
+                    "master" -> "MASTER\n" + control.label.uppercase().ifBlank { "CAUTION" }
+                    "master-warning" -> "MASTER\n" + control.label.uppercase().ifBlank { "WARNING" }
+                    else -> control.label.uppercase()
+                }
+                val st = t.legendStyle((lens.height / density / (if (isMaster) 4.2f else 3.2f)).coerceIn(8f, 15f).sp)
                 val lines = text.count { it == '\n' } + 1
                 drawLegend(tm, text, st, ink, lens.center.x, lens.center.y - st.fontSize.toPx() * 0.62f * lines, lens.width * 0.94f, lines + 1)
             }

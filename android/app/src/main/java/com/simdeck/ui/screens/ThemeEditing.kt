@@ -83,6 +83,14 @@ fun ThemeLookSection(c: Control, theme: String, onUpdate: (Control) -> Unit) {
                 hint = if (current == "toggle-bat") "Down position, e.g. OFF" else "e.g. ON", modifier = Modifier.weight(1f))
         }
     }
+    if (current in setOf("rocker-lamp", "ring-push", "rocker-mom")) {
+        Gap(6)
+        Text("BACKLIGHT", style = RaceType.unit, color = Race.InkFaint)
+        val colours = listOf("Theme", "Amber", "Red", "Green", "Blue", "White")
+        ChoiceChips(colours, c.backlight?.replaceFirstChar { it.uppercase() } ?: "Theme", { v ->
+            onUpdate(c.copy(backlight = if (v == "Theme") null else v.lowercase()))
+        })
+    }
     when (c.type) {
         ControlType.SLIDER, ControlType.ROCKER -> {
             Gap(6)
@@ -149,6 +157,8 @@ fun ThemeSettingsSection(profile: Profile, page: Page, pageIndex: Int, onProfile
         ToggleRow("Follow the vehicle", profile.themeFollowsVehicle, { on -> onProfileChange { it.copy(themeFollowsVehicle = on) } },
             hint = "Trucks get the truck theme, machines the heavy-equipment theme, race cars motorsport, and so on.")
     }
+    val actions = LocalEditorActions.current
+    ToggleRow("Control sounds", actions.soundsOn, actions.onSounds, hint = "A click, clack or thunk with each press on themed pages, at the phone's touch-sound volume. For every profile.")
     Gap(8)
     Text("THIS PAGE", style = RaceType.unit, color = Race.InkFaint)
     Gap(4)

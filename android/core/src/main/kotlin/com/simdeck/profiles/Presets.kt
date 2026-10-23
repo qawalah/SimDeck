@@ -87,6 +87,10 @@ object Presets {
             p("l_tc", "Readouts and lamps", "Traction control working.", t(ControlType.INDICATOR, "TC", "tcs", accent = Accent.AMBER).copy(feedbackKey = "tcs.intervening")),
             p("l_left", "Readouts and lamps", "Left signal tell-tale.", t(ControlType.INDICATOR, "Left", "signal_left", accent = Accent.GREEN).copy(feedbackKey = "signal.left")),
             p("l_right", "Readouts and lamps", "Right signal tell-tale.", t(ControlType.INDICATOR, "Right", "signal_right", accent = Accent.GREEN).copy(feedbackKey = "signal.right")),
+            p("g_roll", "Readouts and lamps", "Side-to-side tilt, from the BeamNG mod.", t(ControlType.GAUGE, "Roll", null, 2, 2, Accent.AMBER).copy(feedbackKey = "roll", skin = "inclinometer", unit = "°", min = -45.0, max = 45.0)),
+            p("g_pitch", "Readouts and lamps", "Nose up or down, from the BeamNG mod.", t(ControlType.GAUGE, "Pitch", null, 2, 2, Accent.AMBER).copy(feedbackKey = "pitch", skin = "inclinometer", unit = "°", min = -45.0, max = 45.0)),
+            p("gp_hat", "Gamepad (bind in the game)", "A four-way hat for camera or trim: full deflection on two free axes.",
+                t(ControlType.JOYSTICK, "Hat", "camera", 2, 2, Accent.CYAN, Action.VJoyAxis(1, NEXT_AXIS)).copy(actionY = Action.VJoyAxis(1, NEXT_AXIS), skin = "hat")),
             // Pages.
             p("page_next", "Pages", "Goes to the next page.", t(ControlType.PAGE, "Next page", "page_next").copy(pageTarget = "next")),
             p("page_prev", "Pages", "Goes to the previous page.", t(ControlType.PAGE, "Previous", "page_prev").copy(pageTarget = "prev")),

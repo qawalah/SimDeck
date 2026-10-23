@@ -58,10 +58,10 @@ object Skins {
         ControlType.RADIO to listOf("cap", "lit-row", "annunciator-row", "glass-tile"),
         ControlType.SLIDER to listOf("fader", "hydraulic-lever", "thrust-lever", "quadrant-knob", "hand-throttle", "pedal", "stalk"),
         ControlType.ROTARY to listOf("encoder", "concentric", "multi-pos", "trim-wheel", "thumb-roller", "chrome-dial"),
-        ControlType.JOYSTICK to listOf("gate", "pilot-grip", "sidestick", "yoke"),
+        ControlType.JOYSTICK to listOf("gate", "pilot-grip", "sidestick", "yoke", "hat"),
         ControlType.ROCKER to listOf("rocker-3", "toggle-3", "window-switch"),
-        ControlType.GAUGE to listOf("readout", "steam", "segment", "bar", "tape", "shift-lights"),
-        ControlType.INDICATOR to listOf("telltale", "annunciator", "master", "led-dot"),
+        ControlType.GAUGE to listOf("readout", "steam", "segment", "bar", "tape", "shift-lights", "inclinometer"),
+        ControlType.INDICATOR to listOf("telltale", "annunciator", "master", "master-warning", "led-dot"),
         ControlType.PAGE to listOf("cap", "page-tab"),
     )
 
@@ -80,6 +80,7 @@ object Skins {
         "rocker-3" to "Rocker, 3 position", "toggle-3" to "Toggle, 3 position", "window-switch" to "Window switch",
         "readout" to "Number", "steam" to "Dial", "segment" to "Segment display", "bar" to "Bar graph", "tape" to "Tape",
         "shift-lights" to "Shift lights", "telltale" to "Tell-tale", "annunciator" to "Annunciator", "master" to "Master caution",
+        "master-warning" to "Master warning", "inclinometer" to "Inclinometer", "hat" to "Four-way hat",
         "led-dot" to "LED", "page-tab" to "Panel tab",
     )
 

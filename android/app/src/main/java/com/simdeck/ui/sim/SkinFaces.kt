@@ -201,7 +201,8 @@ private class FaceCtx(
         // Light ring.
         val ringR = r * 0.80f
         drawCircle(Color.Black, ringR, cc)
-        drawCircle(lampColor(lit), ringR - r * 0.05f, cc, style = Stroke(r * 0.09f))
+        val idleRing = c.backlight?.let { bandColor(t, it).copy(alpha = if (t.night) 0.45f else 0.2f) } ?: t.lampOff
+        drawCircle(if (lit) lamp.copy(alpha = level) else idleRing, ringR - r * 0.05f, cc, style = Stroke(r * 0.09f))
         if (lit) drawCircle(lamp.copy(alpha = 0.18f * level), ringR + r * 0.06f, cc, style = Stroke(r * 0.12f))
         // Cap.
         val capR = ringR - r * 0.16f
@@ -274,7 +275,9 @@ private class FaceCtx(
         drawLine(Color.Black.copy(alpha = 0.7f), Offset(body.left, body.center.y), Offset(body.right, body.center.y), 1.5.dp.toPx())
         drawRoundRect(t.capEdge, body.topLeft, body.size, rr, style = Stroke(1.dp.toPx()))
         // Icon in the upper half, laser-etched and backlit.
-        val etched = if (t.night) t.legend else t.legend.copy(alpha = 0.92f)
+        // A chosen backlight colours the etched legend: fully at night, tinted by day.
+        val etched = c.backlight?.let { b -> val bc = bandColor(t, b); if (t.night) bc else androidx.compose.ui.graphics.lerp(Color.White, bc, 0.35f) }
+            ?: if (t.night) t.legend else t.legend.copy(alpha = 0.92f)
         drawIcon(icon, Offset(top.center.x, top.center.y + top.height * 0.05f), min(top.width, top.height) * 0.62f, etched)
         if (lamps) {
             // Lower lamp window lights when the function is on.

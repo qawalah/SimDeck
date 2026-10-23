@@ -437,6 +437,14 @@ local function collectState()
   if gear ~= nil then s["gear"] = tostring(gear) end
   s["gearbox.mode"] = gearboxMode(gear)
   s["speed"] = round(tonumber(e.wheelspeed) or tonumber(e.airspeed) or 0, 0.1)
+  -- Attitude for the inclinometer, in degrees and 0.5 steps: pitch nose-up positive, roll right-side-down positive.
+  local okA, fwd, up = pcall(function() return obj:getDirectionVector(), obj:getDirectionVectorUp() end)
+  if okA and type(fwd) ~= "nil" and type(up) ~= "nil" and tonumber(fwd.z) and tonumber(up.z) then
+    local function cl(v) return math.max(-1, math.min(1, v)) end
+    local rz = fwd.x * up.y - fwd.y * up.x -- z of right = forward x up
+    s["pitch"] = round(math.deg(math.asin(cl(fwd.z))), 0.5)
+    s["roll"] = round(math.deg(math.asin(cl(-rz))), 0.5)
+  end
   s["rpm"] = round(tonumber(e.rpm) or 0, 10)
   if type(e.fuel) == "number" then s["fuel"] = round(e.fuel, 0.01) end
   for _, src in ipairs(hydroSources) do

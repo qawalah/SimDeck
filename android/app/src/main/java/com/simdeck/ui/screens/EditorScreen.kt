@@ -123,6 +123,8 @@ class EditorActions(
     val onPaste: () -> Unit = {},
     val onPlace: (Control) -> Unit = {},
     val onPastePage: (Page) -> Unit = {},
+    val soundsOn: Boolean = false,
+    val onSounds: (Boolean) -> Unit = {},
 )
 
 val LocalEditorActions = androidx.compose.runtime.staticCompositionLocalOf { EditorActions() }

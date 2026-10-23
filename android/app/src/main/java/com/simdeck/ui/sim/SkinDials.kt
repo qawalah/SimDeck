@@ -182,6 +182,28 @@ fun DrawScope.drawStickSkin(skin: String, t: SimTheme, c: Control, x: Float, y: 
                 drawCircle(t.decor ?: Color(0xFF8E9399), h * 0.18f, yc + Offset(0f, h * 0.15f))
             }
         }
+        "hat" -> {
+            // A four-way hat: a round plate with a cross-shaped cap that rocks toward the pushed direction.
+            drawCircle(Brush.radialGradient(listOf(Color.Black.copy(alpha = 0.6f), t.panel), cc, gate), gate, cc)
+            drawCircle(t.panelLine, gate, cc, style = Stroke(1.5.dp.toPx()))
+            val arm = gate * 0.62f; val thick = gate * 0.3f
+            val tilt = Offset(x, -y) * (gate * 0.08f)
+            for ((dx, dy, on) in listOf(Triple(0f, -1f, y > 0.5f), Triple(0f, 1f, y < -0.5f), Triple(-1f, 0f, x < -0.5f), Triple(1f, 0f, x > 0.5f))) {
+                val d = Offset(dx, dy)
+                drawPath(arrowHead(cc + d * (gate * 0.9f), d, gate * 0.12f), if (on) accent else t.legendMuted)
+            }
+            val cap = Path().apply {
+                val c2 = cc + tilt
+                moveTo(c2.x - thick / 2, c2.y - arm); lineTo(c2.x + thick / 2, c2.y - arm); lineTo(c2.x + thick / 2, c2.y - thick / 2)
+                lineTo(c2.x + arm, c2.y - thick / 2); lineTo(c2.x + arm, c2.y + thick / 2); lineTo(c2.x + thick / 2, c2.y + thick / 2)
+                lineTo(c2.x + thick / 2, c2.y + arm); lineTo(c2.x - thick / 2, c2.y + arm); lineTo(c2.x - thick / 2, c2.y + thick / 2)
+                lineTo(c2.x - arm, c2.y + thick / 2); lineTo(c2.x - arm, c2.y - thick / 2); lineTo(c2.x - thick / 2, c2.y - thick / 2); close()
+            }
+            drawPath(cap, Color.Black.copy(alpha = 0.5f))
+            drawPath(cap, Brush.radialGradient(listOf(t.capHigh, t.cap), cc + tilt, arm))
+            drawPath(cap, if (held) accent else t.capEdge, style = Stroke(1.5.dp.toPx()))
+            drawCircle(if (held) accent else t.legendMuted, thick * 0.22f, cc + tilt)
+        }
         "pilot-grip", "sidestick" -> {
             val square = skin == "pilot-grip"
             if (square) {

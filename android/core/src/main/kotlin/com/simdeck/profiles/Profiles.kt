@@ -22,9 +22,9 @@ object ProfileJson {
      * Newest schema this app reads. 2 added the joystick control and Control.actionY. 3 (SimDeck 1.1) added rockers,
      * gauges, lamps, page switches, safety covers, slider detents, auto pages and Profile.processNames. 4 (SimDeck 1.2)
      * added equipment themes: Profile.theme and themeFollowsVehicle, Page.theme and panels, and the control fields skin,
-     * legends, ends, stations, bands, min and max.
+     * legends, ends, stations, bands, min and max. 5 (SimDeck 1.3) added Control.backlight.
      */
-    const val SCHEMA = 4
+    const val SCHEMA = 5
 
     /**
      * A profile is written with the oldest schema that can hold it, so a profile without
@@ -38,7 +38,9 @@ object ProfileJson {
             controls.any { it.type.ordinal > ControlType.JOYSTICK.ordinal || it.guard || it.detents > 1 }
         val v4 = profile.theme != null || profile.themeFollowsVehicle || profile.pages.any { it.theme != null || it.panels.isNotEmpty() } ||
             controls.any { it.skin != null || it.legends.isNotEmpty() || it.ends.isNotEmpty() || it.stations.isNotEmpty() || it.bands.isNotEmpty() || it.min != null || it.max != null }
+        val v5 = controls.any { it.backlight != null }
         return when {
+            v5 -> 5
             v4 -> 4
             v3 -> 3
             controls.any { it.type == ControlType.JOYSTICK } -> 2

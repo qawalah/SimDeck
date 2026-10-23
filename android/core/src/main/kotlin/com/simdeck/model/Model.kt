@@ -173,6 +173,8 @@ data class Control(
     /** GAUGE: scale limits for dial and bar gauges, in displayed units. */
     val min: Double? = null,
     val max: Double? = null,
+    /** Backlight of lamp windows and etched legends (amber, red, green, blue, white); null = the theme's own. */
+    val backlight: String? = null,
 )
 
 /**

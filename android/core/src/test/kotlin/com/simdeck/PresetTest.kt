@@ -81,6 +81,14 @@ class PresetTest {
         assertEquals(ControlType.SLIDER, a.control.type)
     }
 
+    @Test fun backlightNeedsSchema5AndRoundTrips() {
+        val c = Control("r", ControlType.LATCHING, "Winch", skin = "rocker-lamp", backlight = "blue")
+        val p = profile(c)
+        assertEquals(5, com.simdeck.profiles.ProfileJson.schemaFor(p))
+        assertEquals("blue", com.simdeck.profiles.ProfileJson.import(com.simdeck.profiles.ProfileJson.export(p)).pages[0].controls[0].backlight)
+        assertTrue(Presets.generic.any { it.control.skin == "inclinometer" } && Presets.generic.any { it.control.skin == "hat" })
+    }
+
     @Test fun profilePresetsListRepeatsOnce() {
         val c = Control("x", ControlType.MOMENTARY, "Horn", action = Action.Key(listOf("H")))
         val p = Profile("t", "T", pages = listOf(Page("p1", "One", controls = listOf(c)), Page("p2", "Two", controls = listOf(c.copy(id = "y")))))

@@ -160,6 +160,10 @@ private fun AppRoot(vm: AppViewModel) {
                 onBack = vm::back,
             )
             is Screen.Play -> play?.let { state ->
+                val soundsOn = vm.controlSounds.collectAsStateWithLifecycle().value
+                androidx.compose.runtime.CompositionLocalProvider(
+                    com.simdeck.ui.sim.LocalSimSound provides androidx.compose.runtime.remember(soundsOn) { if (soundsOn) { f: com.simdeck.ui.sim.Feel -> vm.simSounds.play(f) } else null },
+                ) {
                 PlayScreen(
                     state = state,
                     onControlValue = vm::onControlValue,
@@ -174,6 +178,7 @@ private fun AppRoot(vm: AppViewModel) {
                     lighting = vm.lighting.collectAsStateWithLifecycle().value,
                     onLighting = vm::setLighting,
                 )
+                }
             }
             is Screen.Editor -> editor?.let { state ->
                 androidx.compose.runtime.CompositionLocalProvider(
@@ -201,6 +206,7 @@ private fun AppRoot(vm: AppViewModel) {
                     actions = com.simdeck.ui.screens.EditorActions(
                         onCopy = vm::editorCopy, onDuplicate = vm::editorDuplicate, onCopyPage = vm::editorCopyPage,
                         onPaste = vm::editorPaste, onPlace = { vm.editorPlace(it) }, onPastePage = vm::editorPastePage,
+                        soundsOn = vm.controlSounds.collectAsStateWithLifecycle().value, onSounds = vm::setControlSounds,
                     ),
                     profiles = vm.profiles.collectAsStateWithLifecycle().value,
                     onBindHelper = vm::setBindHelper,

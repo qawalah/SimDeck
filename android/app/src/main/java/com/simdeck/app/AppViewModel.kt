@@ -307,6 +307,12 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     val lighting: StateFlow<com.simdeck.ui.sim.Lighting> = _lighting.asStateFlow()
     fun setLighting(l: com.simdeck.ui.sim.Lighting) { _lighting.value = l; settings.lighting = l.name }
 
+    private val _sounds = MutableStateFlow(settings.controlSounds)
+    val controlSounds: StateFlow<Boolean> = _sounds.asStateFlow()
+    /** Created on first use, so phones that never turn sounds on never load them. */
+    val simSounds: com.simdeck.ui.sim.SimSounds by lazy { com.simdeck.ui.sim.SimSounds(getApplication()) }
+    fun setControlSounds(on: Boolean) { settings.controlSounds = on; _sounds.value = on }
+
     fun setAutoSwitch(on: Boolean) { settings.autoSwitch = on }
     val autoSwitchEnabled: Boolean get() = settings.autoSwitch
 
