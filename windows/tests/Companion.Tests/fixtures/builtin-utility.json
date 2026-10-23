@@ -1,0 +1,2904 @@
+{
+    "id": "builtin-utility",
+    "name": "Utility vehicles",
+    "game": "custom",
+    "builtIn": true,
+    "pages": [
+        {
+            "id": "ut_loader",
+            "name": "Loader",
+            "columns": 8,
+            "rows": 4,
+            "controls": [
+                {
+                    "id": "ld_drive",
+                    "type": "joystick",
+                    "label": "Drive / steer",
+                    "icon": "arrow_up",
+                    "x": 0,
+                    "y": 0,
+                    "w": 2,
+                    "h": 2,
+                    "accent": "green",
+                    "action": {
+                        "type": "vjoy_axis",
+                        "device": 1,
+                        "axis": "X",
+                        "range": "bipolar"
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "vjoy_axis",
+                        "device": 1,
+                        "axis": "Y",
+                        "range": "bipolar"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "ld_throttle",
+                    "type": "slider",
+                    "label": "Throttle",
+                    "icon": "speed",
+                    "x": 0,
+                    "y": 2,
+                    "w": 1,
+                    "h": 2,
+                    "accent": "green",
+                    "action": {
+                        "type": "vjoy_axis",
+                        "device": 1,
+                        "axis": "SL0",
+                        "range": "unipolar"
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "ld_gear_up",
+                    "type": "momentary",
+                    "label": "Gear up",
+                    "icon": "gear_up",
+                    "x": 1,
+                    "y": 2,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "neutral",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 8
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "ld_gear_down",
+                    "type": "momentary",
+                    "label": "Gear down",
+                    "icon": "gear_down",
+                    "x": 1,
+                    "y": 3,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "neutral",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 7
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "ld_start",
+                    "type": "momentary",
+                    "label": "Start",
+                    "icon": "starter",
+                    "x": 2,
+                    "y": 0,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "red",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 1
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "ld_horn",
+                    "type": "momentary",
+                    "label": "Horn",
+                    "icon": "horn",
+                    "x": 3,
+                    "y": 0,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "neutral",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 2
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "ld_beacon",
+                    "type": "latching",
+                    "label": "Beacon",
+                    "icon": "beacon",
+                    "x": 4,
+                    "y": 0,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "amber",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 3
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "ld_lights",
+                    "type": "latching",
+                    "label": "Lights",
+                    "icon": "low_beam",
+                    "x": 5,
+                    "y": 0,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "green",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 4
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "ld_pbrake",
+                    "type": "latching",
+                    "label": "Park brake",
+                    "icon": "parking_brake",
+                    "x": 2,
+                    "y": 1,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "red",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 6
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "ld_diff",
+                    "type": "latching",
+                    "label": "Diff lock",
+                    "icon": "diff_lock",
+                    "x": 3,
+                    "y": 1,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "amber",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 32
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "ld_float",
+                    "type": "latching",
+                    "label": "Float",
+                    "icon": "float_mode",
+                    "x": 4,
+                    "y": 1,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "cyan",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 9
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "ld_coupler",
+                    "type": "latching",
+                    "label": "Coupler",
+                    "icon": "quick_coupler",
+                    "x": 5,
+                    "y": 1,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "amber",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 19
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "ld_return",
+                    "type": "momentary",
+                    "label": "Return to dig",
+                    "icon": "bucket",
+                    "x": 2,
+                    "y": 2,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "cyan",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 17
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "ld_cam",
+                    "type": "momentary",
+                    "label": "Camera",
+                    "icon": "camera_cycle",
+                    "x": 3,
+                    "y": 2,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "neutral",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 11
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "ld_rear_cam",
+                    "type": "momentary",
+                    "label": "Rear view",
+                    "icon": "look_back",
+                    "x": 4,
+                    "y": 2,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "neutral",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 12
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "ld_work",
+                    "type": "latching",
+                    "label": "Work lights",
+                    "icon": "work_light",
+                    "x": 5,
+                    "y": 2,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "amber",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 5
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "ld_direction",
+                    "type": "switch",
+                    "label": "Direction",
+                    "icon": "direction",
+                    "x": 2,
+                    "y": 3,
+                    "w": 3,
+                    "h": 1,
+                    "accent": "cyan",
+                    "action": {
+                        "type": "none"
+                    },
+                    "positions": [
+                        {
+                            "label": "F",
+                            "action": {
+                                "type": "vjoy_button",
+                                "device": 1,
+                                "button": 13
+                            }
+                        },
+                        {
+                            "label": "N",
+                            "action": {
+                                "type": "vjoy_button",
+                                "device": 1,
+                                "button": 14
+                            }
+                        },
+                        {
+                            "label": "R",
+                            "action": {
+                                "type": "vjoy_button",
+                                "device": 1,
+                                "button": 15
+                            }
+                        }
+                    ],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "ld_kickdown",
+                    "type": "momentary",
+                    "label": "Kickdown",
+                    "icon": "gear_down",
+                    "x": 5,
+                    "y": 3,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "neutral",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 18
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "ld_bucket",
+                    "type": "joystick",
+                    "label": "Boom / bucket",
+                    "icon": "bucket",
+                    "x": 6,
+                    "y": 0,
+                    "w": 2,
+                    "h": 2,
+                    "accent": "amber",
+                    "action": {
+                        "type": "vjoy_axis",
+                        "device": 1,
+                        "axis": "RY",
+                        "range": "bipolar"
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "vjoy_axis",
+                        "device": 1,
+                        "axis": "RX",
+                        "range": "bipolar"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [
+                        "CURL",
+                        "DUMP",
+                        "RAISE",
+                        "LOWER"
+                    ],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "ld_aux",
+                    "type": "joystick",
+                    "label": "Attachment",
+                    "icon": "quick_coupler",
+                    "x": 6,
+                    "y": 2,
+                    "w": 2,
+                    "h": 2,
+                    "accent": "cyan",
+                    "action": {
+                        "type": "vjoy_axis",
+                        "device": 1,
+                        "axis": "RZ",
+                        "range": "bipolar"
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "vjoy_axis",
+                        "device": 1,
+                        "axis": "SL1",
+                        "range": "bipolar"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                }
+            ],
+            "panels": [
+                {
+                    "title": "LEFT CONSOLE",
+                    "x": 0,
+                    "y": 0,
+                    "w": 2,
+                    "h": 4
+                },
+                {
+                    "title": "DASH",
+                    "x": 2,
+                    "y": 0,
+                    "w": 4,
+                    "h": 4
+                },
+                {
+                    "title": "RIGHT CONSOLE",
+                    "x": 6,
+                    "y": 0,
+                    "w": 2,
+                    "h": 4
+                }
+            ]
+        },
+        {
+            "id": "ut_excavator",
+            "name": "Excavator",
+            "columns": 8,
+            "rows": 4,
+            "controls": [
+                {
+                    "id": "ex_left",
+                    "type": "slider",
+                    "label": "Left track",
+                    "icon": "tracks",
+                    "x": 0,
+                    "y": 0,
+                    "w": 1,
+                    "h": 4,
+                    "accent": "green",
+                    "action": {
+                        "type": "vjoy_axis",
+                        "device": 1,
+                        "axis": "Y",
+                        "range": "bipolar"
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": true,
+                    "range": "bipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "ex_right",
+                    "type": "slider",
+                    "label": "Right track",
+                    "icon": "tracks",
+                    "x": 1,
+                    "y": 0,
+                    "w": 1,
+                    "h": 4,
+                    "accent": "green",
+                    "action": {
+                        "type": "vjoy_axis",
+                        "device": 1,
+                        "axis": "Z",
+                        "range": "bipolar"
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": true,
+                    "range": "bipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "ex_left_stick",
+                    "type": "joystick",
+                    "label": "Swing / stick",
+                    "icon": "swing",
+                    "x": 2,
+                    "y": 0,
+                    "w": 2,
+                    "h": 2,
+                    "accent": "amber",
+                    "action": {
+                        "type": "vjoy_axis",
+                        "device": 1,
+                        "axis": "X",
+                        "range": "bipolar"
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "vjoy_axis",
+                        "device": 1,
+                        "axis": "RY",
+                        "range": "bipolar"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [
+                        "SWING L",
+                        "SWING R",
+                        "STICK IN",
+                        "STICK OUT"
+                    ],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "ex_start",
+                    "type": "momentary",
+                    "label": "Start",
+                    "icon": "starter",
+                    "x": 4,
+                    "y": 0,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "red",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 1
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "ex_horn",
+                    "type": "momentary",
+                    "label": "Horn",
+                    "icon": "horn",
+                    "x": 5,
+                    "y": 0,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "neutral",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 2
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "ex_beacon",
+                    "type": "latching",
+                    "label": "Beacon",
+                    "icon": "beacon",
+                    "x": 4,
+                    "y": 1,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "amber",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 3
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "ex_lights",
+                    "type": "latching",
+                    "label": "Lights",
+                    "icon": "low_beam",
+                    "x": 5,
+                    "y": 1,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "green",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 4
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "ex_right_stick",
+                    "type": "joystick",
+                    "label": "Boom / bucket",
+                    "icon": "boom",
+                    "x": 6,
+                    "y": 0,
+                    "w": 2,
+                    "h": 2,
+                    "accent": "amber",
+                    "action": {
+                        "type": "vjoy_axis",
+                        "device": 1,
+                        "axis": "SL1",
+                        "range": "bipolar"
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "vjoy_axis",
+                        "device": 1,
+                        "axis": "RX",
+                        "range": "bipolar"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [
+                        "CURL",
+                        "DUMP",
+                        "BOOM UP",
+                        "BOOM DOWN"
+                    ],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "ex_work",
+                    "type": "latching",
+                    "label": "Work lights",
+                    "icon": "work_light",
+                    "x": 2,
+                    "y": 2,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "amber",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 5
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "ex_hammer",
+                    "type": "momentary",
+                    "label": "Hammer",
+                    "icon": "bucket",
+                    "x": 3,
+                    "y": 2,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "red",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 20
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "ex_coupler",
+                    "type": "latching",
+                    "label": "Coupler",
+                    "icon": "quick_coupler",
+                    "x": 4,
+                    "y": 2,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "amber",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 19
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "ex_cam",
+                    "type": "momentary",
+                    "label": "Camera",
+                    "icon": "camera_cycle",
+                    "x": 5,
+                    "y": 2,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "neutral",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 11
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "ex_aux",
+                    "type": "slider",
+                    "label": "Aux flow",
+                    "icon": "stick",
+                    "x": 2,
+                    "y": 3,
+                    "w": 2,
+                    "h": 1,
+                    "accent": "cyan",
+                    "action": {
+                        "type": "vjoy_axis",
+                        "device": 1,
+                        "axis": "RZ",
+                        "range": "bipolar"
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": true,
+                    "range": "bipolar",
+                    "vertical": false,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "ex_hispeed",
+                    "type": "latching",
+                    "label": "Travel speed",
+                    "icon": "tracks",
+                    "x": 4,
+                    "y": 3,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "green",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 24
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "ex_rear_cam",
+                    "type": "momentary",
+                    "label": "Rear view",
+                    "icon": "look_back",
+                    "x": 5,
+                    "y": 3,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "neutral",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 12
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "ex_rpm",
+                    "type": "rotary",
+                    "label": "Engine speed",
+                    "icon": "speed",
+                    "x": 6,
+                    "y": 2,
+                    "w": 2,
+                    "h": 2,
+                    "accent": "cyan",
+                    "action": {
+                        "type": "none"
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 25
+                    },
+                    "ccw": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 26
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                }
+            ],
+            "panels": [
+                {
+                    "title": "LEFT CONSOLE",
+                    "x": 0,
+                    "y": 0,
+                    "w": 4,
+                    "h": 4
+                },
+                {
+                    "title": "DASH",
+                    "x": 4,
+                    "y": 0,
+                    "w": 2,
+                    "h": 4
+                },
+                {
+                    "title": "RIGHT CONSOLE",
+                    "x": 6,
+                    "y": 0,
+                    "w": 2,
+                    "h": 4
+                }
+            ]
+        },
+        {
+            "id": "ut_crane",
+            "name": "Crane",
+            "columns": 8,
+            "rows": 4,
+            "controls": [
+                {
+                    "id": "cr_left_stick",
+                    "type": "joystick",
+                    "label": "Slew / hoist",
+                    "icon": "hook",
+                    "x": 0,
+                    "y": 0,
+                    "w": 2,
+                    "h": 2,
+                    "accent": "amber",
+                    "action": {
+                        "type": "vjoy_axis",
+                        "device": 1,
+                        "axis": "X",
+                        "range": "bipolar"
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "vjoy_axis",
+                        "device": 1,
+                        "axis": "SL1",
+                        "range": "bipolar"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [
+                        "SLEW L",
+                        "SLEW R",
+                        "HOIST UP",
+                        "LOWER"
+                    ],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "cr_drive",
+                    "type": "joystick",
+                    "label": "Drive / steer",
+                    "icon": "arrow_up",
+                    "x": 0,
+                    "y": 2,
+                    "w": 2,
+                    "h": 2,
+                    "accent": "green",
+                    "action": {
+                        "type": "vjoy_axis",
+                        "device": 1,
+                        "axis": "Z",
+                        "range": "bipolar"
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "vjoy_axis",
+                        "device": 1,
+                        "axis": "Y",
+                        "range": "bipolar"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "cr_out_out",
+                    "type": "momentary",
+                    "label": "Outriggers out",
+                    "icon": "outriggers",
+                    "x": 2,
+                    "y": 0,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "amber",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 21
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "cr_out_in",
+                    "type": "momentary",
+                    "label": "Outriggers in",
+                    "icon": "outriggers",
+                    "x": 3,
+                    "y": 0,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "neutral",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 22
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "cr_lock",
+                    "type": "latching",
+                    "label": "Load lock",
+                    "icon": "hook",
+                    "x": 4,
+                    "y": 0,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "red",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 23
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "cr_start",
+                    "type": "momentary",
+                    "label": "Start",
+                    "icon": "starter",
+                    "x": 5,
+                    "y": 0,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "red",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 1
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "cr_horn",
+                    "type": "momentary",
+                    "label": "Horn",
+                    "icon": "horn",
+                    "x": 2,
+                    "y": 1,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "neutral",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 2
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "cr_beacon",
+                    "type": "latching",
+                    "label": "Beacon",
+                    "icon": "beacon",
+                    "x": 3,
+                    "y": 1,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "amber",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 3
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "cr_lights",
+                    "type": "latching",
+                    "label": "Lights",
+                    "icon": "low_beam",
+                    "x": 4,
+                    "y": 1,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "green",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 4
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "cr_pbrake",
+                    "type": "latching",
+                    "label": "Park brake",
+                    "icon": "parking_brake",
+                    "x": 5,
+                    "y": 1,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "red",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 6
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "cr_gear_down",
+                    "type": "momentary",
+                    "label": "Gear down",
+                    "icon": "gear_down",
+                    "x": 2,
+                    "y": 2,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "neutral",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 7
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "cr_gear_up",
+                    "type": "momentary",
+                    "label": "Gear up",
+                    "icon": "gear_up",
+                    "x": 3,
+                    "y": 2,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "neutral",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 8
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "cr_cam",
+                    "type": "momentary",
+                    "label": "Camera",
+                    "icon": "camera_cycle",
+                    "x": 4,
+                    "y": 2,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "neutral",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 11
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "cr_hook_cam",
+                    "type": "momentary",
+                    "label": "Hook view",
+                    "icon": "camera",
+                    "x": 5,
+                    "y": 2,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "neutral",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 10
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "cr_rotate",
+                    "type": "slider",
+                    "label": "Hook rotate",
+                    "icon": "hook",
+                    "x": 2,
+                    "y": 3,
+                    "w": 4,
+                    "h": 1,
+                    "accent": "neutral",
+                    "action": {
+                        "type": "vjoy_axis",
+                        "device": 1,
+                        "axis": "RZ",
+                        "range": "bipolar"
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": true,
+                    "range": "bipolar",
+                    "vertical": false,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "cr_right_stick",
+                    "type": "joystick",
+                    "label": "Boom / extend",
+                    "icon": "boom",
+                    "x": 6,
+                    "y": 0,
+                    "w": 2,
+                    "h": 2,
+                    "accent": "amber",
+                    "action": {
+                        "type": "vjoy_axis",
+                        "device": 1,
+                        "axis": "RY",
+                        "range": "bipolar"
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "vjoy_axis",
+                        "device": 1,
+                        "axis": "RX",
+                        "range": "bipolar"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [
+                        "RETRACT",
+                        "EXTEND",
+                        "BOOM UP",
+                        "BOOM DOWN"
+                    ],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "cr_throttle",
+                    "type": "slider",
+                    "label": "Throttle",
+                    "icon": "speed",
+                    "x": 6,
+                    "y": 2,
+                    "w": 1,
+                    "h": 2,
+                    "accent": "green",
+                    "action": {
+                        "type": "vjoy_axis",
+                        "device": 1,
+                        "axis": "SL0",
+                        "range": "unipolar"
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "cr_work",
+                    "type": "latching",
+                    "label": "Work lights",
+                    "icon": "work_light",
+                    "x": 7,
+                    "y": 2,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "amber",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 5
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "cr_rear_cam",
+                    "type": "momentary",
+                    "label": "Rear view",
+                    "icon": "look_back",
+                    "x": 7,
+                    "y": 3,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "neutral",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 12
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                }
+            ],
+            "panels": [
+                {
+                    "title": "LEFT CONSOLE",
+                    "x": 0,
+                    "y": 0,
+                    "w": 2,
+                    "h": 4
+                },
+                {
+                    "title": "DASH",
+                    "x": 2,
+                    "y": 0,
+                    "w": 4,
+                    "h": 4
+                },
+                {
+                    "title": "RIGHT CONSOLE",
+                    "x": 6,
+                    "y": 0,
+                    "w": 2,
+                    "h": 4
+                }
+            ]
+        },
+        {
+            "id": "ut_plough",
+            "name": "Plough & tow",
+            "columns": 8,
+            "rows": 4,
+            "controls": [
+                {
+                    "id": "pl_plough",
+                    "type": "joystick",
+                    "label": "Plough lift / angle",
+                    "icon": "plough",
+                    "x": 0,
+                    "y": 0,
+                    "w": 2,
+                    "h": 2,
+                    "accent": "amber",
+                    "action": {
+                        "type": "vjoy_axis",
+                        "device": 1,
+                        "axis": "Z",
+                        "range": "bipolar"
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "vjoy_axis",
+                        "device": 1,
+                        "axis": "RX",
+                        "range": "bipolar"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "pl_rate",
+                    "type": "rotary",
+                    "label": "Spread rate",
+                    "icon": "spreader",
+                    "x": 0,
+                    "y": 2,
+                    "w": 2,
+                    "h": 2,
+                    "accent": "cyan",
+                    "action": {
+                        "type": "none"
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 25
+                    },
+                    "ccw": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 26
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "pl_beacon",
+                    "type": "latching",
+                    "label": "Beacon",
+                    "icon": "beacon",
+                    "x": 2,
+                    "y": 0,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "amber",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 3
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "pl_lights",
+                    "type": "latching",
+                    "label": "Lights",
+                    "icon": "low_beam",
+                    "x": 3,
+                    "y": 0,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "green",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 4
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "pl_work",
+                    "type": "latching",
+                    "label": "Work lights",
+                    "icon": "work_light",
+                    "x": 4,
+                    "y": 0,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "amber",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 5
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "pl_horn",
+                    "type": "momentary",
+                    "label": "Horn",
+                    "icon": "horn",
+                    "x": 5,
+                    "y": 0,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "neutral",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 2
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "pl_spreader",
+                    "type": "latching",
+                    "label": "Spreader",
+                    "icon": "spreader",
+                    "x": 2,
+                    "y": 1,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "cyan",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 24
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "pl_float",
+                    "type": "latching",
+                    "label": "Plough float",
+                    "icon": "float_mode",
+                    "x": 3,
+                    "y": 1,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "cyan",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 31
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "pl_wheel_up",
+                    "type": "momentary",
+                    "label": "Wheel lift up",
+                    "icon": "tow",
+                    "x": 4,
+                    "y": 1,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "amber",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 27
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "pl_wheel_down",
+                    "type": "momentary",
+                    "label": "Wheel lift down",
+                    "icon": "tow",
+                    "x": 5,
+                    "y": 1,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "neutral",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 28
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "pl_winch_in",
+                    "type": "momentary",
+                    "label": "Winch in",
+                    "icon": "winch",
+                    "x": 2,
+                    "y": 2,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "amber",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 29
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "pl_winch_out",
+                    "type": "momentary",
+                    "label": "Winch out",
+                    "icon": "winch",
+                    "x": 3,
+                    "y": 2,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "neutral",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 30
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "pl_pbrake",
+                    "type": "latching",
+                    "label": "Park brake",
+                    "icon": "parking_brake",
+                    "x": 4,
+                    "y": 2,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "red",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 6
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "pl_cam",
+                    "type": "momentary",
+                    "label": "Camera",
+                    "icon": "camera_cycle",
+                    "x": 5,
+                    "y": 2,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "neutral",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 11
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "pl_rear_cam",
+                    "type": "momentary",
+                    "label": "Rear view",
+                    "icon": "look_back",
+                    "x": 2,
+                    "y": 3,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "neutral",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 12
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "pl_tow",
+                    "type": "joystick",
+                    "label": "Tow boom / extend",
+                    "icon": "tow",
+                    "x": 6,
+                    "y": 0,
+                    "w": 2,
+                    "h": 2,
+                    "accent": "amber",
+                    "action": {
+                        "type": "vjoy_axis",
+                        "device": 1,
+                        "axis": "RY",
+                        "range": "bipolar"
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "vjoy_axis",
+                        "device": 1,
+                        "axis": "SL1",
+                        "range": "bipolar"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "pl_wing",
+                    "type": "joystick",
+                    "label": "Wing plough",
+                    "icon": "plough",
+                    "x": 6,
+                    "y": 2,
+                    "w": 2,
+                    "h": 2,
+                    "accent": "cyan",
+                    "action": {
+                        "type": "vjoy_axis",
+                        "device": 1,
+                        "axis": "RZ",
+                        "range": "bipolar"
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "vjoy_axis",
+                        "device": 1,
+                        "axis": "X",
+                        "range": "bipolar"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                }
+            ],
+            "panels": [
+                {
+                    "title": "LEFT CONSOLE",
+                    "x": 0,
+                    "y": 0,
+                    "w": 2,
+                    "h": 4
+                },
+                {
+                    "title": "DASH",
+                    "x": 2,
+                    "y": 0,
+                    "w": 4,
+                    "h": 4
+                },
+                {
+                    "title": "RIGHT CONSOLE",
+                    "x": 6,
+                    "y": 0,
+                    "w": 2,
+                    "h": 4
+                }
+            ]
+        }
+    ],
+    "output": "auto",
+    "description": "Wheel loader, excavator (ISO joysticks), mobile crane, snow plough and tow truck, a page each. Bind once in the game's controls menu (Bind helper on, so each stick axis is captured on its own). With vJoy, set device 1 to 32 buttons and all 8 axes in Configure vJoy. In BeamNG, use the BeamNG profile's Vehicle page instead: no binding needed.",
+    "schema": 4,
+    "processNames": [],
+    "theme": "heavy",
+    "themeFollowsVehicle": false
+}

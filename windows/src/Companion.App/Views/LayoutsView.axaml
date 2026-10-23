@@ -1,0 +1,204 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:SimDeck.Companion.App.ViewModels"
+             xmlns:c="using:SimDeck.Companion.App.Controls"
+             x:Class="SimDeck.Companion.App.Views.LayoutsView"
+             x:DataType="vm:LayoutsViewModel">
+  <UserControl.Styles>
+    <Style Selector="Button.tool">
+      <Setter Property="Padding" Value="12,4" />
+      <Setter Property="MinHeight" Value="34" />
+      <Setter Property="FontSize" Value="13" />
+    </Style>
+    <Style Selector="TextBox.field, ComboBox.field, NumericUpDown.field">
+      <Setter Property="MinHeight" Value="34" />
+      <Setter Property="FontSize" Value="13" />
+    </Style>
+    <Style Selector="Button.tab">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderBrush" Value="{x:Null}" />
+      <Setter Property="Foreground" Value="{StaticResource InkMuted}" />
+      <Setter Property="Padding" Value="14,4" />
+      <Setter Property="MinHeight" Value="32" />
+      <Setter Property="FontSize" Value="14" />
+    </Style>
+    <Style Selector="Button.tab.on">
+      <Setter Property="Background" Value="{StaticResource Cap}" />
+      <Setter Property="BorderBrush" Value="{StaticResource Electric}" />
+      <Setter Property="Foreground" Value="{StaticResource Ink}" />
+    </Style>
+    <Style Selector="TextBlock.status.bad">
+      <Setter Property="Foreground" Value="{StaticResource Amber}" />
+    </Style>
+  </UserControl.Styles>
+
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+    <StackPanel Margin="32,26,32,32" Spacing="16">
+
+      <!-- Title and phone -->
+      <Grid ColumnDefinitions="*,Auto">
+        <StackPanel Spacing="2">
+          <TextBlock Text="Layouts" Classes="h1" />
+          <TextBlock Text="Edit a phone's pages here with a mouse and a big screen. Save sends the profile back to the phone." Classes="muted wrap" />
+        </StackPanel>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" IsVisible="{Binding HasPhone}">
+          <TextBlock Text="PHONE" Classes="label" VerticalAlignment="Center" />
+          <ComboBox ItemsSource="{Binding PhoneChoices}" SelectedItem="{Binding SelectedPhone}" MinWidth="170" />
+        </StackPanel>
+      </Grid>
+
+      <c:Plate Classes="panel" IsVisible="{Binding NoPhone}" Padding="28,24">
+        <Grid ColumnDefinitions="Auto,*">
+          <c:RigIcon Kind="layout" Size="34" Foreground="{StaticResource InkFaint}" VerticalAlignment="Center" />
+          <StackPanel Grid.Column="1" Margin="18,0" VerticalAlignment="Center" Spacing="4">
+            <TextBlock Text="No phone connected" Classes="h3" />
+            <TextBlock Text="Connect the phone app over Wi-Fi (1.3 or later). Its profiles appear here, ready to edit." Classes="muted wrap" />
+          </StackPanel>
+        </Grid>
+      </c:Plate>
+
+      <!-- Profile bar -->
+      <Grid ColumnDefinitions="Auto,Auto,*,Auto" RowDefinitions="Auto,Auto" IsVisible="{Binding HasPhone}">
+        <ComboBox ItemsSource="{Binding Profiles}" SelectedItem="{Binding SelectedProfile}" MinWidth="260" PlaceholderText="Pick a profile to edit">
+          <ComboBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:ProfileChoice">
+              <StackPanel Orientation="Horizontal" Spacing="10">
+                <TextBlock Text="{Binding Name}" FontFamily="{StaticResource CondSemi}" FontSize="15" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding Detail}" Classes="small faint" VerticalAlignment="Center" />
+              </StackPanel>
+            </DataTemplate>
+          </ComboBox.ItemTemplate>
+        </ComboBox>
+        <Button Grid.Column="1" Classes="quiet" Margin="6,0,0,0" Command="{Binding RefreshCommand}" ToolTip.Tip="Ask the phone for its profiles again">
+          <c:RigIcon Kind="refresh" Size="18" Foreground="{StaticResource InkMuted}" />
+        </Button>
+        <TextBlock Grid.Row="1" Grid.ColumnSpan="4" Text="{Binding Status}" Classes="small muted wrap status" Classes.bad="{Binding StatusBad}"
+                   Margin="2,8,0,0" IsVisible="{Binding Status, Converter={x:Static c:Converters.NotEmpty}}" />
+        <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6" IsVisible="{Binding HasDoc}">
+          <Button Classes="quiet tool" Content="UNDO" Command="{Binding UndoCommand}" IsEnabled="{Binding CanUndo}" ToolTip.Tip="Ctrl+Z" />
+          <Button Classes="quiet tool" Content="REDO" Command="{Binding RedoCommand}" IsEnabled="{Binding CanRedo}" ToolTip.Tip="Ctrl+Y" />
+          <Button Classes="tool" Content="REVERT" Command="{Binding RevertCommand}" IsEnabled="{Binding Dirty}" ToolTip.Tip="Drop changes and load the phone's copy again" />
+          <Button Classes="primary" Content="SAVE TO PHONE" Command="{Binding SaveCommand}" IsEnabled="{Binding Dirty}" />
+        </StackPanel>
+      </Grid>
+
+      <!-- Editor -->
+      <Grid ColumnDefinitions="*,16,290" IsVisible="{Binding HasDoc}">
+        <StackPanel Spacing="10">
+          <!-- Control toolbar -->
+          <WrapPanel Orientation="Horizontal">
+            <ComboBox Classes="field" ItemsSource="{Binding AddTypeChoices}" SelectedItem="{Binding AddType}" MinWidth="130" Margin="0,0,6,6" />
+            <Button Classes="tool" Content="ADD" Command="{Binding AddCommand}" Margin="0,0,14,6" ToolTip.Tip="Adds one in the first free cells" />
+            <Button Classes="quiet tool" Content="COPY" Command="{Binding CopyCommand}" IsEnabled="{Binding HasSelection}" Margin="0,0,4,6" ToolTip.Tip="Ctrl+C" />
+            <Button Classes="quiet tool" Content="PASTE" Command="{Binding PasteCommand}" IsEnabled="{Binding HasClip}" Margin="0,0,4,6" ToolTip.Tip="Ctrl+V, into this page of any profile" />
+            <Button Classes="quiet tool" Content="DUPLICATE" Command="{Binding DuplicateCommand}" IsEnabled="{Binding HasSelection}" Margin="0,0,4,6" ToolTip.Tip="Ctrl+D" />
+            <Button Classes="quiet tool danger" Content="DELETE" Command="{Binding DeleteCommand}" IsEnabled="{Binding HasSelection}" Margin="0,0,4,6" ToolTip.Tip="Del" />
+            <TextBlock Text="{Binding ClipText}" Classes="small faint" VerticalAlignment="Center" Margin="8,0,0,6" />
+          </WrapPanel>
+
+          <Border BorderBrush="{StaticResource LineStrong}" BorderThickness="1" CornerRadius="14" ClipToBounds="True" Padding="10"
+                  Background="#05070B">
+            <c:LayoutCanvas x:Name="Canvas" Doc="{Binding Doc}" PageIndex="{Binding PageIndex}" Version="{Binding Version}"
+                            Selected="{Binding Selected}" />
+          </Border>
+
+          <!-- Pages -->
+          <StackPanel Spacing="2">
+            <ItemsControl ItemsSource="{Binding PageTabs}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate><WrapPanel Orientation="Horizontal" /></ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:PageTab">
+                  <Button Classes="tab" Classes.on="{Binding Current}" Content="{Binding Name}" Margin="0,0,4,4"
+                          Command="{Binding $parent[UserControl].((vm:LayoutsViewModel)DataContext).ShowPageCommand}" CommandParameter="{Binding Index}" />
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <StackPanel Orientation="Horizontal" Spacing="4">
+              <Button Classes="quiet tool" Content="NEW PAGE" Command="{Binding AddPageCommand}" />
+              <Button Classes="quiet tool" Content="COPY PAGE" Command="{Binding CopyPageCommand}" />
+              <Button Classes="quiet tool" Content="PASTE PAGE" Command="{Binding PastePageCommand}" IsEnabled="{Binding HasPageClip}" />
+              <Button Classes="quiet tool danger" Content="DELETE PAGE" Command="{Binding DeletePageCommand}" />
+            </StackPanel>
+          </StackPanel>
+
+          <c:Plate Classes="panel" Padding="18,14">
+            <Grid ColumnDefinitions="2*,12,Auto,12,Auto,12,3*" RowDefinitions="Auto,Auto">
+              <TextBlock Text="PAGE NAME" Classes="label" />
+              <TextBox Grid.Row="1" Classes="field" Text="{Binding PageName, UpdateSourceTrigger=LostFocus}" Margin="0,6,0,0" />
+              <TextBlock Grid.Column="2" Text="COLUMNS" Classes="label" />
+              <NumericUpDown Grid.Column="2" Grid.Row="1" Classes="field" Value="{Binding PageColumns}" Minimum="4" Maximum="12" Increment="1"
+                             FormatString="0" Width="100" Margin="0,6,0,0" />
+              <TextBlock Grid.Column="4" Text="ROWS" Classes="label" />
+              <NumericUpDown Grid.Column="4" Grid.Row="1" Classes="field" Value="{Binding PageRows}" Minimum="2" Maximum="8" Increment="1"
+                             FormatString="0" Width="100" Margin="0,6,0,0" />
+              <TextBlock Grid.Column="6" Text="PAGE THEME" Classes="label" />
+              <ComboBox Grid.Column="6" Grid.Row="1" Classes="field" ItemsSource="{Binding PageThemeChoices}" SelectedItem="{Binding PageTheme}"
+                        HorizontalAlignment="Stretch" Margin="0,6,0,0" />
+            </Grid>
+          </c:Plate>
+          <TextBlock Classes="small faint wrap"
+                     Text="Click to select, Ctrl+click to add to the selection, drag to move, drag the pink corner to resize. Arrow keys nudge. Copied controls and pages paste into any profile, on this phone or another." />
+        </StackPanel>
+
+        <!-- Inspector -->
+        <StackPanel Grid.Column="2" Spacing="14">
+          <c:Plate Classes="panel" Padding="18,14">
+            <StackPanel Spacing="6">
+              <TextBlock Text="PROFILE" Classes="label" />
+              <TextBox Classes="field" Text="{Binding ProfileName, UpdateSourceTrigger=LostFocus}" />
+              <TextBlock Text="THEME" Classes="label" Margin="0,6,0,0" />
+              <ComboBox Classes="field" ItemsSource="{Binding ThemeChoices}" SelectedItem="{Binding ProfileTheme}" HorizontalAlignment="Stretch" />
+              <CheckBox Content="Follow the vehicle (BeamNG)" IsChecked="{Binding ThemeFollowsVehicle}" FontSize="13" />
+            </StackPanel>
+          </c:Plate>
+
+          <c:Plate Classes="panel" Padding="18,14">
+            <StackPanel Spacing="6">
+              <TextBlock Text="CONTROL" Classes="label" />
+              <TextBlock Text="Select a control on the page to edit it." Classes="small muted wrap" IsVisible="{Binding !HasSelection}" />
+              <TextBlock Text="{Binding SelectionText}" Classes="small muted" IsVisible="{Binding MultiSelection}" />
+              <StackPanel Spacing="6" IsVisible="{Binding SingleSelection}">
+                <TextBlock Text="{Binding SelType}" Classes="h3" />
+                <TextBlock Text="LABEL" Classes="label" Margin="0,4,0,0" />
+                <TextBox Classes="field" Text="{Binding SelLabel, UpdateSourceTrigger=LostFocus}" />
+                <Grid ColumnDefinitions="*,8,*">
+                  <StackPanel Spacing="6">
+                    <TextBlock Text="ICON" Classes="label" />
+                    <TextBox Classes="field" Text="{Binding SelIcon, UpdateSourceTrigger=LostFocus}" />
+                  </StackPanel>
+                  <StackPanel Grid.Column="2" Spacing="6">
+                    <TextBlock Text="LIGHTS" Classes="label" />
+                    <ComboBox Classes="field" ItemsSource="{Binding Accents}" SelectedItem="{Binding SelAccent}" HorizontalAlignment="Stretch" />
+                  </StackPanel>
+                </Grid>
+                <TextBlock Text="STYLE" Classes="label" />
+                <ComboBox Classes="field" ItemsSource="{Binding SkinChoices}" SelectedItem="{Binding SelSkin}" HorizontalAlignment="Stretch" />
+                <Grid ColumnDefinitions="*,8,*">
+                  <StackPanel Spacing="6">
+                    <TextBlock Text="WIDTH" Classes="label" />
+                    <NumericUpDown Classes="field" Value="{Binding SelW}" Minimum="1" Maximum="12" FormatString="0" />
+                  </StackPanel>
+                  <StackPanel Grid.Column="2" Spacing="6">
+                    <TextBlock Text="HEIGHT" Classes="label" />
+                    <NumericUpDown Classes="field" Value="{Binding SelH}" Minimum="1" Maximum="8" FormatString="0" />
+                  </StackPanel>
+                </Grid>
+                <TextBlock Text="LIGHTS FROM GAME STATE" Classes="label" />
+                <TextBox Classes="field" Text="{Binding SelFeedback, UpdateSourceTrigger=LostFocus}" Watermark="e.g. lights, parkingbrake" />
+                <TextBlock Text="EVERYTHING (JSON)" Classes="label" Margin="0,6,0,0" />
+                <TextBox Text="{Binding SelJson}" AcceptsReturn="True" TextWrapping="NoWrap" FontFamily="Consolas, Menlo, monospace" FontSize="12"
+                         MinHeight="160" MaxHeight="300" />
+                <TextBlock Text="{Binding JsonError}" Classes="small wrap" Foreground="{StaticResource Red}"
+                           IsVisible="{Binding JsonError, Converter={x:Static c:Converters.NotEmpty}}" />
+                <Button Classes="tool" Content="APPLY JSON" Command="{Binding ApplyJsonCommand}" HorizontalAlignment="Left"
+                        ToolTip.Tip="The action, ranges, stations and every other field, in the profile file format (protocol/PROTOCOL.md)" />
+              </StackPanel>
+            </StackPanel>
+          </c:Plate>
+        </StackPanel>
+      </Grid>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

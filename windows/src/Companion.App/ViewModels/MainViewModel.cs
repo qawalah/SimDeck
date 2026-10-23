@@ -28,6 +28,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     (string Source, string Control)? _topAxisRow;
 
     public CompanionHost Host { get; }
+    /// <summary>The PC layout editor (1.3).</summary>
+    public LayoutsViewModel Layouts { get; }
 
     /// <summary>Raised on the UI thread for the signal path: (phone id, output key).</summary>
     public event Action<string, string>? InputFired;
@@ -97,9 +99,11 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         Host = host;
         _platform = platform;
         ReduceMotion = platform.ReduceMotion;
+        Layouts = new LayoutsViewModel(host);
 
         Nav.Add(new NavItem { Key = "status", Title = "Status", Icon = "status" });
         Nav.Add(new NavItem { Key = "phones", Title = "Phones", Icon = "phone" });
+        Nav.Add(new NavItem { Key = "layouts", Title = "Layouts", Icon = "layout" });
         Nav.Add(new NavItem { Key = "outputs", Title = "Outputs", Icon = "outputs" });
         Nav.Add(new NavItem { Key = "log", Title = "Log", Icon = "log" });
         Nav.Add(new NavItem { Key = "settings", Title = "Settings", Icon = "settings" });

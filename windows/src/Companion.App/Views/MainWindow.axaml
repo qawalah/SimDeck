@@ -89,6 +89,9 @@
     <Panel Grid.Column="1">
       <v:StatusView IsVisible="{Binding Page, Converter={x:Static c:Converters.Is}, ConverterParameter=status}" />
       <v:PhonesView IsVisible="{Binding Page, Converter={x:Static c:Converters.Is}, ConverterParameter=phones}" />
+      <Panel IsVisible="{Binding Page, Converter={x:Static c:Converters.Is}, ConverterParameter=layouts}">
+        <v:LayoutsView DataContext="{Binding Layouts}" />
+      </Panel>
       <v:OutputsView IsVisible="{Binding Page, Converter={x:Static c:Converters.Is}, ConverterParameter=outputs}" />
       <v:LogView IsVisible="{Binding Page, Converter={x:Static c:Converters.Is}, ConverterParameter=log}" />
       <v:SettingsView IsVisible="{Binding Page, Converter={x:Static c:Converters.Is}, ConverterParameter=settings}" />

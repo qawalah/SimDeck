@@ -12,6 +12,9 @@
     <PackageReference Include="Avalonia.Skia" Version="11.3.22" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="samples\*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\..\src\Companion.App\Companion.App.csproj" />
   </ItemGroup>
 </Project>

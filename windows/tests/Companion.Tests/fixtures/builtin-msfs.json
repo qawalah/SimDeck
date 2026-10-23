@@ -1,0 +1,1315 @@
+{
+    "id": "builtin-msfs",
+    "name": "Microsoft Flight Simulator",
+    "game": "msfs",
+    "builtIn": true,
+    "pages": [
+        {
+            "id": "msfs_cockpit",
+            "name": "Cockpit",
+            "columns": 8,
+            "rows": 4,
+            "controls": [
+                {
+                    "id": "msfs_gear",
+                    "type": "latching",
+                    "label": "Gear",
+                    "icon": "landing_gear",
+                    "x": 0,
+                    "y": 0,
+                    "w": 1,
+                    "h": 2,
+                    "accent": "green",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 1
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "skin": "gear-lever",
+                    "legends": [
+                        "UP",
+                        "DN"
+                    ],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "msfs_flaps",
+                    "type": "rocker",
+                    "label": "Flaps",
+                    "icon": "flaps",
+                    "x": 1,
+                    "y": 0,
+                    "w": 1,
+                    "h": 2,
+                    "accent": "cyan",
+                    "action": {
+                        "type": "none"
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 2
+                    },
+                    "ccw": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 3
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "msfs_spoilers",
+                    "type": "latching",
+                    "label": "Spoilers",
+                    "icon": "flaps",
+                    "x": 2,
+                    "y": 0,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "amber",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 4
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "msfs_pbrake",
+                    "type": "latching",
+                    "label": "Park brake",
+                    "icon": "parking_brake",
+                    "x": 3,
+                    "y": 0,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "red",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 5
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "msfs_battery",
+                    "type": "latching",
+                    "label": "Battery",
+                    "icon": "battery",
+                    "x": 4,
+                    "y": 0,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "cyan",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 6
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [
+                        "FAULT",
+                        "OFF"
+                    ],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "msfs_avionics",
+                    "type": "latching",
+                    "label": "Avionics",
+                    "icon": "power",
+                    "x": 5,
+                    "y": 0,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "green",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 7
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "msfs_fuelpump",
+                    "type": "latching",
+                    "label": "Fuel pump",
+                    "icon": "fuel",
+                    "x": 6,
+                    "y": 0,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "cyan",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 8
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [
+                        "LO PR",
+                        "ON"
+                    ],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "msfs_starter",
+                    "type": "momentary",
+                    "label": "Starter",
+                    "icon": "starter",
+                    "x": 7,
+                    "y": 0,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "red",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 9
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "msfs_nav",
+                    "type": "latching",
+                    "label": "Nav",
+                    "icon": "beacon_air",
+                    "x": 2,
+                    "y": 1,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "green",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 10
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "msfs_beacon",
+                    "type": "latching",
+                    "label": "Beacon",
+                    "icon": "beacon",
+                    "x": 3,
+                    "y": 1,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "red",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 11
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "msfs_strobe",
+                    "type": "latching",
+                    "label": "Strobe",
+                    "icon": "beacon_air",
+                    "x": 4,
+                    "y": 1,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "cyan",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 12
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "msfs_taxi",
+                    "type": "latching",
+                    "label": "Taxi",
+                    "icon": "low_beam",
+                    "x": 5,
+                    "y": 1,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "green",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 13
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "msfs_landing",
+                    "type": "latching",
+                    "label": "Landing",
+                    "icon": "high_beam",
+                    "x": 6,
+                    "y": 1,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "blue",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 14
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "msfs_trim",
+                    "type": "rocker",
+                    "label": "Trim",
+                    "icon": "swing",
+                    "x": 7,
+                    "y": 1,
+                    "w": 1,
+                    "h": 2,
+                    "accent": "cyan",
+                    "action": {
+                        "type": "none"
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 15
+                    },
+                    "ccw": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 16
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "msfs_ap",
+                    "type": "latching",
+                    "label": "AP master",
+                    "icon": "autopilot",
+                    "x": 0,
+                    "y": 2,
+                    "w": 2,
+                    "h": 1,
+                    "accent": "green",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 17
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [
+                        "",
+                        "ON"
+                    ],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "msfs_hdg",
+                    "type": "latching",
+                    "label": "HDG",
+                    "icon": "navigation",
+                    "x": 2,
+                    "y": 2,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "cyan",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 18
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "msfs_alt",
+                    "type": "latching",
+                    "label": "ALT",
+                    "icon": "arrow_up",
+                    "x": 3,
+                    "y": 2,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "cyan",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 19
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "msfs_navm",
+                    "type": "latching",
+                    "label": "NAV",
+                    "icon": "map",
+                    "x": 4,
+                    "y": 2,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "cyan",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 20
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "msfs_appr",
+                    "type": "latching",
+                    "label": "APPR",
+                    "icon": "plane",
+                    "x": 5,
+                    "y": 2,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "cyan",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 21
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "msfs_vs",
+                    "type": "latching",
+                    "label": "VS",
+                    "icon": "arrow_down",
+                    "x": 6,
+                    "y": 2,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "cyan",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 22
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "msfs_cam",
+                    "type": "momentary",
+                    "label": "Camera",
+                    "icon": "camera_cycle",
+                    "x": 0,
+                    "y": 3,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "neutral",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 23
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "msfs_cockpit_view",
+                    "type": "momentary",
+                    "label": "Cockpit",
+                    "icon": "visibility",
+                    "x": 1,
+                    "y": 3,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "neutral",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 24
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "msfs_ext",
+                    "type": "momentary",
+                    "label": "External",
+                    "icon": "plane",
+                    "x": 2,
+                    "y": 3,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "neutral",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 25
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "msfs_atc",
+                    "type": "momentary",
+                    "label": "ATC",
+                    "icon": "chat",
+                    "x": 3,
+                    "y": 3,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "neutral",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 26
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "msfs_pause",
+                    "type": "latching",
+                    "label": "Pause",
+                    "icon": "pause",
+                    "x": 4,
+                    "y": 3,
+                    "w": 1,
+                    "h": 1,
+                    "accent": "amber",
+                    "action": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 27
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                }
+            ],
+            "panels": [
+                {
+                    "title": "GEAR",
+                    "x": 0,
+                    "y": 0,
+                    "w": 1,
+                    "h": 2
+                },
+                {
+                    "title": "ENGINE & ELEC",
+                    "x": 2,
+                    "y": 0,
+                    "w": 6,
+                    "h": 1
+                },
+                {
+                    "title": "EXT LIGHTS",
+                    "x": 2,
+                    "y": 1,
+                    "w": 5,
+                    "h": 1
+                },
+                {
+                    "title": "AUTOPILOT",
+                    "x": 0,
+                    "y": 2,
+                    "w": 7,
+                    "h": 1
+                },
+                {
+                    "title": "VIEWS",
+                    "x": 0,
+                    "y": 3,
+                    "w": 5,
+                    "h": 1
+                }
+            ]
+        },
+        {
+            "id": "msfs_levers",
+            "name": "Levers",
+            "columns": 8,
+            "rows": 4,
+            "controls": [
+                {
+                    "id": "msfs_throttle",
+                    "type": "slider",
+                    "label": "Throttle",
+                    "icon": "speed",
+                    "x": 0,
+                    "y": 0,
+                    "w": 1,
+                    "h": 4,
+                    "accent": "green",
+                    "action": {
+                        "type": "vjoy_axis",
+                        "device": 1,
+                        "axis": "Z",
+                        "range": "unipolar"
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [
+                        {
+                            "at": 0.0,
+                            "label": "IDLE"
+                        },
+                        {
+                            "at": 0.62,
+                            "label": "CL"
+                        },
+                        {
+                            "at": 0.82,
+                            "label": "FLX"
+                        },
+                        {
+                            "at": 1.0,
+                            "label": "TOGA"
+                        }
+                    ],
+                    "bands": []
+                },
+                {
+                    "id": "msfs_prop",
+                    "type": "slider",
+                    "label": "Prop",
+                    "icon": "swing",
+                    "x": 1,
+                    "y": 0,
+                    "w": 1,
+                    "h": 4,
+                    "accent": "blue",
+                    "action": {
+                        "type": "vjoy_axis",
+                        "device": 1,
+                        "axis": "SL0",
+                        "range": "unipolar"
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "msfs_mixture",
+                    "type": "slider",
+                    "label": "Mixture",
+                    "icon": "fuel",
+                    "x": 2,
+                    "y": 0,
+                    "w": 1,
+                    "h": 4,
+                    "accent": "red",
+                    "action": {
+                        "type": "vjoy_axis",
+                        "device": 1,
+                        "axis": "SL1",
+                        "range": "unipolar"
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "msfs_flaps_ax",
+                    "type": "slider",
+                    "label": "Flaps",
+                    "icon": "flaps",
+                    "x": 3,
+                    "y": 0,
+                    "w": 1,
+                    "h": 4,
+                    "accent": "cyan",
+                    "action": {
+                        "type": "vjoy_axis",
+                        "device": 1,
+                        "axis": "RZ",
+                        "range": "unipolar"
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 4,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "msfs_yoke",
+                    "type": "joystick",
+                    "label": "Yoke",
+                    "icon": "plane",
+                    "x": 4,
+                    "y": 0,
+                    "w": 2,
+                    "h": 2,
+                    "accent": "amber",
+                    "action": {
+                        "type": "vjoy_axis",
+                        "device": 1,
+                        "axis": "X",
+                        "range": "bipolar"
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "vjoy_axis",
+                        "device": 1,
+                        "axis": "Y",
+                        "range": "bipolar"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "msfs_rudder",
+                    "type": "slider",
+                    "label": "Rudder",
+                    "icon": "swing",
+                    "x": 4,
+                    "y": 2,
+                    "w": 4,
+                    "h": 1,
+                    "accent": "cyan",
+                    "action": {
+                        "type": "vjoy_axis",
+                        "device": 1,
+                        "axis": "RX",
+                        "range": "bipolar"
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "none"
+                    },
+                    "ccw": {
+                        "type": "none"
+                    },
+                    "springReturn": true,
+                    "range": "bipolar",
+                    "vertical": false,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                },
+                {
+                    "id": "msfs_trim2",
+                    "type": "rocker",
+                    "label": "Trim",
+                    "icon": "swing",
+                    "x": 6,
+                    "y": 0,
+                    "w": 2,
+                    "h": 2,
+                    "accent": "cyan",
+                    "action": {
+                        "type": "none"
+                    },
+                    "positions": [],
+                    "cw": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 15
+                    },
+                    "ccw": {
+                        "type": "vjoy_button",
+                        "device": 1,
+                        "button": 16
+                    },
+                    "springReturn": false,
+                    "range": "unipolar",
+                    "vertical": true,
+                    "actionY": {
+                        "type": "none"
+                    },
+                    "guard": false,
+                    "detents": 0,
+                    "scale": 1.0,
+                    "decimals": 0,
+                    "legends": [],
+                    "ends": [],
+                    "stations": [],
+                    "bands": []
+                }
+            ],
+            "panels": [
+                {
+                    "title": "PEDESTAL",
+                    "x": 0,
+                    "y": 0,
+                    "w": 4,
+                    "h": 4
+                },
+                {
+                    "title": "FLIGHT CONTROLS",
+                    "x": 4,
+                    "y": 0,
+                    "w": 4,
+                    "h": 3
+                }
+            ]
+        }
+    ],
+    "output": "auto",
+    "description": "Gear (covered), flaps, lights, autopilot and engine switches as gamepad buttons 1-27; throttle, prop, mixture and flap levers on axes. Bind them once in Controls Options.",
+    "schema": 4,
+    "processNames": [
+        "FlightSimulator.exe",
+        "FlightSimulator2024.exe"
+    ],
+    "theme": "airliner",
+    "themeFollowsVehicle": false
+}

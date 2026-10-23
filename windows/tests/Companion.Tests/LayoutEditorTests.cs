@@ -83,6 +83,37 @@ public class LayoutEditorTests
         Assert.Equal("toggle-bat", LayoutCatalog.ResolveSkin("latching", "toggle-bat", "heavy", null, false, "X", null));
     }
 
+    static JsonObject Fixture(string name) =>
+        (JsonObject)JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "fixtures", name)))!;
+
+    [Fact]
+    public void Real_phone_profiles_round_trip_and_controls_copy_between_them()
+    {
+        // The fixtures are the phone's own export of two built-in profiles (android core ProfileJson.export).
+        var util = new LayoutDoc(Fixture("builtin-utility.json"), "k");
+        var msfs = new LayoutDoc(Fixture("builtin-msfs.json"), "k");
+        Assert.Equal("heavy", util.Theme);
+        Assert.Equal("airliner", msfs.Theme);
+        Assert.Equal(util.Profile.ToJsonString(), util.ForPhone().ToJsonString()); // nothing lost or reordered when nothing changed
+        foreach (var d in new[] { util, msfs })
+            for (int p = 0; p < d.PageCount; p++)
+                foreach (var c in d.Controls(p))
+                {
+                    Assert.InRange(LayoutDoc.Num(c, "x", -1) + LayoutDoc.Num(c, "w", 1), 1, d.Columns(p));
+                    Assert.InRange(LayoutDoc.Num(c, "y", -1) + LayoutDoc.Num(c, "h", 1), 1, d.Rows(p));
+                    Assert.Contains(LayoutCatalog.ResolveSkin((string)c["type"]!, (string?)c["skin"], d.PageTheme(p), (string?)c["range"], false, (string?)c["label"], (string?)c["icon"]),
+                        LayoutCatalog.SkinsByType[(string)c["type"]!]);
+                }
+        // A lever from the excavator onto a new page of the flight profile keeps its action and stations, with a fresh id.
+        var lever = util.Controls(1).First(c => (string?)c["type"] == "slider");
+        var page = msfs.AddPage();
+        var ids = msfs.Paste(page, util.Copy(1, new[] { (string)lever["id"]! }));
+        var pasted = msfs.Find(page, Assert.Single(ids))!;
+        Assert.NotEqual((string?)lever["id"], (string?)pasted["id"]);
+        Assert.Equal(lever["action"]!.ToJsonString(), pasted["action"]!.ToJsonString());
+        Assert.True((int)msfs.ForPhone()["schema"]! >= 4);
+    }
+
     static int FreeTcp() { var l = new TcpListener(IPAddress.Loopback, 0); l.Start(); int p = ((IPEndPoint)l.LocalEndpoint).Port; l.Stop(); return p; }
     static int FreeUdp() { using var u = new UdpClient(0); return ((IPEndPoint)u.Client.LocalEndPoint!).Port; }
 

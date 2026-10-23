@@ -222,6 +222,11 @@
   <Style Selector="Button.primary:pressed">
     <Setter Property="Background" Value="{StaticResource ElectricPressed}" />
   </Style>
+  <Style Selector="Button.primary:disabled">
+    <Setter Property="Background" Value="{StaticResource Panel}" />
+    <Setter Property="Foreground" Value="{StaticResource InkFaint}" />
+    <Setter Property="BorderBrush" Value="{StaticResource Line}" />
+  </Style>
   <Style Selector="Button.attention">
     <Setter Property="Background" Value="{StaticResource Amber}" />
     <Setter Property="Foreground" Value="{StaticResource OnAmber}" />

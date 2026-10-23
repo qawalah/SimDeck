@@ -69,6 +69,7 @@ Snap(win, "01-status-first-run");
 vm.GoCommand.Execute("phones"); Snap(win, "02-phones-empty");
 vm.GoCommand.Execute("outputs"); Snap(win, "03-outputs");
 vm.GoCommand.Execute("settings"); Snap(win, "04-settings");
+vm.GoCommand.Execute("layouts"); Snap(win, "14-layouts-no-phone");
 vm.GoCommand.Execute("status");
 
 // 1b. The phone connects over Bluetooth only (controls work, Wi-Fi not linked yet).
@@ -88,7 +89,41 @@ async Task Phone()
     await Send("""{"v":1,"type":"hello","deviceId":"pixel-8","deviceName":"Pixel 8","appVersion":"1.0.0","pin":"482913"}""");
     var buf = new byte[8192];
     await ws.ReceiveAsync(buf, CancellationToken.None);
-    _ = Task.Run(async () => { try { while (true) await ws.ReceiveAsync(buf, CancellationToken.None); } catch { } });
+    // The phone side of the 1.3 layout editor: list the sample profiles and send one when asked.
+    var samples = Directory.GetFiles(Path.Combine(AppContext.BaseDirectory, "samples"), "*.json")
+        .Select(f => (System.Text.Json.Nodes.JsonObject)System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(f))!).ToList();
+    _ = Task.Run(async () =>
+    {
+        var big = new byte[1 << 20];
+        try
+        {
+            while (true)
+            {
+                int n = 0; WebSocketReceiveResult r;
+                do { r = await ws.ReceiveAsync(new ArraySegment<byte>(big, n, big.Length - n), CancellationToken.None); n += r.Count; } while (!r.EndOfMessage);
+                if (System.Text.Json.Nodes.JsonNode.Parse(Encoding.UTF8.GetString(big, 0, n)) is not System.Text.Json.Nodes.JsonObject m) continue;
+                switch ((string?)m["type"])
+                {
+                    case "profiles.request":
+                        var list = new System.Text.Json.Nodes.JsonArray(samples.Select(p => (System.Text.Json.Nodes.JsonNode)new System.Text.Json.Nodes.JsonObject
+                        {
+                            ["id"] = (string?)p["id"], ["name"] = (string?)p["name"], ["game"] = (string?)p["game"], ["builtIn"] = true,
+                            ["pages"] = ((System.Text.Json.Nodes.JsonArray)p["pages"]!).Count,
+                        }).ToArray());
+                        await Send(new System.Text.Json.Nodes.JsonObject { ["v"] = 1, ["type"] = "profiles.list", ["list"] = list }.ToJsonString());
+                        break;
+                    case "profile.get":
+                        var want = samples.FirstOrDefault(p => (string?)p["id"] == (string?)m["id"]);
+                        if (want != null) await Send(new System.Text.Json.Nodes.JsonObject { ["v"] = 1, ["type"] = "profile.data", ["profile"] = want.DeepClone() }.ToJsonString());
+                        break;
+                    case "profile.put":
+                        await Send($$"""{"v":1,"type":"profile.saved","id":"{{(string?)m["profile"]?["id"]}}","ok":true,"message":"Saved on Pixel 8"}""");
+                        break;
+                }
+            }
+        }
+        catch { }
+    });
     await Send("""
     {"v":1,"type":"profile.sync","profileId":"BeamNG · Trail rig","game":"beamng","bindings":[
      {"id":"hazards","kind":"latching","action":{"type":"beamng","command":"hazard"}},
@@ -125,6 +160,29 @@ Snap(win, "06-status-live-settled");
 vm.GoCommand.Execute("phones"); Snap(win, "07-phones-live");
 vm.GoCommand.Execute("outputs"); Snap(win, "08-outputs-live");
 vm.GoCommand.Execute("log"); Snap(win, "09-log");
+
+// 1.3 layout editor: open the utility profile, select the excavator page and a lever, then the airliner cockpit.
+vm.GoCommand.Execute("layouts"); Pump(300);
+var lv = vm.Layouts;
+lv.SelectedProfile = lv.Profiles.FirstOrDefault(p => p.Id == "builtin-utility"); Pump(600);
+lv.PageIndex = 1; Pump(100);
+var lever = lv.Doc?.Controls(1).FirstOrDefault(x => (string?)x["type"] == "slider");
+if (lever != null) lv.Select(new[] { (string)lever["id"]! });
+Pump(200);
+Snap(win, "15-layouts-heavy");
+lv.CopyCommand.Execute(null);
+lv.AddPageCommand.Execute(null); Pump(100);
+lv.PasteCommand.Execute(null); lv.PasteCommand.Execute(null); Pump(200);
+Console.WriteLine($"after paste: dirty={lv.Dirty} undo={lv.CanUndo} page={lv.PageIndex} status={lv.Status}");
+Snap(win, "16-layouts-pasted");
+lv.SaveCommand.Execute(null); Pump(400);
+Console.WriteLine($"after save: dirty={lv.Dirty} status={lv.Status}");
+Snap(win, "17-layouts-saved");
+lv.SelectedProfile = lv.Profiles.FirstOrDefault(p => p.Id == "builtin-msfs"); Pump(300); // unsaved? no: just saved
+Pump(500);
+lv.Select(Array.Empty<string>());
+Snap(win, "18-layouts-airliner");
+Console.WriteLine($"layouts: doc={lv.Doc?.Name} pages={lv.Doc?.PageCount} status={lv.Status}");
 
 // Smallest supported window
 vm.GoCommand.Execute("status");
