@@ -1,11 +1,13 @@
 # SimDeck roadmap
 
-Planned for a future version. Nothing here is built yet.
+Planned for a future version.
 
-- **Circular buttons and gauges.** A round shape option for buttons and lamps, and round dial gauges (needle and arc)
-  next to the current number readouts.
-- **Equipment themes.** Play-surface themes that look and feel like the equipment: airliner, light aircraft, heavy
-  equipment, agriculture, truck, road car, overland, motorsport. Not just colours: levers, rockers, lit pushbuttons,
-  numbered rotaries, steam gauges, panel groups and night lighting. The design language is in [THEMES.md](THEMES.md).
 - **Edit layouts from the Windows companion.** Open a phone profile in the companion, move, add, resize and set up controls
-  on the PC with mouse and keyboard, and send the result back to the phone.
+  on the PC with mouse and keyboard, and send the result back to the phone. It should draw controls with the same theme
+  tokens and skin ids as the phone ([THEMES.md](THEMES.md)).
+- **Theme extras** left from 1.2: optional sounds, the four-way hat skin, an inclinometer gauge (needs roll and pitch from the
+  BeamNG mod), a master-warning lens, and a backlight colour choice per control for the truck and overland themes.
+
+Done:
+- 1.2: equipment themes (airliner, light aircraft, heavy equipment, agriculture, truck and bus, road car, overland,
+  motorsport) with round buttons and dial gauges, panel groups, night lighting and theme-follows-vehicle in BeamNG.

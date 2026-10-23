@@ -1,6 +1,6 @@
 # SimDeck equipment themes: design language
 
-Status: **design spec, not built yet.** It defines how SimDeck's play surface can look and behave like the equipment
+Status: **built in SimDeck 1.2** (see "What 1.2 built" at the end for what differs from this spec). It defines how SimDeck's play surface can look and behave like the equipment
 being driven: an airliner flight deck, a general-aviation panel, an excavator cab, a farm tractor armrest, a truck dash,
 a road car, an overland rig, a race car. A theme changes more than colour. It swaps materials, the shape and travel of
 every control, how lamps and legends light, how gauges read, how the page is divided into panels, and how it all looks
@@ -530,3 +530,26 @@ Research for this spec (accessed October 2026). Facts used are paraphrased in th
 - GT wheel function placement: https://www.fanatec.com/us/en/explorer/games/gaming-tips/configure-your-steering-wheel-for-gt-racing/
 - Button box design (detent, travel, materials, LED telemetry): https://www.apexsimracing.com/blogs/sim-racing-blog/makes-great-button-box
 - Euro NCAP 2026 physical controls: https://www.automotiveworld.com/news/euro-ncap-results-reward-physical-buttons-in-2026-tests/
+
+## What 1.2 built
+
+Everything above, with these differences:
+
+- **Not built yet:** optional sounds (§3, Feel), the `hat` joystick skin, the `inclinometer` gauge (the BeamNG mod does not
+  report roll and pitch yet), the master-warning variant (only `master` caution exists), and a per-control backlight colour
+  choice for Overland and Commercial (each theme has one backlight).
+- **Seven-segment readouts are drawn**, not set in the DSEG font: the app draws the segments itself (digits and the letters a
+  seven-segment display can show), so no font file is needed.
+- **Road car labels** use the system sans-serif (Roboto on most phones) instead of Inter.
+- **Haptics** use three weights per theme (light, firm, heavy) instead of six separate events; slider stations, notches and
+  the bipolar centre still tick.
+- **Night lighting** is chosen in the play screen's header (automatic, day, night). Automatic follows the game's headlights
+  when the game reports them; otherwise it stays on day.
+- **Theme follows vehicle**: the mod classifies the vehicle as car, truck, bus, machine, tractor, offroad, race, trailer or prop
+  from the words in its info files (`Type`, `Body Style`, `Config Type`, names) and sends it with the vehicle's features.
+- Fonts shipped: B612 (airliner, light-aircraft readouts), Barlow Semi Condensed (machines, light aircraft, overland),
+  Overpass (trucks), Titillium Web (motorsport), Big Shoulders Stencil (overland panel titles), Barlow Condensed (house). All
+  under the SIL Open Font License; notices in `android/FONT_LICENSE_THEMES_OFL.txt`.
+
+Reference screenshots are in [images/themes](images/themes).
+

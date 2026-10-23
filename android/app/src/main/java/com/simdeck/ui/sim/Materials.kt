@@ -118,7 +118,7 @@ fun DrawScope.drawPanelGroup(t: SimTheme, r: Rect, title: String, measurer: Text
     val corner = when (t.panelStyle) { PanelStyle.BAY -> 18.dp.toPx(); PanelStyle.GLASS -> 14.dp.toPx(); else -> 4.dp.toPx() }
     val cr = CornerRadius(corner)
     val titleLayout = if (title.isBlank()) null else measurer.measure(
-        title.uppercase(), t.titleStyle(if (t.panelStyle == PanelStyle.PLATE && t.titleFont != t.legendFont) 12.sp else 9.sp).copy(color = t.panelLine),
+        title.uppercase(), t.titleStyle(if (t.panelStyle == PanelStyle.PLATE && t.titleFont != t.legendFont) 11.sp else 8.sp).copy(color = t.panelLine),
         overflow = TextOverflow.Ellipsis, maxLines = 1,
         constraints = Constraints(maxWidth = (r.width - 24.dp.toPx()).toInt().coerceAtLeast(1)),
     )
@@ -172,7 +172,7 @@ fun DrawScope.drawPanelGroup(t: SimTheme, r: Rect, title: String, measurer: Text
     // Titles sit on the top edge, breaking the boundary line, centred on plates and left-aligned in bays and rows.
     val centred = t.panelStyle == PanelStyle.LIGHTPLATE || t.panelStyle == PanelStyle.PLATE
     val x = if (centred) r.center.x - tw / 2 else r.left + (if (t.panelStyle == PanelStyle.BAY) corner + 34.dp.toPx() else 12.dp.toPx())
-    val y = r.top - th / 2 + (if (t.panelStyle == PanelStyle.LIGHTPLATE) 3.dp.toPx() else 0f)
+    val y = r.top - th / 2
     val pad = 4.dp.toPx()
     val behind = when (t.panelStyle) {
         PanelStyle.LIGHTPLATE -> t.panel

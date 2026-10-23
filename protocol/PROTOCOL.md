@@ -229,6 +229,8 @@ The mod reports what the vehicle being driven can do beyond the standard car fun
 {"v":1,"type":"actions","vehicle":"pickup","list":[{"name":"toggle_tailgate","title":"Tailgate","cat":"vehicle_specific","vehicle":true,"axis":null}]}
 ```
 
+- `category` (SimDeck 1.2): `car`, `truck`, `bus`, `machine`, `tractor`, `offroad`, `race`, `trailer` or `prop`, from the
+  vehicle's info files. The phone picks the equipment theme from it when the profile follows the vehicle. Relayed as-is.
 - `kind`: `button` (press / release), `hold` (on while held), `axis` (-1..1 when `centered`, else 0..1; springs back). `source`: `input_actions` (the vehicle's `input_actions*.json`), `interaction` (the vehicle's `*.interaction.json`, enabled by its jbeam `actionsEnabled`), `interaction_common` (`vehicles/common/*.interaction.json` the vehicle enables), `game` (the game's own active-action list), `coupler` (a coupler controller with a toggle group, e.g. a tailgate latch or fifth wheel), `hydro` (a hydraulic whose input is an electrics value).
 - An empty list arrives as `[]` or `{}` (a Lua empty table). `diag` is informational: it says which source found what, for troubleshooting.
 - The companion relays them to the phone as `{"v":1,"type":"beamng.features",...}` and `{"v":1,"type":"beamng.actions",...}` (same fields), sends the last ones to every new session, and sends an empty `beamng.features` when the mod disconnects.
@@ -267,6 +269,9 @@ Extended (need `KEYEVENTF_EXTENDEDKEY`): `RCTRL RALT LWIN RWIN APPS UP DOWN LEFT
 
 ## Profile file format (import / export)
 
-A profile is exported as one JSON file, `<name>.simdeck.json`, with the lowest `"schema"` that can hold it: 1, 2 for joysticks, 3 for anything new in SimDeck 1.1 (rocker, gauge, indicator and page controls; `guard`; slider `detents`; auto pages; `processNames`; the newer games). An app refuses a schema newer than it knows.
+A profile is exported as one JSON file, `<name>.simdeck.json`, with the lowest `"schema"` that can hold it: 1, 2 for joysticks, 4 for equipment themes (SimDeck 1.2), 3 for anything new in SimDeck 1.1 (rocker, gauge, indicator and page controls; `guard`; slider `detents`; auto pages; `processNames`; the newer games). An app refuses a schema newer than it knows.
 
 Schema 3 fields: on a profile, `processNames` (Windows exe names for automatic switching). On a page, `auto` (`"beamng.vehicle"`: the page's controls are generated from `beamng.features` and are not saved). On a control, `guard` (safety cover: first tap lifts it), `detents` (slider notches), `scale`, `decimals`, `unit` (gauge), `pageTarget` (`next`, `prev` or a page id). Control `type` adds `rocker` (two momentary halves on the wire, `<id>.up` from `cw` and `<id>.down` from `ccw`), `gauge`, `indicator` and `page` (display or in-app only: never in `profile.sync`). It is the Android `Profile` model serialized with kotlinx.serialization (`classDiscriminator = "type"` for actions). See `examples/profile-example.json`. Importers ignore unknown fields and fill missing ones with defaults.
+
+Schema 4 fields (SimDeck 1.2, docs/THEMES.md): on a profile `theme` (`race`, `airliner`, `ga`, `heavy`, `agriculture`, `commercial`, `roadcar`, `overland`, `motorsport`) and `themeFollowsVehicle`; on a page `theme` and `panels` (`[{"title","x","y","w","h"}]` in grid cells); on a control `skin` (a skin id from THEMES.md section 4), `legends` (up to two strings), `ends` (two labels for sliders and rockers, four for joysticks: left, right, back, forward), `stations` (`[{"at":0..1,"label"}]`), `bands` (`[{"from","to","color"}]`), `min` and `max`. None of them change what a control sends.
+

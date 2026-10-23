@@ -1,3 +1,41 @@
+# SimDeck 1.2.0
+
+The play surface can now look and feel like the equipment you drive. Pick a theme per profile (or per page) and every control
+changes with it: real-looking levers, rockers, lit pushbuttons, toggle switches with covers, numbered rotaries, dial gauges,
+seven-segment readouts and panels with engraved titles, with day and night lighting. Inputs do not change: a profile sends
+exactly the same thing in every theme.
+
+## Themes
+
+| Theme | Looks like | Used by |
+|---|---|---|
+| Airliner | Grey lightplates, lit pushbuttons with split legends, thrust levers with IDLE / CL / FLX / TOGA stations, shape-coded flap and gear knobs, segment value windows, red flip covers | Microsoft Flight Simulator |
+| Light aircraft | Black panel, toggle switches, dial gauges, black / blue / red throttle, propeller and mixture knobs, trim wheel, yoke | (choose it) |
+| Heavy equipment | Cab consoles, rubber keys with lamp windows, rocker switches, pilot joysticks labelled with the machine's motions, hydraulic levers, yellow-and-black guards | Bulldozer, Utility vehicles |
+| Agriculture | Tractor armrest: rubber keys, rockers, levers, bar graphs | Farming Simulator 25 |
+| Truck & bus | Rows of rocker switches with lamps, column stalks, dial gauges, amber night backlight | Euro Truck Simulator 2, American Truck Simulator |
+| Road car | Glass tiles, chrome dials, a gated P R N D lever; indicators, hazards, horn and wipers stay physical buttons | BeamNG (cars) |
+| Overland | Powder-coated switch plate with Torx screws, backlit rockers, round push buttons | SnowRunner, MudRunner, Expeditions |
+| Motorsport | Carbon, toggle switches under red covers, numbered 1-12 rotaries, LED tell-tales, red segment dash, shift lights | Assetto Corsa Competizione |
+| Race (house) | The SimDeck look so far | Everything else, and your own profiles |
+
+- **BeamNG follows the vehicle**: the BeamNG profiles switch theme by themselves: road car for cars, truck & bus for trucks,
+  heavy equipment for machines, overland for off-roaders, motorsport for race cars. The mod now reports the vehicle's
+  category.
+- **Night lighting**: the sun / moon button in the play header switches day, night or automatic (follows your headlights).
+- **In the editor**: Theme and page theme under page settings; per control a Style (any skin for that control type),
+  legends, end and direction labels, slider stations (for example IDLE 0, CL 62, TOGA 100, felt as detents), gauge scale and
+  coloured ranges; and titled Panels drawn behind the controls.
+- Profiles that use themes are saved as schema 4; 1.1 can't open them (it says so).
+
+## Also
+- The mod reports the vehicle category in its log line: `vehicle features for <car> (<category>): ...`.
+- Fonts added (all SIL Open Font License): B612, Barlow Semi Condensed, Overpass, Titillium Web, Big Shoulders Stencil.
+
+## Not tested on real hardware
+Built and checked with the automated tests (mod, companion, phone core) and with rendered screenshots of every theme on a
+phone-sized screen, not yet on a real phone, in BeamNG or with vJoy. The 1.1 caveats still apply.
+
 # SimDeck 1.1.0
 
 SimDeck is now one app: the GameControl codebase continues under the SimDeck name, with what the earlier SimDeck prototype

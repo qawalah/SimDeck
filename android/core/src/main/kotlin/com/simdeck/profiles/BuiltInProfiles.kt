@@ -782,7 +782,7 @@ object BuiltInProfiles {
                 PanelGroup("AUTOPILOT", 0, 2, 7, 1), PanelGroup("VIEWS", 0, 3, 5, 1),
             ),
             controls = listOf(
-                Control("msfs_gear", ControlType.LATCHING, "Gear", "landing_gear", 0, 0, 1, 2, Accent.GREEN, btn(1), skin = "gear-lever", legends = listOf("UP", "DOWN")),
+                Control("msfs_gear", ControlType.LATCHING, "Gear", "landing_gear", 0, 0, 1, 2, Accent.GREEN, btn(1), skin = "gear-lever", legends = listOf("UP", "DN")),
                 rocker("msfs_flaps", "Flaps", "flaps", 1, 0, btn(2), btn(3)),
                 latching("msfs_spoilers", "Spoilers", "flaps", 2, 0, btn(4), Accent.AMBER),
                 latching("msfs_pbrake", "Park brake", "parking_brake", 3, 0, btn(5), Accent.RED),

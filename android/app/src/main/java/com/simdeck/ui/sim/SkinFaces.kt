@@ -395,8 +395,10 @@ private class FaceCtx(
         val top = area.top + area.height * 0.14f
         val bottom = area.bottom - area.height * 0.14f
         val ts = t.legendStyle((area.width / density / 9f).coerceIn(8f, 12f).sp)
-        drawLegend(tm, c.legends.getOrNull(0)?.ifBlank { null } ?: "UP", ts, t.legendMuted, slotX, area.top, area.width * 0.6f)
-        drawLegend(tm, c.legends.getOrNull(1)?.ifBlank { null } ?: "DN", ts, t.legendMuted, slotX, area.bottom - ts.fontSize.toPx() * 1.3f, area.width * 0.6f)
+        // UP / DN beside the slot (left), level with the knob's two stations.
+        val labelX = area.left + area.width * 0.14f
+        drawLegend(tm, c.legends.getOrNull(0)?.ifBlank { null } ?: "UP", ts, if (!lit) t.legend else t.legendMuted, labelX, top - ts.fontSize.toPx() * 0.2f, area.width * 0.3f)
+        drawLegend(tm, c.legends.getOrNull(1)?.ifBlank { null } ?: "DN", ts, if (lit) t.legend else t.legendMuted, labelX, bottom - ts.fontSize.toPx() * 1.2f, area.width * 0.3f)
         drawRoundRect(Color.Black, Offset(slotX - 5.dp.toPx(), top), Size(10.dp.toPx(), bottom - top), CornerRadius(5.dp.toPx()))
         val down = lit
         val knobY = if (down) bottom - 6.dp.toPx() else top + 6.dp.toPx()

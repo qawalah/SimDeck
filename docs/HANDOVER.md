@@ -24,7 +24,7 @@ The app has two routes, and it can use both at once:
 ### Android module layout
 
 - `:core` is plain JVM with no Android dependency: the model (`Profile`, `Page`, `Control`, `Action`), `InputEngine`, `Feedback`, `Protocol`, the HID descriptor, `BuiltInProfiles`, `LayoutOps`, and `ProfileJson` (import and export as `.simdeck.json`, schema 3), and `VehicleFeaturePages` (fills auto pages from the mod's `beamng.features`). `-PcoreOnly=true` builds and tests it without the Android SDK.
-- `:app` holds the Compose UI (`ui/screens`, `ui/components`, `ui/theme`, `ui/icons`), `AppViewModel`, `BluetoothHidLink`, `CompanionClient`, and storage.
+- `:app` holds the Compose UI (`ui/screens`, `ui/components`, `ui/theme`, `ui/icons`, and `ui/sim` for equipment themes: `SimTheme` tokens per theme, generated textures and panel groups, and the skin painters for every control type; `Themes` and `Skins` ids live in `:core`), `AppViewModel`, `BluetoothHidLink`, `CompanionClient`, and storage.
 
 Control types are momentary, latching, switch, button group, slider, rotary, joystick, rocker, gauge, lamp (indicator) and page key. A joystick is two spring-centred slider axes on the wire: `<id>.x` and `<id>.y`; a rocker is two momentary buttons: `<id>.up` and `<id>.down`. Gauges, lamps and page keys never go on the wire (`ControlType.displayOnly`).
 

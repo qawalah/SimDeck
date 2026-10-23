@@ -16,7 +16,7 @@ This optional add-on lets the SimDeck phone app work hand in hand with BeamNG.dr
    ```
 2. Copy `simdeck.zip` into your BeamNG user folder's `mods` folder. That is usually
    `%LOCALAPPDATA%\BeamNG.drive\<version>\mods` (older versions use `Documents\BeamNG.drive\mods`). In game you can open it from **Options > Other > Open user folder**.
-3. Start BeamNG.drive and make sure **SimDeck for BeamNG** is enabled in **Mods** (it shows version 1.1.0 and author ALI). Remove older copies (`gamecontroller.zip`, `simdeck_bridge.zip`) first.
+3. Start BeamNG.drive and make sure **SimDeck for BeamNG** is enabled in **Mods** (it shows version 1.2.0 and author ALI). Remove older copies (`gamecontroller.zip`, `simdeck_bridge.zip`) first.
 4. Start the SimDeck companion on the same PC. The mod connects by itself within a few seconds and shows "Connected to the SimDeck companion". It keeps retrying every 3 seconds while the companion is closed, so the start order doesn't matter.
 
 To remove it, delete the zip or disable it in **Mods**. If you applied bindings from the app, they live in `settings/inputmaps/<vidpid>_simdeck.json` in the user folder; delete that file to remove them, or change them as usual in **Options > Controls**.
@@ -51,6 +51,9 @@ Vehicle-specific functions live in different places depending on the vehicle and
 | `core_input_actions.getActiveActions()` | The game's own list of active actions, when this version has it |
 | Vehicle Lua: couplers | Coupler controllers with a toggle group (tailgate latches, fifth wheels, hitches): `coupler.<name>.toggle` |
 | Vehicle Lua: hydraulics | Hydraulics whose input is an electrics value (beds, cranes, outriggers): `hydro.<name>`, -1..1 while held |
+
+The mod also sends the vehicle's category (car, truck, bus, machine, tractor, offroad, race, trailer, prop), worked out from
+the words in its `info.json` and config info files, so the phone can switch to the matching equipment theme.
 
 Each found function goes to the phone as a feature with a title (translated where the game has a translation), a kind (button, hold or axis) and its source. The console line `vehicle features for <vehicle>: <count> (input_actions=… interaction=… common=… game=… couplers=… hydros=…)` says how many came from each source.
 

@@ -150,6 +150,11 @@ object Skins {
             return "hydraulic-lever"
         }
         if (theme == Themes.ROADCAR && c.icon in physicalInRoadCar && c.type in setOf(ControlType.MOMENTARY, ControlType.LATCHING)) return "ring-push"
+        // Shape-coded levers on a flight deck: flaps, gear, propeller and mixture get their quadrant knobs.
+        if (theme == Themes.AIRLINER && c.type == ControlType.SLIDER && c.range == AxisRange.UNIPOLAR) {
+            val n = (c.label + " " + (c.icon ?: "")).lowercase()
+            if (listOf("flap", "gear", "prop", "mix").any { it in n }) return "quadrant-knob"
+        }
         // Sliders on a bipolar spring axis in a flight deck are trim/rudder-like: a quadrant lever reads wrong.
         if (theme in setOf(Themes.AIRLINER, Themes.GA) && c.type == ControlType.SLIDER && c.range == AxisRange.BIPOLAR) return "fader"
         return defaults[theme]?.get(c.type) ?: valid.first()

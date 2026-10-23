@@ -42,13 +42,37 @@ fun DrawScope.drawRockerSkin(
             drawCircle(Color(0xFF3B3E42), nutR * 1.45f, cc)
             drawPath(polygon(cc, nutR * 1.25f, 6, 0f), Brush.linearGradient(listOf(Color(0xFFD7DADD), Color(0xFF6E7378)), cc - Offset(nutR, nutR), cc + Offset(nutR, nutR)))
             val len = (if (tall) area.height else area.width) / 2 * 0.78f
-            val angle = tilt * 38f
-            rotate(if (tall) angle * -1f + 0f else 90f + angle, cc) {
-                val tip = cc + Offset(0f, -len * (if (tilt == 0f) 0.55f else 1f))
-                val w0 = nutR * 0.55f; val w1 = nutR * 0.85f
-                val bat = Path().apply { moveTo(cc.x - w0 / 2, cc.y); lineTo(cc.x + w0 / 2, cc.y); lineTo(tip.x + w1 / 2, tip.y); lineTo(tip.x - w1 / 2, tip.y); close() }
-                drawPath(bat, Brush.horizontalGradient(listOf(Color(0xFF8A8F95), Color(0xFFEDEFF1), Color(0xFF7C8187)), cc.x - w1 / 2, cc.x + w1 / 2))
-                drawOval(Color(0xFFDADDE0), tip - Offset(w1 / 2, w1 * 0.3f), Size(w1, w1 * 0.6f))
+            val w0 = nutR * 0.55f; val w1 = nutR * 0.85f
+            // Held: the bat lies over toward that side. Centred: seen end-on, a round tip over the nut.
+            val dir = when {
+                upOn -> if (tall) Offset(0f, -1f) else Offset(1f, 0f)
+                downOn -> if (tall) Offset(0f, 1f) else Offset(-1f, 0f)
+                else -> null
+            }
+            if (dir != null) {
+                val tip = cc + dir * len
+                val n = Offset(-dir.y, dir.x)
+                val bat = Path().apply {
+                    moveTo((cc + n * (w0 / 2)).x, (cc + n * (w0 / 2)).y); lineTo((cc - n * (w0 / 2)).x, (cc - n * (w0 / 2)).y)
+                    lineTo((tip - n * (w1 / 2)).x, (tip - n * (w1 / 2)).y); lineTo((tip + n * (w1 / 2)).x, (tip + n * (w1 / 2)).y); close()
+                }
+                drawPath(bat, Brush.linearGradient(listOf(Color(0xFF8A8F95), Color(0xFFEDEFF1), Color(0xFF7C8187)), cc - n * w1, cc + n * w1))
+                drawCircle(Color(0xFFDADDE0), w1 * 0.55f, tip)
+            } else {
+                drawCircle(Color.Black.copy(alpha = 0.4f), w1 * 0.75f, cc + Offset(0f, 3.dp.toPx()))
+                drawCircle(Brush.radialGradient(listOf(Color.White, Color(0xFF8A8F95)), cc - Offset(w1 * 0.2f, w1 * 0.2f), w1), w1 * 0.7f, cc)
+            }
+            // Direction marks.
+            val m = len * 0.95f
+            val ch = nutR * 0.5f
+            val sw = 2.dp.toPx()
+            if (tall) {
+                drawPath(chevron(cc + Offset(-len * 0.75f, -m * 0.6f), ch, down = false), if (upOn) lamp else t.legendMuted, style = Stroke(sw, cap = StrokeCap.Round))
+                drawPath(chevron(cc + Offset(-len * 0.75f, m * 0.6f), ch, down = true), if (downOn) lamp else t.legendMuted, style = Stroke(sw, cap = StrokeCap.Round))
+            } else {
+                val r0 = cc + Offset(m * 0.7f, -len * 0.55f); val l0 = cc + Offset(-m * 0.7f, -len * 0.55f)
+                drawPath(Path().apply { moveTo(r0.x - ch * 0.5f, r0.y - ch); lineTo(r0.x + ch * 0.5f, r0.y); lineTo(r0.x - ch * 0.5f, r0.y + ch) }, if (upOn) lamp else t.legendMuted, style = Stroke(sw, cap = StrokeCap.Round))
+                drawPath(Path().apply { moveTo(l0.x + ch * 0.5f, l0.y - ch); lineTo(l0.x - ch * 0.5f, l0.y); lineTo(l0.x + ch * 0.5f, l0.y + ch) }, if (downOn) lamp else t.legendMuted, style = Stroke(sw, cap = StrokeCap.Round))
             }
             endLabels(t, tm, ls, area, tall, lowLabel, highLabel, upOn, downOn, lamp)
         }
