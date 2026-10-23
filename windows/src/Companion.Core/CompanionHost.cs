@@ -106,6 +106,12 @@ public sealed class CompanionHost : IDisposable
 
     public event Action<LogEntry>? Logged;
     public event Action? SessionsChanged;
+    /// <summary>A phone sent its profile list (PROTOCOL.md, Layout editing from the PC).</summary>
+    public event Action<PhoneSession, JsonArray>? ProfilesListed;
+    /// <summary>A phone sent one profile for editing.</summary>
+    public event Action<PhoneSession, JsonObject>? ProfileReceived;
+    /// <summary>A phone answered a profile.put: (session, profile id, ok, message).</summary>
+    public event Action<PhoneSession, string, bool, string>? ProfileSaved;
     public event Action? StatusChanged;
     public event Action<IReadOnlyDictionary<string, JsonNode?>, string>? GameState;
 
@@ -452,6 +458,39 @@ public sealed class CompanionHost : IDisposable
         return m;
     }
 
+    // ---------------------------------------------------------------- layout editing from the PC
+
+    public PhoneSession? Session(string key) => _sessions.TryGetValue(key, out var s) ? s : null;
+
+    /// <summary>Asks a phone for its profile list; false when that phone is gone.</summary>
+    public bool RequestProfiles(string sessionKey)
+    {
+        if (Session(sessionKey) is not { } s) return false;
+        s.Send(JsonExt.Msg("profiles.request"));
+        return true;
+    }
+
+    /// <summary>Asks a phone for one profile, to edit it.</summary>
+    public bool RequestProfile(string sessionKey, string id)
+    {
+        if (Session(sessionKey) is not { } s) return false;
+        var m = JsonExt.Msg("profile.get");
+        m["id"] = id;
+        s.Send(m);
+        return true;
+    }
+
+    /// <summary>Sends an edited profile back to the phone, which saves it and answers profile.saved.</summary>
+    public bool PutProfile(string sessionKey, JsonObject profile)
+    {
+        if (Session(sessionKey) is not { } s) return false;
+        var m = JsonExt.Msg("profile.put");
+        m["profile"] = profile.DeepClone();
+        s.Send(m);
+        Log("info", $"{s.DeviceName}: sent layout {(string?)profile["name"]} from the PC editor");
+        return true;
+    }
+
     void Broadcast(JsonObject msg)
     {
         foreach (var s in _sessions.Values) s.Send((JsonObject)msg.DeepClone());
@@ -611,6 +650,8 @@ public sealed class CompanionHost : IDisposable
 
         Log("info", $"{deviceName} connected from {addr}");
         SessionsChanged?.Invoke();
+        // Ask for the phone's profiles up front, so the layout editor has them when it opens (phones before 1.3 ignore it).
+        session.Send(JsonExt.Msg("profiles.request"));
         if (_beamngCommands.Count > 0) session.Send(CommandsMessage());
         if (_beamngFeatures is { } bf) session.Send((JsonObject)bf.DeepClone());
         if (_beamngActions is { } ba) session.Send((JsonObject)ba.DeepClone());
@@ -648,6 +689,16 @@ public sealed class CompanionHost : IDisposable
             }
             case "beamng.bindings.apply": ForwardBindings(s, m); break;
             case "state.request": SendSnapshot(s); break;
+            case "profiles.list":
+                if (JsonNode.Parse(m.GetRawText()) is JsonObject pl && pl["list"] is JsonArray list) ProfilesListed?.Invoke(s, (JsonArray)list.DeepClone());
+                break;
+            case "profile.data":
+                if (JsonNode.Parse(m.GetRawText()) is JsonObject pd && pd["profile"] is JsonObject prof) ProfileReceived?.Invoke(s, (JsonObject)prof.DeepClone());
+                break;
+            case "profile.saved":
+                ProfileSaved?.Invoke(s, m.Str("id") ?? "", m.Bool("ok"), m.Str("message") ?? "");
+                Log(m.Bool("ok") ? "info" : "warn", $"{s.DeviceName}: layout {(m.Bool("ok") ? "saved" : "not saved")}: {m.Str("message")}");
+                break;
             // pong, and anything newer than us, is ignored (forward compatibility).
         }
     }
