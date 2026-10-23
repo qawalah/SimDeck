@@ -170,7 +170,7 @@ One JSON object per datagram:
 
 Indicator keys (boolean unless stated):
 
-`ignition`, `engine.running`, `lights.low`, `lights.high`, `lights.fog`, `lights.light_bar`, `signal.left`, `signal.right`, `hazard`, `horn`, `parkingbrake`, `esc.active`, `tcs.active`, `abs.active`, `cruise.active`, `cruise.speed` (number, m/s), `diff.front.locked`, `diff.center.locked`, `diff.rear.locked`, `awd.active`, `range.low`, `gearbox.mode` (string: `P`,`R`,`N`,`D`,`S`,`M`), `gear` (string), `speed` (number, m/s), `rpm` (number), `fuel` (0..1), `game.paused`, `game.slowmo`, `camera.mode` (string), `winch.active`.
+`ignition`, `engine.running`, `lights.low`, `lights.high`, `lights.fog`, `lights.light_bar`, `signal.left`, `signal.right`, `hazard`, `horn`, `parkingbrake`, `esc.active`, `tcs.active`, `abs.active`, `cruise.active`, `cruise.speed` (number, m/s), `diff.front.locked`, `diff.center.locked`, `diff.rear.locked`, `awd.active`, `range.low`, `gearbox.mode` (string: `P`,`R`,`N`,`D`,`S`,`M`), `gear` (string), `speed` (number, m/s), `rpm` (number), `fuel` (0..1), `game.paused`, `game.slowmo`, `camera.mode` (string), `winch.active`, `pitch` and `roll` (numbers, degrees, nose up and right side down positive; SimDeck 1.3, for the inclinometer gauge).
 
 BeamNG notes from the mod: `esc.active` / `tcs.active` mean the system is enabled. BeamNG has one combined ESC/TC mode, so `tcs.toggle` = `esc.toggle`, and the setters use tracked state (on at spawn). Extra keys: `esc.intervening`, `tcs.intervening`, `ignition.level` (0-3). `abs.active` = ABS intervening. `lights.low` is true for low or high beam. `winch.active` is never reported by BeamNG (no stock winch).
 
@@ -257,6 +257,32 @@ Companion to phone:
 - `foreground` is sent when the program in front on the PC changes (and to each new session). The phone opens the profile whose `processNames` contain that exe, if the user allows automatic switching.
 - `capabilities` gains `vjoyInfo`: `[{"device":1,"buttons":8,"axes":["X","Y","Z"]}]` for each vJoy device the companion can read.
 
+## Layout editing from the PC (SimDeck 1.3)
+
+The companion's Layouts page reads and writes the phone's profiles. The phone stays their owner. Companion to phone:
+
+```json
+{"v":1,"type":"profiles.request"}
+{"v":1,"type":"profile.get","id":"builtin-utility"}
+{"v":1,"type":"profile.put","profile":{ ...a profile in the file format below... }}
+```
+
+Phone to companion:
+
+```json
+{"v":1,"type":"profiles.list","list":[{"id":"builtin-utility","name":"Utility vehicles","game":"custom","builtIn":true,"pages":4,"theme":"heavy"}]}
+{"v":1,"type":"profile.data","profile":{ ...the profile in the file format... }}
+{"v":1,"type":"profile.saved","id":"builtin-utility","ok":true,"message":"Saved on the phone"}
+```
+
+- The companion sends `profiles.request` right after `welcome`; the phone also sends `profiles.list` by itself whenever its
+  profiles change while connected.
+- `profile.put` replaces the profile with that `id` (or adds it). The phone validates it like an import, keeps a built-in
+  profile's `builtIn` flag, and answers `profile.saved` with `ok:false` and a reason when it refuses, for example while its
+  own editor has the same profile open. When the phone is playing that profile, it is synced again at once.
+- The companion edits the JSON tree, so fields it doesn't know survive the round trip; it raises `schema` when it adds a field
+  that needs a newer one.
+
 ## Key names
 
 Letters `A`-`Z`; digits `D0`-`D9`; `F1`-`F24`; `ESC TAB CAPSLOCK SPACE ENTER BACKSPACE`; `LSHIFT RSHIFT LCTRL RCTRL LALT RALT LWIN RWIN APPS`; `UP DOWN LEFT RIGHT INSERT DELETE HOME END PAGEUP PAGEDOWN`; `MINUS EQUALS LBRACKET RBRACKET SEMICOLON APOSTROPHE GRAVE BACKSLASH COMMA PERIOD SLASH`; `NUMPAD0`-`NUMPAD9 NUMPAD_ADD NUMPAD_SUBTRACT NUMPAD_MULTIPLY NUMPAD_DIVIDE NUMPAD_DECIMAL NUMPAD_ENTER NUMLOCK`; `PRINTSCREEN SCROLLLOCK PAUSE`.
@@ -269,9 +295,11 @@ Extended (need `KEYEVENTF_EXTENDEDKEY`): `RCTRL RALT LWIN RWIN APPS UP DOWN LEFT
 
 ## Profile file format (import / export)
 
-A profile is exported as one JSON file, `<name>.simdeck.json`, with the lowest `"schema"` that can hold it: 1, 2 for joysticks, 4 for equipment themes (SimDeck 1.2), 3 for anything new in SimDeck 1.1 (rocker, gauge, indicator and page controls; `guard`; slider `detents`; auto pages; `processNames`; the newer games). An app refuses a schema newer than it knows.
+A profile is exported as one JSON file, `<name>.simdeck.json`, with the lowest `"schema"` that can hold it: 1, 2 for joysticks, 5 for a control `backlight` (SimDeck 1.3), 4 for equipment themes (SimDeck 1.2), 3 for anything new in SimDeck 1.1 (rocker, gauge, indicator and page controls; `guard`; slider `detents`; auto pages; `processNames`; the newer games). An app refuses a schema newer than it knows.
 
 Schema 3 fields: on a profile, `processNames` (Windows exe names for automatic switching). On a page, `auto` (`"beamng.vehicle"`: the page's controls are generated from `beamng.features` and are not saved). On a control, `guard` (safety cover: first tap lifts it), `detents` (slider notches), `scale`, `decimals`, `unit` (gauge), `pageTarget` (`next`, `prev` or a page id). Control `type` adds `rocker` (two momentary halves on the wire, `<id>.up` from `cw` and `<id>.down` from `ccw`), `gauge`, `indicator` and `page` (display or in-app only: never in `profile.sync`). It is the Android `Profile` model serialized with kotlinx.serialization (`classDiscriminator = "type"` for actions). See `examples/profile-example.json`. Importers ignore unknown fields and fill missing ones with defaults.
 
 Schema 4 fields (SimDeck 1.2, docs/THEMES.md): on a profile `theme` (`race`, `airliner`, `ga`, `heavy`, `agriculture`, `commercial`, `roadcar`, `overland`, `motorsport`) and `themeFollowsVehicle`; on a page `theme` and `panels` (`[{"title","x","y","w","h"}]` in grid cells); on a control `skin` (a skin id from THEMES.md section 4), `legends` (up to two strings), `ends` (two labels for sliders and rockers, four for joysticks: left, right, back, forward), `stations` (`[{"at":0..1,"label"}]`), `bands` (`[{"from","to","color"}]`), `min` and `max`. None of them change what a control sends.
+
+Schema 5 (SimDeck 1.3): a control's `backlight` (`amber`, `red`, `green`, `blue` or `white`), the night glow of lamp rockers and ring pushbuttons. Skins added in 1.3 (`hat` for joysticks, `inclinometer` for gauges, `master-warning` for lamps) need no new schema: an older app draws its default skin instead.
 

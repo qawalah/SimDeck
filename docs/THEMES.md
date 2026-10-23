@@ -1,6 +1,6 @@
 # SimDeck equipment themes: design language
 
-Status: **built in SimDeck 1.2** (see "What 1.2 built" at the end for what differs from this spec). It defines how SimDeck's play surface can look and behave like the equipment
+Status: **built in SimDeck 1.2 and 1.3** (see "What 1.2 built" and "What 1.3 added" at the end for what differs from this spec). It defines how SimDeck's play surface can look and behave like the equipment
 being driven: an airliner flight deck, a general-aviation panel, an excavator cab, a farm tractor armrest, a truck dash,
 a road car, an overland rig, a race car. A theme changes more than colour. It swaps materials, the shape and travel of
 every control, how lamps and legends light, how gauges read, how the page is divided into panels, and how it all looks
@@ -535,7 +535,7 @@ Research for this spec (accessed October 2026). Facts used are paraphrased in th
 
 Everything above, with these differences:
 
-- **Not built yet:** optional sounds (§3, Feel), the `hat` joystick skin, the `inclinometer` gauge (the BeamNG mod does not
+- **Not built in 1.2 (added in 1.3, below):** optional sounds (§3, Feel), the `hat` joystick skin, the `inclinometer` gauge (the BeamNG mod does not
   report roll and pitch yet), the master-warning variant (only `master` caution exists), and a per-control backlight colour
   choice for Overland and Commercial (each theme has one backlight).
 - **Seven-segment readouts are drawn**, not set in the DSEG font: the app draws the segments itself (digits and the letters a
@@ -552,4 +552,20 @@ Everything above, with these differences:
   under the SIL Open Font License; notices in `android/FONT_LICENSE_THEMES_OFL.txt`.
 
 Reference screenshots are in [images/themes](images/themes).
+
+## What 1.3 added
+
+- **Sounds** (§3, Feel): one generated sound per weight (light tick, firm click, heavy thunk), made in code as tiny WAV files
+  at first use and played at the touch-sound volume. Off by default; one switch in the editor settings for every profile.
+- **`hat`** joystick skin: a four-way hat with a centre boss. It sends one direction at a time (the stick snaps to the nearest
+  of up, down, left, right), so a hat bound to a gamepad's view or trim works like the real thing.
+- **`inclinometer`** gauge skin: a vehicle silhouette that tilts with the value, with a degree scale. The BeamNG mod now
+  reports `pitch` and `roll` in degrees; use `roll` from the side, `pitch` from behind.
+- **`master-warning`** lamp skin: the red twin of `master` caution, labelled MASTER WARNING, flashing until tapped.
+- **Backlight per control** (schema 5): Theme, Amber, Red, Green, Blue or White for `rocker-lamp`, `rocker-mom` and
+  `ring-push`, so a truck or overland switch row can mix colours like a real aftermarket panel.
+- **The PC editor** (companion, Layouts page) draws each page with the theme's day colours (environment, panel, cap,
+  legend, lamp colours, corner radius) and a simplified outline of the resolved skin (round caps, levers, sticks, gauges,
+  gear lever). The skin catalogue and the resolve rules are mirrored in `windows/src/Companion.Core/Layout/LayoutCatalog.cs`;
+  keep it in step with `Themes.kt` when a theme or skin is added.
 

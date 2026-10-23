@@ -10,7 +10,7 @@ Values in angle brackets change from run to run.
 
 | When | Line | Also on screen |
 |---|---|---|
-| The mod loads (game start, or the mod is enabled) | `SimDeck mod 1.2.0 loaded, looking for the companion on 127.0.0.1:47803` | none |
+| The mod loads (game start, or the mod is enabled) | `SimDeck mod 1.3.0 loaded, looking for the companion on 127.0.0.1:47803` | none |
 | The companion links (within about 3 s of both running) | `connected to the companion` | message "Connected to the SimDeck companion" |
 | A car is entered, switched to, spawned or reloaded | `vehicle <car folder>: has.esc=<true/unknown> has.cruise=<…> has.fog=<…> has.light_bar=<…> has.awd=<…> has.range=<…> has.diff.front=<…> has.diff.center=<…> has.diff.rear=<…> has.gearbox.modes=<…>` | none |
 | A vehicle is entered or its scan finishes | `vehicle features for <car folder> (<category>): <count> (input_actions=<n> interaction=<n> common=<n> game=<n> couplers=<n> hydros=<n>)` | the phone's Vehicle page fills |

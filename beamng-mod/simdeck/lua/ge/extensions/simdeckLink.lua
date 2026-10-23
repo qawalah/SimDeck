@@ -12,7 +12,7 @@ if not socketOk then
 end
 
 local PROTOCOL_VERSION = 1
-local MOD_VERSION = "1.2.0"
+local MOD_VERSION = "1.3.0"
 local HOST = "127.0.0.1"
 local PORT = 47803
 local RETRY_INTERVAL = 3      -- seconds between connection attempts

@@ -78,7 +78,7 @@ panel comes first: use the companion.
 1. Copy `simdeck.zip` (still zipped) into `%LOCALAPPDATA%\BeamNG.drive\<version>\mods\`. In BeamNG,
    **Options > Other > Open user folder** opens that folder; the zip goes in its `mods` folder.
    Remove any older copy first (`gamecontroller.zip`, `simdeck_bridge.zip`): two copies fight over the same port.
-2. Start BeamNG with the companion running. In the companion window the node **BeamNG mod** shows "Mod 1.2.0 connected".
+2. Start BeamNG with the companion running. In the companion window the node **BeamNG mod** shows "Mod 1.3.0 connected".
 3. On the phone open the **BeamNG.drive** profile: every vehicle function, lamps light from the real game state,
    and controls the current vehicle doesn't have (fog lights, diff locks, low range...) are dimmed.
    The **Vehicle** page fills itself with what the car you drive has beyond the basics: tailgate, doors, dump bed, crane,
@@ -121,9 +121,16 @@ panel comes first: use the companion.
   heavy equipment, agriculture, truck & bus, road car, overland, motorsport); a page can have its own. Each control's
   **Style** can be changed too. The sun / moon button in the play header switches day, night or automatic lighting.
   The BeamNG profiles follow the vehicle you drive.
-- Make your own: **New profile**, then **Edit**. Add controls from the palette, drag to move, drag the corner to
-  resize, and set what each one does in the inspector: keys, gamepad buttons/axes, macros, BeamNG commands or Xbox
-  buttons. Profiles export and import as `.simdeck.json` files.
+- Make your own: **New profile**, then **Edit**. The quickest way to add a control is **Presets** at the top of the left
+  column: pick a ready-made one (the game's own commands, any-game gamepad controls that take the next free button, common
+  keys, gauges and lamps, BeamNG actions of the vehicle you drive, or any control of another profile) and it lands on the
+  page already set up. For a blank control pick a type below it, then set what it does in the inspector: keys, gamepad
+  buttons/axes, macros, BeamNG commands or Xbox buttons. Drag to move, drag the corner to resize.
+- **Copy and paste:** **Copy** or **Duplicate** in the inspector, **Copy page** under the page settings; **Paste** then
+  appears in the left column on any page of any profile. Profiles export and import as `.simdeck.json` files.
+- **Edit on the PC:** with the phone connected over Wi-Fi, open **Layouts** in the companion, pick the phone and a profile,
+  and edit it with the mouse (keyboard shortcuts: Ctrl+C / V / D / Z / Y, Del, arrow keys). **Save to phone** sends it back.
+  Close the profile in the phone's editor first: the phone refuses a save for a profile it is editing itself.
 
 ## Troubleshooting
 
@@ -136,7 +143,7 @@ panel comes first: use the companion.
   the phone tap **MAKE DISCOVERABLE** and add it again.
 - **The PC's sound moved to the phone after pairing.** See section 2a, step 2.
 - **No lamps in BeamNG.** Check that **SimDeck for BeamNG** is enabled in BeamNG's mod manager and that the companion window shows
-  "Mod 1.2.0 connected".
+  "Mod 1.3.0 connected".
 - **A machine or utility profile does nothing in the game.** Look for the amber warning strip on the phone: it names the vJoy
   buttons or axes to enable in *Configure vJoy*. Then rebind in the game with **Bind helper** on.
 - **Reporting a problem.** The companion's settings and log are in `%APPDATA%\SimDeck\` (`companion.json`,

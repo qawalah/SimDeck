@@ -1,3 +1,50 @@
+# SimDeck 1.3.0
+
+Adding a control no longer means building it from scratch, controls and whole pages copy between profiles, and the phone's
+layouts can be edited on the PC.
+
+## Presets
+- In the editor, **Presets** (top of the left column) opens a library of ready-made controls. A tap puts one on the page in the
+  first free cells, already set up: no action, number or feedback to fill in.
+- **Presets** tab: the game's own commands first (for BeamNG: hazards, horn, lights, parking brake, ignition, recover and
+  so on, the same ones the built-in profiles use), then controls that work in any game: gamepad buttons, rockers, dials,
+  selectors, throttles, levers, joysticks and a four-way hat, common keys, gauges and lamps (speed, rpm, gear, fuel, roll and
+  pitch), and page keys. Chips switch the source to any built-in profile, and search finds by name or by what it does.
+- Gamepad presets take the **next free button or axis** of the profile, so two presets never send the same input.
+- **BeamNG actions** tab (BeamNG profiles, connected): every input action of the game and every function of the vehicle you
+  drive, ready to add with no binding.
+- **From profiles** tab: any control of any of your profiles, with **Copy whole page**.
+
+## Copy and paste
+- In the inspector, **Copy** and **Duplicate**; under the page settings, **Copy page**. **Paste** appears in the left column
+  with what you copied and where from. It works across pages and profiles and survives closing the app.
+- Pasted controls get new ids; if the page is short of room they shrink to fit or the app says there is no room.
+
+## Edit layouts on the PC
+- The companion has a new **Layouts** page. Pick a connected phone and one of its profiles, and the pages appear on a big
+  canvas, drawn in their equipment theme.
+- Click to select (Ctrl+click for more), drag to move, drag the pink corner to resize, arrow keys to nudge. Add any control
+  type, copy, paste, duplicate, delete, undo and redo (Ctrl+C / V / D / Z / Y, Del); add, copy, paste and delete pages, set
+  columns, rows, page names and themes. The inspector sets label, icon, light colour, style (the same skins as the phone),
+  size and the game-state key; **Everything (JSON)** edits any other field, such as the action.
+- Controls and pages copied in the companion paste into any profile, on the same phone or another.
+- **Save to phone** sends the profile back. The phone refuses while its own editor has the same profile open, and the
+  companion says so. Needs the phone app and the companion both at 1.3.
+
+## Theme extras (left over from 1.2)
+- **Control sounds** (editor settings, off by default, for every profile): a light tick, a firm click or a heavy thunk
+  depending on the theme, at the phone's touch-sound volume.
+- **Hat** skin for joysticks: a four-way hat switch, one direction at a time.
+- **Inclinometer** gauge skin, fed by the new `roll` and `pitch` values from the BeamNG mod (in degrees).
+- **Master warning** lamp skin: a red MASTER WARNING lens that flashes when lit until you tap it.
+- **Backlight** per control (Theme, Amber, Red, Green, Blue, White) for lamp rockers, momentary rockers and ring pushbuttons,
+  the truck and overland switch styles.
+- Profiles that use a backlight are saved as schema 5; 1.2 can't open them (it says so).
+
+## Not tested on real hardware
+Built and checked with the automated tests (phone core 54, companion 145, mod 213) and rendered screenshots of the phone
+screens and the companion window. Not yet tried on a real phone, in BeamNG or with vJoy; the 1.1 and 1.2 caveats still apply.
+
 # SimDeck 1.2.0
 
 The play surface can now look and feel like the equipment you drive. Pick a theme per profile (or per page) and every control

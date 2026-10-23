@@ -1,6 +1,6 @@
 # SimDeck: an Android control surface for Windows games
 
-**Version 1.2.0.** Turn an Android phone or tablet into an extra controller for any Windows game: buttons, toggles,
+**Version 1.3.0.** Turn an Android phone or tablet into an extra controller for any Windows game: buttons, toggles,
 switches, sliders, pilot joysticks, rotaries and indicator lamps beyond your gamepad, organised in per-game profiles.
 BeamNG.drive is fully supported both ways (live vehicle state on the phone, game commands, in-game auto-binding, and a
 Vehicle page that fills itself with the functions of the vehicle you drive), and there are built-in profiles for a generic
@@ -8,6 +8,8 @@ gamepad, keyboard keys, MudRunner, SnowRunner, Expeditions, Euro Truck Simulator
 Simulator 25, Assetto Corsa Competizione, Microsoft Flight Simulator, a bulldozer and other utility vehicles. The phone
 can switch to the right profile by itself when a game comes to the front on the PC. Equipment themes make each profile look
 and feel like what you drive: an airliner flight deck, a machine cab, a truck dash, a race car (see [docs/THEMES.md](docs/THEMES.md)).
+Adding a control is a tap in the preset library, controls and pages copy between profiles, and the PC companion can edit the
+phone's layouts with a mouse.
 
 ![The BeamNG.drive profile on a phone](docs/images/play-beamng.png)
 
@@ -16,6 +18,10 @@ and feel like what you drive: an airliner flight deck, a machine cab, a truck da
 ![The airliner theme](docs/images/themes/airliner_cockpit.png)
 
 ![The heavy-equipment theme](docs/images/themes/heavy_excavator.png)
+
+![Presets in the phone's editor](docs/images/presets-beamng.png)
+
+![The companion's Layouts page editing a phone profile](docs/images/companion-layouts.png)
 
 ## Download
 

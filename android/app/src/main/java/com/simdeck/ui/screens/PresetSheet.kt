@@ -100,31 +100,44 @@ fun PresetSheet(
     onDismiss: () -> Unit,
 ) {
     val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheet, containerColor = Race.PanelRaised) {
+        PresetSheetBody(profile, profiles, catalog, onPick, onPastePage)
+    }
+}
+
+/** The sheet's content: tabs, search and the tiles (separate so screenshots can render it without a modal window). */
+@Composable
+fun PresetSheetBody(
+    profile: Profile,
+    profiles: List<Profile>,
+    catalog: BeamNGCatalog,
+    onPick: (Control) -> Unit,
+    onPastePage: (Page) -> Unit,
+    initialTab: Int = 0,
+) {
     val tabs = buildList {
         add("Presets")
         if (profile.game == GameId.BEAMNG || catalog.actions.isNotEmpty()) add("BeamNG actions")
         add("From profiles")
     }
-    var tab by rememberSaveable { mutableStateOf(0) }
+    var tab by rememberSaveable { mutableStateOf(initialTab) }
     var query by rememberSaveable { mutableStateOf("") }
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheet, containerColor = Race.PanelRaised) {
-        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Add from presets", style = RaceType.title, color = Race.Ink, modifier = Modifier.weight(1f))
-                Box(Modifier.horizontalScroll(rememberScrollState())) { SlantTabs(tabs, tab.coerceIn(0, tabs.lastIndex), { tab = it }, height = 40) }
-            }
-            OutlinedTextField(
-                query, { query = it }, singleLine = true, placeholder = { Text("Search: hazard, diff lock, flaps, tailgate…") },
-                leadingIcon = { Icon(Icons.Rounded.Search, null, tint = Race.InkMuted) }, colors = raceFieldColors(),
-                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-            )
-            when (tabs[tab.coerceIn(0, tabs.lastIndex)]) {
-                "Presets" -> PresetsTab(profile, query, onPick)
-                "BeamNG actions" -> GameActionsTab(catalog, query, onPick)
-                else -> ProfilesTab(profile, profiles, query, onPick, onPastePage)
-            }
-            Spacer(Modifier.size(12.dp))
+    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Add from presets", style = RaceType.title, color = Race.Ink, modifier = Modifier.weight(1f))
+            Box(Modifier.horizontalScroll(rememberScrollState())) { SlantTabs(tabs, tab.coerceIn(0, tabs.lastIndex), { tab = it }, height = 40) }
         }
+        OutlinedTextField(
+            query, { query = it }, singleLine = true, placeholder = { Text("Search: hazard, diff lock, flaps, tailgate…") },
+            leadingIcon = { Icon(Icons.Rounded.Search, null, tint = Race.InkMuted) }, colors = raceFieldColors(),
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        )
+        when (tabs[tab.coerceIn(0, tabs.lastIndex)]) {
+            "Presets" -> PresetsTab(profile, query, onPick)
+            "BeamNG actions" -> GameActionsTab(catalog, query, onPick)
+            else -> ProfilesTab(profile, profiles, query, onPick, onPastePage)
+        }
+        Spacer(Modifier.size(12.dp))
     }
 }
 
@@ -136,7 +149,8 @@ private fun PresetsTab(profile: Profile, query: String, onPick: (Control) -> Uni
     Box(Modifier.horizontalScroll(rememberScrollState())) { ChoiceChips(sources, source, { source = it }) }
     val all = Presets.builtIn
     val list = when (source) {
-        forGame -> all.filter { it.games.isEmpty() || profile.game in it.games }
+        // The game's own commands first, then the controls that work in any game.
+        forGame -> all.filter { profile.game in it.games } + all.filter { it.games.isEmpty() }
         "Any game" -> Presets.generic
         else -> all.filter { it.source == source }
     }

@@ -23,12 +23,22 @@ The app has two routes, and it can use both at once:
 
 ### Android module layout
 
-- `:core` is plain JVM with no Android dependency: the model (`Profile`, `Page`, `Control`, `Action`), `InputEngine`, `Feedback`, `Protocol`, the HID descriptor, `BuiltInProfiles`, `LayoutOps`, and `ProfileJson` (import and export as `.simdeck.json`, schema 3), and `VehicleFeaturePages` (fills auto pages from the mod's `beamng.features`). `-PcoreOnly=true` builds and tests it without the Android SDK.
+- `:core` is plain JVM with no Android dependency: the model (`Profile`, `Page`, `Control`, `Action`), `InputEngine`, `Feedback`, `Protocol`, the HID descriptor, `BuiltInProfiles`, `LayoutOps`, `Presets` (the preset library, next-free gamepad numbering and placing or pasting controls and pages), and `ProfileJson` (import and export as `.simdeck.json`, schema 5), and `VehicleFeaturePages` (fills auto pages from the mod's `beamng.features`). `-PcoreOnly=true` builds and tests it without the Android SDK.
 - `:app` holds the Compose UI (`ui/screens`, `ui/components`, `ui/theme`, `ui/icons`, and `ui/sim` for equipment themes: `SimTheme` tokens per theme, generated textures and panel groups, and the skin painters for every control type; `Themes` and `Skins` ids live in `:core`), `AppViewModel`, `BluetoothHidLink`, `CompanionClient`, and storage.
 
 Control types are momentary, latching, switch, button group, slider, rotary, joystick, rocker, gauge, lamp (indicator) and page key. A joystick is two spring-centred slider axes on the wire: `<id>.x` and `<id>.y`; a rocker is two momentary buttons: `<id>.up` and `<id>.down`. Gauges, lamps and page keys never go on the wire (`ControlType.displayOnly`).
 
 `AppViewModel` keeps the stored profile (`baseProfile`) apart from the one being played (`activeProfile`), which is the stored one with its auto pages filled for the current vehicle; every `beamng.features` refills it and re-syncs the companion. It also handles `notice` (warning strip), `foreground` (automatic profile switching by `Profile.processNames`) and the bind helper (joystick axis lock).
+
+### Editing from the PC (1.3)
+
+The companion's **Layouts** page edits the phone's profiles over the existing WebSocket (`profiles.*` / `profile.*` messages
+in PROTOCOL.md). `windows/src/Companion.Core/Layout/LayoutDoc.cs` edits the profile as a JSON tree (so unknown fields
+survive) with the phone's layout rules (minimum spans, grid limits, free-spot search, new ids) and undo; `LayoutCatalog.cs`
+mirrors the phone's theme colours, skin ids and skin resolve rules. The UI is `LayoutsViewModel` and `LayoutCanvas` in
+`Companion.App`. The phone is the owner: `AppViewModel.saveFromPc` imports the JSON like a file and refuses while its own
+editor has that profile open. `tools/UiSnap` renders the companion headlessly with a simulated phone serving two built-in
+profiles, for design review.
 
 ### Built-in profiles
 
@@ -72,6 +82,8 @@ Unit tests cannot cover Bluetooth pairing, vJoy, ViGEm, SendInput, or BeamNG in 
 
 ## History and known limits
 
+- 1.2.0 added equipment themes ([THEMES.md](THEMES.md)); 1.3.0 added presets, copy and paste, the PC layout editor and the
+  theme extras. Neither has been run on a real phone, in BeamNG or with vJoy yet.
 - 1.1.0 merged the earlier SimDeck prototype into this codebase (which was called GameControl until then) and renamed it SimDeck throughout, including the Android package (`com.simdeck.app`). It added the multi-source vehicle feature discovery in the mod, vJoy configuration checks in the companion, and the controls, profiles and icons the prototype had. None of 1.1.0 has been run in BeamNG or with vJoy yet: run SMOKE_TEST plus the Vehicle page and utility checks in RELEASE_NOTES before calling it released.
 
 - `docs/review/` holds every review round, round 1 to rc3, with each part's replies. When a comment in the code cites an item id (A19, M1, B-3, U28, and so on), you can trace it back there. The 1.0 release candidate was signed off with 0 open comments in `rc3.md`.
@@ -94,4 +106,6 @@ Unit tests cannot cover Bluetooth pairing, vJoy, ViGEm, SendInput, or BeamNG in 
 | A new built-in profile | `core/.../profiles/BuiltInProfiles.kt`; the layout and round-trip tests check it automatically |
 | A new BeamNG command or lamp | `beamng-mod/simdeck/lua/...`, the `beamng.*` ids in `PROTOCOL.md`, and the BeamNG profiles |
 | A new companion output | `windows/src/Companion.Core/Input` and `Engine` |
+| A new preset | `core/.../profiles/Presets.kt` (generic ones), or the built-in profiles, whose controls become presets |
+| A new skin or theme | `core/.../model/Themes.kt`, `app/.../ui/sim`, THEMES.md, and `LayoutCatalog.cs` for the PC editor |
 | Connection or pairing bugs | `android/app/.../net/CompanionClient.kt` and `windows/src/Companion.Core/Net` |
