@@ -89,6 +89,20 @@ class PresetTest {
         assertTrue(Presets.generic.any { it.control.skin == "inclinometer" } && Presets.generic.any { it.control.skin == "hat" })
     }
 
+    @Test fun pcLayoutEditingMessages() {
+        val bng = BuiltInProfiles.beamng()
+        val list = com.simdeck.protocol.Protocol.profilesList(listOf(bng))
+        assertTrue("\"type\":\"profiles.list\"" in list && bng.id in list)
+        val data = com.simdeck.protocol.Protocol.json.parseToJsonElement(com.simdeck.protocol.Protocol.profileData(bng)) as kotlinx.serialization.json.JsonObject
+        val profileJson = data["profile"].toString()
+        val back = com.simdeck.profiles.ProfileJson.import(profileJson, newId = bng.id)
+        assertEquals(bng.pages.size, back.pages.size)
+        assertEquals(com.simdeck.protocol.Incoming.ProfilesRequest, com.simdeck.protocol.Protocol.parse("""{"v":1,"type":"profiles.request"}"""))
+        assertEquals(com.simdeck.protocol.Incoming.ProfileGet("x"), com.simdeck.protocol.Protocol.parse("""{"v":1,"type":"profile.get","id":"x"}"""))
+        val put = com.simdeck.protocol.Protocol.parse("""{"v":1,"type":"profile.put","profile":$profileJson}""")
+        assertTrue(put is com.simdeck.protocol.Incoming.ProfilePut && bng.id in put.json)
+    }
+
     @Test fun profilePresetsListRepeatsOnce() {
         val c = Control("x", ControlType.MOMENTARY, "Horn", action = Action.Key(listOf("H")))
         val p = Profile("t", "T", pages = listOf(Page("p1", "One", controls = listOf(c)), Page("p2", "Two", controls = listOf(c.copy(id = "y")))))

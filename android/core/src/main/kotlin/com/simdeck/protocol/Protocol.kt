@@ -123,6 +123,25 @@ object Protocol {
 
     fun action(action: Action): JsonElement = json.encodeToJsonElement(Action.serializer(), action)
 
+    /** The phone's profiles, for the PC companion's layout editor. */
+    fun profilesList(profiles: List<com.simdeck.model.Profile>): String = obj("profiles.list") {
+        put("list", buildJsonArray {
+            for (p in profiles) add(buildJsonObject {
+                put("id", p.id); put("name", p.name); put("game", p.game.name.lowercase()); put("builtIn", p.builtIn)
+                put("pages", p.pages.size); p.theme?.let { put("theme", it) }
+            })
+        })
+    }
+
+    /** One profile in the profile file format, for the PC companion's layout editor. */
+    fun profileData(p: com.simdeck.model.Profile): String = obj("profile.data") {
+        put("profile", json.parseToJsonElement(com.simdeck.profiles.ProfileJson.export(p)))
+    }
+
+    fun profileSaved(id: String, ok: Boolean, message: String): String = obj("profile.saved") {
+        put("id", id); put("ok", ok); put("message", message)
+    }
+
     fun beamngBindingsApply(device: String, bindings: List<Pair<String, Int>>): String = obj("beamng.bindings.apply") {
         put("device", device)
         put("bindings", buildJsonArray {
@@ -191,6 +210,10 @@ object Protocol {
             )
             "notice" -> Incoming.Notice(str("level") ?: "info", str("code") ?: "", str("message") ?: "")
             "foreground" -> Incoming.Foreground(str("exe") ?: "")
+            // Layout editing from the PC companion (SimDeck 1.3).
+            "profiles.request" -> Incoming.ProfilesRequest
+            "profile.get" -> Incoming.ProfileGet(str("id") ?: "")
+            "profile.put" -> (o["profile"] as? JsonObject)?.let { Incoming.ProfilePut(it.toString()) } ?: Incoming.Malformed(text)
             "discover.reply" -> Incoming.DiscoverReply(
                 str("name") ?: "PC",
                 o["wsPort"]?.jsonPrimitive?.intOrNull ?: WS_PORT,
@@ -282,6 +305,12 @@ sealed interface Incoming {
     /** A message for the user, e.g. code "vjoy_config" when vJoy is set up with too few buttons for the profile. */
     data class Notice(val level: String, val code: String, val message: String) : Incoming
     data class Foreground(val exe: String) : Incoming
+    /** The PC companion asks for the list of this phone's profiles. */
+    data object ProfilesRequest : Incoming
+    /** The PC companion asks for one profile, to edit it. */
+    data class ProfileGet(val id: String) : Incoming
+    /** The PC companion sends back an edited profile ([json] is the profile file object). */
+    data class ProfilePut(val json: String) : Incoming
     data class VersionMismatch(val remoteVersion: Int) : Incoming
     data class Malformed(val text: String) : Incoming
     data class Unknown(val type: String?) : Incoming

@@ -48,6 +48,9 @@ class CompanionClient(
         fun onGameActions(list: List<com.simdeck.model.GameAction>) {}
         fun onNotice(notice: Incoming.Notice) {}
         fun onForeground(exe: String) {}
+        fun onProfilesRequest() {}
+        fun onProfileGet(id: String) {}
+        fun onProfilePut(json: String) {}
         fun onDisconnected() {}
     }
 
@@ -197,6 +200,9 @@ class CompanionClient(
             is Incoming.BeamNGActions -> listener?.onGameActions(msg.list)
             is Incoming.Notice -> listener?.onNotice(msg)
             is Incoming.Foreground -> listener?.onForeground(msg.exe)
+            is Incoming.ProfilesRequest -> listener?.onProfilesRequest()
+            is Incoming.ProfileGet -> listener?.onProfileGet(msg.id)
+            is Incoming.ProfilePut -> listener?.onProfilePut(msg.json)
             is Incoming.VersionMismatch -> {
                 ws?.send("""{"v":1,"type":"error","code":"version_mismatch","message":"phone supports v${Protocol.VERSION}"}""")
                 userDisconnected = true // do not reconnect into the same mismatch

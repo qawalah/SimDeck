@@ -173,6 +173,13 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 notify(notice.message)
             }
             override fun onForeground(exe: String) = autoSwitchFor(exe)
+            override fun onProfilesRequest() = companion.send(Protocol.profilesList(repo.profiles.value))
+            override fun onProfileGet(id: String) {
+                val p = repo.get(id)
+                if (p == null) companion.send(Protocol.profileSaved(id, false, "That profile is no longer on the phone."))
+                else companion.send(Protocol.profileData(p))
+            }
+            override fun onProfilePut(json: String) = saveFromPc(json)
             override fun onDisconnected() {
                 engine.onCompanionLost()
                 game.value = emptyMap()
@@ -197,6 +204,10 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         settings.lastHost?.let { host -> if (settings.token(host.substringBefore(":")) != null) companion.connect(host) }
         if (hid.hasPermission() && hid.isBluetoothOn()) hid.enable()
 
+        // Keep the PC companion's layout editor list current.
+        viewModelScope.launch {
+            repo.profiles.collect { list -> if (companion.isConnected) companion.send(Protocol.profilesList(list)) }
+        }
         viewModelScope.launch {
             companion.state.collect { c ->
                 _editor.update { it?.copy(canBindInGame = c.status == com.simdeck.model.ConnectionStatus.CONNECTED && c.capabilities.beamng) }
@@ -312,6 +323,35 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     /** Created on first use, so phones that never turn sounds on never load them. */
     val simSounds: com.simdeck.ui.sim.SimSounds by lazy { com.simdeck.ui.sim.SimSounds(getApplication()) }
     fun setControlSounds(on: Boolean) { settings.controlSounds = on; _sounds.value = on }
+
+    /**
+     * A layout edited in the PC companion comes back: it replaces the profile with the same id (a built-in one keeps its
+     * built-in mark, so "Restore" still works). Refused while the phone's own editor has that profile open.
+     */
+    private fun saveFromPc(json: String) {
+        val id = runCatching { Protocol.json.parseToJsonElement(json).let { (it as kotlinx.serialization.json.JsonObject)["id"]?.let { e -> (e as kotlinx.serialization.json.JsonPrimitive).content } } }.getOrNull()
+        if (id.isNullOrBlank()) { companion.send(Protocol.profileSaved("", false, "The layout has no profile id.")); return }
+        if (_editor.value?.profile?.id == id) {
+            companion.send(Protocol.profileSaved(id, false, "That profile is open in the phone's editor. Close it there first."))
+            return
+        }
+        val existing = repo.get(id)
+        val p = try {
+            ProfileJson.import(json, newId = id).copy(builtIn = existing?.builtIn ?: false)
+        } catch (e: Exception) {
+            companion.send(Protocol.profileSaved(id, false, e.message ?: "Not a profile"))
+            return
+        }
+        repo.save(p)
+        companion.send(Protocol.profileSaved(id, true, "Saved on the phone"))
+        notify("${p.name}: layout from the PC saved")
+        // Playing it: show the new layout now, on the same page.
+        if ((_screen.value as? Screen.Play)?.profileId == id) {
+            val page = pageIndex.value
+            play(id)
+            pageIndex.value = page.coerceIn(0, p.pages.lastIndex)
+        }
+    }
 
     fun setAutoSwitch(on: Boolean) { settings.autoSwitch = on }
     val autoSwitchEnabled: Boolean get() = settings.autoSwitch
