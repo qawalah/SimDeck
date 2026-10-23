@@ -374,7 +374,7 @@ class CoreTest {
 
     @Test fun r6_4_newerSchemaIsRefusedBeforeDecoding() {
         val text = ProfileJson.export(BuiltInProfiles.bulldozer())
-            .replace("\"schema\": 2", "\"schema\": 3").replace("\"joystick\"", "\"hologram\"")
+            .replace("\"schema\": 2", "\"schema\": ${ProfileJson.SCHEMA + 1}").replace("\"joystick\"", "\"hologram\"")
         val e = runCatching { ProfileJson.import(text) }.exceptionOrNull()
         assertNotNull(e)
         assertTrue("newer version" in (e.message ?: ""), "got: ${e.message}")
@@ -417,7 +417,7 @@ class CoreTest {
         val p = BuiltInProfiles.utility()
         val text = ProfileJson.export(p)
         assertTrue("\"schema\": 2" in text, "joystick profile is schema 2")
-        assertTrue("\"schema\": 1" in ProfileJson.export(BuiltInProfiles.mudrunner()), "no joystick: schema 1")
+        assertTrue("\"schema\": 1" in ProfileJson.export(BuiltInProfiles.keyboard()), "no joystick: schema 1")
         val back = ProfileJson.import(text)
         val stick = back.pages[1].controls.first { it.id == "ex_right_stick" }
         assertEquals(Action.VJoyAxis(1, "RX"), stick.actionY)

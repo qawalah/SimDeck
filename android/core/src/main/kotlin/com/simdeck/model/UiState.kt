@@ -30,7 +30,11 @@ data class Capabilities(
     val vigem: Boolean = false,
     val beamng: Boolean = false,
     val outgauge: Boolean = false,
+    /** How each vJoy device is set up in "Configure vJoy" (button count, enabled axes), when the companion can tell. */
+    val vjoyInfo: List<VJoyInfo> = emptyList(),
 )
+
+data class VJoyInfo(val device: Int, val buttons: Int, val axes: List<String>)
 
 data class ConnectionUi(
     val status: ConnectionStatus = ConnectionStatus.DISCONNECTED,
@@ -74,6 +78,12 @@ data class PlayState(
     val hid: HidUi = HidUi(),
     /** Incremented every time a press is dropped because no link is up; the HUD flashes "NO LINK" on change. */
     val linkDrops: Int = 0,
+    /** Problems that stop this profile from working (vJoy set up with too few buttons...), shown until dismissed. */
+    val warnings: List<String> = emptyList(),
+    /** What the BeamNG mod found on the current vehicle, for auto pages and their diagnostics. */
+    val vehicle: VehicleFeatures = VehicleFeatures(),
+    /** Bind helper: joysticks move one axis at a time, so a game's "move the axis" capture picks the right one. */
+    val bindHelper: Boolean = false,
 )
 
 /** Outcome of the last "Bind in game" request. */
@@ -99,6 +109,12 @@ data class EditorState(
     val stateKeys: List<String> = emptyList(),
     /** BeamNG commands reported by the mod, for the command picker. */
     val beamngCommands: List<String> = emptyList(),
+    /** Every BeamNG input action the mod can run (action.<name>), for the action browser. */
+    val beamngActions: List<GameAction> = emptyList(),
+    /** Features of the vehicle being driven (vehicle actions, couplers, hydraulics). */
+    val vehicleFeatures: List<VehicleFeature> = emptyList(),
+    /** Bind helper switch, mirrored here for the profile panel. */
+    val bindHelper: Boolean = false,
     /** Result of the last "Bind in game", null until one was requested. */
     val bindResult: BindResult? = null,
     /** Whether "Bind in game" can be sent right now (companion connected and the mod is up). */

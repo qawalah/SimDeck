@@ -8,6 +8,13 @@ import kotlinx.serialization.Serializable
 enum class GameId(val displayName: String) {
     @SerialName("beamng") BEAMNG("BeamNG.drive"),
     @SerialName("mudrunner") MUDRUNNER("MudRunner"),
+    @SerialName("snowrunner") SNOWRUNNER("SnowRunner"),
+    @SerialName("expeditions") EXPEDITIONS("Expeditions"),
+    @SerialName("ets2") ETS2("Euro Truck Simulator 2"),
+    @SerialName("ats") ATS("American Truck Simulator"),
+    @SerialName("fs25") FS25("Farming Simulator 25"),
+    @SerialName("acc") ACC("Assetto Corsa Competizione"),
+    @SerialName("msfs") MSFS("Flight Simulator"),
     @SerialName("custom") CUSTOM("Custom"),
 }
 
@@ -24,6 +31,8 @@ data class Profile(
     val description: String = "",
     /** Schema version of the exported JSON, not the network protocol version. */
     val schema: Int = 1,
+    /** Game executables (e.g. "BeamNG.drive.x64.exe"): the app switches to this profile when one is in front. */
+    val processNames: List<String> = emptyList(),
 )
 
 /** Where a profile's inputs go. Game commands (BeamNG) and XInput always need the companion. */
@@ -45,7 +54,17 @@ data class Page(
     val columns: Int = 8,
     val rows: Int = 4,
     val controls: List<Control> = emptyList(),
-)
+    /**
+     * A page that fills itself while playing. [AUTO_BEAMNG_VEHICLE]: one control per feature of the BeamNG
+     * vehicle being driven (its own actions, couplers, hydraulics), as reported by the mod. Its stored
+     * controls are ignored.
+     */
+    val auto: String? = null,
+) {
+    companion object {
+        const val AUTO_BEAMNG_VEHICLE = "beamng.vehicle"
+    }
+}
 
 @Serializable
 enum class ControlType {
@@ -56,9 +75,20 @@ enum class ControlType {
     @SerialName("slider") SLIDER,
     @SerialName("rotary") ROTARY,
     /** Two spring-centred axes on one stick, like a machine's pilot joystick. See [Joystick]. */
-    @SerialName("joystick") JOYSTICK;
+    @SerialName("joystick") JOYSTICK,
+    /** Up / down (or right / left) halves, each a momentary button: [Control.cw] up, [Control.ccw] down. See [Joystick]. */
+    @SerialName("rocker") ROCKER,
+    /** Display only: a number from the game ([Control.feedbackKey]) with scale, decimals and unit. */
+    @SerialName("gauge") GAUGE,
+    /** Display only: a lamp lit by [Control.feedbackKey]. */
+    @SerialName("indicator") INDICATOR,
+    /** Goes to another page of the profile ([Control.pageTarget]). Never sent to the PC. */
+    @SerialName("page") PAGE;
 
     val wire: String get() = name.lowercase()
+
+    /** Controls that only show something or act inside the app: they have no binding on the wire. */
+    val displayOnly: Boolean get() = this == GAUGE || this == INDICATOR || this == PAGE
 }
 
 /** Accent colour role for a control. The UI theme maps each role to a colour. */
@@ -110,6 +140,18 @@ data class Control(
     val bindTo: String? = null,
     /** JOYSTICK: the forward-back axis (forward is +1). */
     val actionY: Action = Action.None,
+    /** Safety cover: the first tap lifts the cover for a few seconds, the next one operates the control. */
+    val guard: Boolean = false,
+    /** SLIDER: snap to this many evenly spaced positions (0 or 1 = continuous). */
+    val detents: Int = 0,
+    /** GAUGE: shown value = game value x [scale]. */
+    val scale: Double = 1.0,
+    /** GAUGE: digits after the decimal point. */
+    val decimals: Int = 0,
+    /** GAUGE: unit printed under the value, e.g. "km/h". */
+    val unit: String? = null,
+    /** PAGE: "next", "prev" or a page id. */
+    val pageTarget: String? = null,
 )
 
 /**
@@ -120,6 +162,9 @@ data class Control(
 object Joystick {
     const val X = ".x"
     const val Y = ".y"
+    /** A ROCKER is two momentary buttons on the wire: "<id>.up" ([Control.cw]) and "<id>.down" ([Control.ccw]). */
+    const val UP = ".up"
+    const val DOWN = ".down"
 
     fun axes(c: Control): List<Control> = listOf(axis(c, X, c.action), axis(c, Y, c.actionY))
 
@@ -129,20 +174,42 @@ object Joystick {
         label = c.label + if (suffix == X) " (left-right)" else " (forward-back)",
     )
 
-    /** The page's controls as the engine sees them: each joystick replaced by its two axes. */
-    fun expand(controls: List<Control>): List<Control> =
-        controls.flatMap { if (it.type == ControlType.JOYSTICK) axes(it) else listOf(it) }
+    fun halves(c: Control): List<Control> = listOf(half(c, UP, c.cw), half(c, DOWN, c.ccw))
 
-    /** Finds [id] among [controls], including a joystick axis id such as "stick.x". */
+    private fun half(c: Control, suffix: String, a: Action) = c.copy(
+        id = c.id + suffix, type = ControlType.MOMENTARY, action = a, cw = Action.None, ccw = Action.None,
+        feedbackKey = null, label = c.label + if (suffix == UP) " (up)" else " (down)",
+    )
+
+    /** The ids a control drives: its own, its two axes, or its two halves. */
+    fun ids(c: Control): Pair<String, String?> = when (c.type) {
+        ControlType.JOYSTICK -> (c.id + X) to (c.id + Y)
+        ControlType.ROCKER -> (c.id + UP) to (c.id + DOWN)
+        else -> c.id to null
+    }
+
+    /**
+     * The page's controls as the engine sees them: each joystick replaced by its two axes, each rocker by
+     * its two halves, and display-only controls (gauges, lamps, page switches) left out.
+     */
+    fun expand(controls: List<Control>): List<Control> = controls.flatMap {
+        when {
+            it.type == ControlType.JOYSTICK -> axes(it)
+            it.type == ControlType.ROCKER -> halves(it)
+            it.type.displayOnly -> emptyList()
+            else -> listOf(it)
+        }
+    }
+
+    /** Finds [id] among [controls], including a joystick axis id such as "stick.x" or a rocker half "zoom.up". */
     fun find(controls: List<Control>, id: String): Control? {
         controls.firstOrNull { it.id == id }?.let { return it }
-        val base = when {
-            id.endsWith(X) -> id.removeSuffix(X)
-            id.endsWith(Y) -> id.removeSuffix(Y)
-            else -> return null
+        for ((suffix, type) in listOf(X to ControlType.JOYSTICK, Y to ControlType.JOYSTICK, UP to ControlType.ROCKER, DOWN to ControlType.ROCKER)) {
+            if (!id.endsWith(suffix)) continue
+            val parent = controls.firstOrNull { it.id == id.removeSuffix(suffix) && it.type == type } ?: continue
+            return (if (type == ControlType.JOYSTICK) axes(parent) else halves(parent)).first { it.id == id }
         }
-        val stick = controls.firstOrNull { it.id == base && it.type == ControlType.JOYSTICK } ?: return null
-        return axes(stick).first { it.id == id }
+        return null
     }
 }
 

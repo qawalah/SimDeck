@@ -58,9 +58,13 @@ object Feedback {
         for (c in profile.pages.flatMap { it.controls }) {
             c.visibleWhen?.let { key -> if (truthy(game[key]) == false) unavailable += c.id }
             // A joystick's value lives on its two axis ids; it is "on" while either is off centre (R6-5).
-            val value = if (c.type == ControlType.JOYSTICK) {
-                maxOf(kotlin.math.abs(values[c.id + Joystick.X] ?: 0f), kotlin.math.abs(values[c.id + Joystick.Y] ?: 0f))
-            } else values[c.id] ?: 0f
+            // A rocker's lives on its two halves.
+            val value = when (c.type) {
+                ControlType.JOYSTICK ->
+                    maxOf(kotlin.math.abs(values[c.id + Joystick.X] ?: 0f), kotlin.math.abs(values[c.id + Joystick.Y] ?: 0f))
+                ControlType.ROCKER -> maxOf(values[c.id + Joystick.UP] ?: 0f, values[c.id + Joystick.DOWN] ?: 0f)
+                else -> values[c.id] ?: 0f
+            }
             indicators[c.id] = indicator(c, value, game, isPending(c.id, pending, now))
         }
         return Resolved(indicators, unavailable)
@@ -89,11 +93,25 @@ object Feedback {
                 }
                 IndicatorState(true, c.positions.getOrNull(idx)?.label, source)
             }
-            ControlType.SLIDER, ControlType.ROTARY, ControlType.JOYSTICK -> {
+            ControlType.SLIDER, ControlType.ROTARY, ControlType.JOYSTICK, ControlType.ROCKER -> {
                 if (gameRaw != null) IndicatorState(truthy(gameRaw) == true, text(gameRaw), FeedbackSource.GAME)
                 else IndicatorState(value != 0f, null, FeedbackSource.LOCAL)
             }
+            ControlType.GAUGE -> IndicatorState(gameRaw != null, gauge(c, gameRaw), if (gameRaw != null) FeedbackSource.GAME else FeedbackSource.LOCAL)
+            ControlType.INDICATOR -> IndicatorState(truthy(gameRaw) == true, null, if (gameRaw != null) FeedbackSource.GAME else FeedbackSource.LOCAL)
+            ControlType.PAGE -> IndicatorState(false)
         }
+    }
+
+    /** A gauge's readout: number x scale with its decimals, or the raw text ("D", "N"); "--" before the game reports. */
+    fun gauge(c: Control, v: Any?): String = when (v) {
+        null -> "--"
+        is Number -> {
+            val x = v.toDouble() * c.scale
+            if (c.decimals <= 0) x.roundToInt().toString() else "%.${c.decimals.coerceAtMost(4)}f".format(java.util.Locale.ROOT, x)
+        }
+        is Boolean -> if (v) "ON" else "OFF"
+        else -> v.toString()
     }
 
     private fun text(v: Any?): String? = when (v) {

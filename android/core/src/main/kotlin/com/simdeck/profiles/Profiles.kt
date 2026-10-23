@@ -18,8 +18,11 @@ import java.util.UUID
 
 /** Import and export of `.simdeck.json` files (PROTOCOL.md, Profile file format). */
 object ProfileJson {
-    /** Newest schema this app reads. 2 added the joystick control and Control.actionY. */
-    const val SCHEMA = 2
+    /**
+     * Newest schema this app reads. 2 added the joystick control and Control.actionY. 3 (SimDeck 1.1) added rockers,
+     * gauges, lamps, page switches, safety covers, slider detents, auto pages and Profile.processNames.
+     */
+    const val SCHEMA = 3
 
     /**
      * A profile is written with the oldest schema that can hold it, so a profile without
@@ -27,8 +30,16 @@ object ProfileJson {
      * before decoding (this one, from 1.0) refuses a newer file with a clear "newer version"
      * message; the betas decoded first, so they show a parse error for a schema 2 file.
      */
-    fun schemaFor(profile: Profile): Int =
-        if (profile.pages.any { pg -> pg.controls.any { it.type == ControlType.JOYSTICK } }) 2 else 1
+    fun schemaFor(profile: Profile): Int {
+        val controls = profile.pages.flatMap { it.controls }
+        val v3 = profile.processNames.isNotEmpty() || profile.pages.any { it.auto != null } || profile.game !in setOf(GameId.BEAMNG, GameId.MUDRUNNER, GameId.CUSTOM) ||
+            controls.any { it.type.ordinal > ControlType.JOYSTICK.ordinal || it.guard || it.detents > 1 }
+        return when {
+            v3 -> 3
+            controls.any { it.type == ControlType.JOYSTICK } -> 2
+            else -> 1
+        }
+    }
 
     fun export(profile: Profile): String =
         Protocol.prettyJson.encodeToString(Profile.serializer(), profile.copy(schema = schemaFor(profile)))
@@ -88,6 +99,10 @@ object LayoutOps {
             ControlType.SLIDER -> base.copy(h = 2, accent = Accent.GREEN, action = Action.VJoyAxis(1, "SL0", AxisRange.UNIPOLAR), range = AxisRange.UNIPOLAR)
             ControlType.ROTARY -> base.copy(w = 2, h = 2, accent = Accent.CYAN)
             ControlType.JOYSTICK -> base.copy(w = 2, h = 2, accent = Accent.AMBER, action = Action.VJoyAxis(1, "X"), actionY = Action.VJoyAxis(1, "Y"))
+            ControlType.ROCKER -> base.copy(h = 2, accent = Accent.CYAN, cw = Action.Key(listOf("UP")), ccw = Action.Key(listOf("DOWN")))
+            ControlType.GAUGE -> base.copy(w = 2, accent = Accent.CYAN, feedbackKey = "speed", scale = 3.6, unit = "km/h")
+            ControlType.INDICATOR -> base.copy(accent = Accent.AMBER, icon = "check_engine", feedbackKey = "parkingbrake")
+            ControlType.PAGE -> base.copy(icon = "page_next", pageTarget = "next")
         }
         return clamp(c, page)
     }
@@ -100,6 +115,10 @@ object LayoutOps {
         ControlType.SLIDER -> "Slider"
         ControlType.ROTARY -> "Dial"
         ControlType.JOYSTICK -> "Joystick"
+        ControlType.ROCKER -> "Rocker"
+        ControlType.GAUGE -> "Speed"
+        ControlType.INDICATOR -> "Lamp"
+        ControlType.PAGE -> "Next page"
     }
 
     /** Smallest span (w, h) a control may have so it stays usable at touch size. */

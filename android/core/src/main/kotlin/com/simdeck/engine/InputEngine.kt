@@ -343,7 +343,8 @@ class InputEngine(
                 tapAction(action, i, control.positions.size)
             }
             ControlType.ROTARY -> Unit // handled by onRotary
-            ControlType.JOYSTICK -> Unit // the UI sends its two axes as sliders (Joystick)
+            ControlType.JOYSTICK, ControlType.ROCKER -> Unit // the UI sends its axes / halves as sliders and buttons (Joystick)
+            ControlType.GAUGE, ControlType.INDICATOR, ControlType.PAGE -> Unit // display only
         }
     }
 
@@ -494,7 +495,7 @@ class InputEngine(
         fun hidCapable(control: Control): Boolean {
             val actions = when (control.type) {
                 ControlType.SWITCH, ControlType.RADIO -> control.positions.map { it.action }
-                ControlType.ROTARY -> listOf(control.cw, control.ccw)
+                ControlType.ROTARY, ControlType.ROCKER -> listOf(control.cw, control.ccw)
                 ControlType.JOYSTICK -> listOf(control.action, control.actionY)
                 else -> listOf(control.action)
             }.filter { it !is Action.None }

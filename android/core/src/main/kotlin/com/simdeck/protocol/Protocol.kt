@@ -3,6 +3,10 @@ package com.simdeck.protocol
 import com.simdeck.model.Action
 import com.simdeck.model.AxisRange
 import com.simdeck.model.Capabilities
+import com.simdeck.model.GameAction
+import com.simdeck.model.VJoyInfo
+import com.simdeck.model.VehicleFeature
+import com.simdeck.model.VehicleFeatures
 import com.simdeck.model.Control
 import com.simdeck.model.Joystick
 import com.simdeck.model.ControlType
@@ -177,6 +181,16 @@ object Protocol {
                 busy = o["busy"]?.jsonPrimitive?.booleanOrNull ?: false,
                 alreadyBound = o["alreadyBound"]?.jsonPrimitive?.booleanOrNull ?: false,
             )
+            "beamng.features" -> Incoming.BeamNGFeatures(features(o))
+            "beamng.actions" -> Incoming.BeamNGActions(
+                (o["list"] as? JsonArray)?.mapNotNull { e ->
+                    val a = e as? JsonObject ?: return@mapNotNull null
+                    val name = a.s("name") ?: return@mapNotNull null
+                    GameAction(name, a.s("title") ?: name, a.s("cat") ?: "", a.b("vehicle"), a.b("axis"))
+                } ?: emptyList()
+            )
+            "notice" -> Incoming.Notice(str("level") ?: "info", str("code") ?: "", str("message") ?: "")
+            "foreground" -> Incoming.Foreground(str("exe") ?: "")
             "discover.reply" -> Incoming.DiscoverReply(
                 str("name") ?: "PC",
                 o["wsPort"]?.jsonPrimitive?.intOrNull ?: WS_PORT,
@@ -184,6 +198,27 @@ object Protocol {
             )
             else -> Incoming.Unknown(str("type"))
         }
+    }
+
+    private fun JsonObject.s(k: String) = (this[k] as? JsonPrimitive)?.contentOrNull
+    private fun JsonObject.b(k: String) = (this[k] as? JsonPrimitive)?.booleanOrNull ?: false
+
+    /** "beamng.features": the list (an empty Lua table may arrive as {} instead of []) and the diagnostics block. */
+    fun features(o: JsonObject): VehicleFeatures {
+        val list = (o["list"] as? JsonArray)?.mapNotNull { e ->
+            val f = e as? JsonObject ?: return@mapNotNull null
+            val id = f.s("id")?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+            VehicleFeature(id, f.s("title") ?: id, f.s("kind") ?: "button", f.b("centered"), f.s("source") ?: "", f.s("stateKey"))
+        } ?: emptyList()
+        val diag = (o["diag"] as? JsonObject)?.let { d -> flatten(d, "") } ?: emptyList()
+        return VehicleFeatures(o.s("vehicle") ?: "", list, diag)
+    }
+
+    private fun flatten(e: JsonElement, prefix: String): List<String> = when (e) {
+        is JsonObject -> e.entries.sortedBy { it.key }.flatMap { (k, v) -> flatten(v, if (prefix.isEmpty()) k else "$prefix.$k") }
+        is JsonArray -> if (e.isEmpty()) emptyList() else listOf("$prefix: " + e.joinToString(" | ") { (it as? JsonPrimitive)?.content ?: it.toString() })
+        is JsonPrimitive -> listOf("$prefix: ${e.content}")
+        else -> emptyList()
     }
 
     private fun capabilities(e: JsonElement?): Capabilities {
@@ -195,6 +230,14 @@ object Protocol {
             vigem = b("vigem"),
             beamng = b("beamng"),
             outgauge = b("outgauge"),
+            vjoyInfo = (o["vjoyInfo"] as? JsonArray)?.mapNotNull { x ->
+                val d = x as? JsonObject ?: return@mapNotNull null
+                VJoyInfo(
+                    device = (d["device"] as? JsonPrimitive)?.intOrNull ?: return@mapNotNull null,
+                    buttons = (d["buttons"] as? JsonPrimitive)?.intOrNull ?: 0,
+                    axes = (d["axes"] as? JsonArray)?.mapNotNull { (it as? JsonPrimitive)?.contentOrNull } ?: emptyList(),
+                )
+            } ?: emptyList(),
         )
     }
 
@@ -234,6 +277,11 @@ sealed interface Incoming {
         val alreadyBound: Boolean = false,
     ) : Incoming
     data class DiscoverReply(val name: String, val wsPort: Int, val udpPort: Int) : Incoming
+    data class BeamNGFeatures(val features: VehicleFeatures) : Incoming
+    data class BeamNGActions(val list: List<GameAction>) : Incoming
+    /** A message for the user, e.g. code "vjoy_config" when vJoy is set up with too few buttons for the profile. */
+    data class Notice(val level: String, val code: String, val message: String) : Incoming
+    data class Foreground(val exe: String) : Incoming
     data class VersionMismatch(val remoteVersion: Int) : Incoming
     data class Malformed(val text: String) : Incoming
     data class Unknown(val type: String?) : Incoming
