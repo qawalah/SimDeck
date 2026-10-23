@@ -264,7 +264,7 @@ fun GuardCover(label: String, active: Boolean, modifier: Modifier, content: @Com
                 Modifier
                     .fillMaxSize()
                     .clip(CapShape())
-                    .background(Race.Ground.copy(alpha = 0.72f))
+                    .background(Race.Panel)
                     .border(2.dp, Race.Red.copy(alpha = 0.8f), CapShape())
                     .semantics { role = Role.Button; contentDescription = "$label: lift the cover"; onClick { open = true; true } }
                     .then(

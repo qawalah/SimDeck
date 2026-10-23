@@ -10,6 +10,8 @@ can switch to the right profile by itself when a game comes to the front on the 
 
 ![The BeamNG.drive profile on a phone](docs/images/play-beamng.png)
 
+![The Vehicle page, filled with what a pickup has](docs/images/play-beamng-vehicle.png)
+
 ## Download
 
 Get the latest release from **https://github.com/alialyami90/GameControl/releases**: `SimDeck.apk` (phone),

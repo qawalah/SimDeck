@@ -239,6 +239,7 @@ object BuiltInProfiles {
                 lamp("bng_lamp_pb", "Park brake", "parking_brake", "parkingbrake", 3, 3, Accent.RED),
                 lamp("bng_lamp_hi", "High beam", "high_beam", "lights.high", 4, 3, Accent.BLUE),
                 lamp("bng_lamp_ign", "Ignition", "ignition", "ignition", 5, 3, Accent.GREEN),
+                lamp("bng_lamp_cc", "Cruise on", "cruise", "cruise.active", 6, 2, Accent.GREEN),
             ),
         )
         val world = Page(

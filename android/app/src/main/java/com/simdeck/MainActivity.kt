@@ -34,7 +34,7 @@ import com.simdeck.ui.screens.ConnectScreen
 import com.simdeck.ui.screens.EditorScreen
 import com.simdeck.ui.screens.PlayScreen
 import com.simdeck.ui.screens.ProfilesScreen
-import com.simdeck.ui.theme.GcTheme
+import com.simdeck.ui.theme.SimDeckTheme
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -45,7 +45,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         setContent {
-            GcTheme {
+            SimDeckTheme {
                 AppRoot(vm)
             }
         }

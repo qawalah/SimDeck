@@ -59,7 +59,7 @@ val RaceShapes = Shapes(
 )
 
 @Composable
-fun GcTheme(content: @Composable () -> Unit) {
+fun SimDeckTheme(content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = RaceScheme,
         typography = RaceTypography,
