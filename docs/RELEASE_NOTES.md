@@ -1,3 +1,59 @@
+# SimDeck 1.1.0
+
+SimDeck is now one app: the GameControl codebase continues under the SimDeck name, with what the earlier SimDeck prototype
+had that GameControl lacked, and fixes for vehicle-specific BeamNG functions and the machine (utility) profiles.
+
+## Upgrading
+
+- The app's package is now `com.simdeck.app`, so it installs **next to** GameControl or the earlier SimDeck instead of over
+  them. Export the profiles you made, uninstall the old app, install `SimDeck.apk`, import them, and pair once with the PIN.
+- BeamNG: delete the old mod zips (`gamecontroller.zip`, `simdeck_bridge.zip` or an older `simdeck.zip`) from the `mods`
+  folder and copy in the new `simdeck.zip` (version 1.1.0). Two copies of the mod fight over the same port.
+- Replace the PC companion with the new one.
+
+## Vehicle-specific BeamNG functions (fixed)
+
+Tailgates, doors, dump beds, cranes, outriggers, ramps, lift axles and similar did not work because the mod only looked in one
+place for them. BeamNG keeps them in four: the vehicle's `input_actions*.json`, its `*.interaction.json` files (the newer
+"Triggers2" actions, switched on per vehicle in its jbeam), the shared `vehicles/common` interaction maps, and the game's
+own list of active actions. The mod now reads all four, and also drives couplers (tailgate latches, fifth wheels) and
+hydraulics directly in vehicle Lua, so a function works even when it has no input action.
+
+- **Vehicle page**: a new page in the BeamNG.drive profile that fills itself with the functions of the vehicle you are
+  driving: buttons for actions and couplers, spring-centred sliders for hydraulics. Nothing to bind. If it stays empty, it
+  says why and shows what the mod found where.
+- In the editor, the BeamNG command field now offers **This vehicle** and **Game actions** by name, and sliders can drive a
+  BeamNG analog action or hydraulic directly.
+- In the BeamNG console, `simdeckLink.report()` lists everything the mod found for the current vehicle.
+
+## Utility and machine profiles (fixed)
+
+They failed silently in two ways, both now caught:
+- vJoy ignores buttons above the number set in *Configure vJoy* (8 by default) and axes that aren't ticked, so most of a
+  machine cab did nothing. The companion now checks each profile against the vJoy setup and the phone shows a warning
+  strip saying exactly what to change.
+- Pushing a joystick or bipolar lever below centre was never released when the phone went away. Fixed in the companion.
+- **Bind helper** (editor > Binding): while you assign controls in a game's settings, each joystick moves one axis at a
+  time, so the game captures the axis you mean instead of whichever moved first.
+- In BeamNG you don't need them at all: the Vehicle page drives a machine's hydraulics directly.
+
+## New from SimDeck
+
+- **Controls**: rocker switch (hold up / down), gauge (any game value with scale and unit), tell-tale lamp, page key,
+  a safety cover for any button or selector, and notched sliders.
+- **Profiles**: SnowRunner, Expeditions: A MudRunner Game, Euro Truck Simulator 2, American Truck Simulator, Farming
+  Simulator 25, Assetto Corsa Competizione and Microsoft Flight Simulator; a crane page for MudRunner; and a much larger
+  BeamNG.drive profile (Vehicle, Lights & assists with tell-tales and gauges, World, and analog Pedals pages).
+- **Automatic profile switching**: the companion tells the phone which game is in front, and the phone opens the profile
+  made for it (set the game program in the editor; on by default, off in editor > Binding).
+- **Icons**: 65 more, including tailgate, door, ramp, lift axle, crane, PTO, landing gear, flaps and autopilot.
+
+## Not tested in game
+
+This round was built and tested with the automated suites only (207 mod, 139 companion and 41 phone-core tests). The new
+BeamNG discovery and the vJoy checks follow BeamNG's documentation and vJoy's API but have not been run in BeamNG or on a
+PC with vJoy. If the Vehicle page stays empty for a vehicle, send the `simdeckLink.report()` output from the console.
+
 # SimDeck 1.0.0
 
 The first full release of SimDeck: an Android phone or tablet as an extra control surface for Windows games.

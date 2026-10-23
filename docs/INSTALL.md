@@ -65,7 +65,7 @@ panel comes first: use the companion.
    shows a 6-digit PIN.
 2. Optional drivers:
    - **vJoy** (extra joystick buttons and axes through the companion): install the maintained fork from
-     https://github.com/BrunnerInnovation/vJoy/releases and enable device 1 with 128 buttons and all axes in *Configure vJoy*.
+     https://github.com/BrunnerInnovation/vJoy/releases and enable device 1 with 128 buttons and all axes in *Configure vJoy* (at least 32 buttons; the phone warns when the profile needs more than vJoy has).
    - **ViGEmBus** (virtual Xbox pad for XInput-only games): https://github.com/nefarius/ViGEmBus/releases. The project is
      archived upstream, so it is optional.
 3. On the phone open **Connect > PC companion**. Your PC appears in the list (same Wi-Fi network). Tap it, enter the PIN.
@@ -77,9 +77,14 @@ panel comes first: use the companion.
 
 1. Copy `simdeck.zip` (still zipped) into `%LOCALAPPDATA%\BeamNG.drive\<version>\mods\`. In BeamNG,
    **Options > Other > Open user folder** opens that folder; the zip goes in its `mods` folder.
-2. Start BeamNG with the companion running. In the companion window the node **BeamNG mod** shows "Mod 1.0.0 connected".
+   Remove any older copy first (`gamecontroller.zip`, `simdeck_bridge.zip`): two copies fight over the same port.
+2. Start BeamNG with the companion running. In the companion window the node **BeamNG mod** shows "Mod 1.1.0 connected".
 3. On the phone open the **BeamNG.drive** profile: every vehicle function, lamps light from the real game state,
    and controls the current vehicle doesn't have (fog lights, diff locks, low range...) are dimmed.
+   The **Vehicle** page fills itself with what the car you drive has beyond the basics: tailgate, doors, dump bed, crane,
+   outriggers, lift axle, ramps and so on, as buttons and spring-centred sliders. Nothing to bind. Machines (loaders,
+   excavators, cranes) work here too, without the vJoy setup the Utility profile needs. If the page stays empty it says why;
+   for a vehicle that should have something, open the BeamNG console (` key), type `simdeckLink.report()` and send the lines.
 4. Prefer Bluetooth? Use **BeamNG.drive (Bluetooth pad)**. Bind it once: with the companion connected, BeamNG running with the
    mod, and the pad known to the companion (phone paired over Bluetooth, or vJoy installed), open the profile, tap **Edit**,
    then on a phone the **gear icon** in the top bar (on a tablet the right-hand panel), scroll to **BEAMNG** and tap
@@ -101,6 +106,17 @@ panel comes first: use the companion.
   Common jobs keep the same button on every machine (1 start, 2 horn, 3 beacon, 4 lights, 6 park brake, 11 camera).
   Jobs only one machine has can share a button with another machine's own job, so bind each machine on its own.
   Every machine button is 32 or below, so games that only read 32 joystick buttons see them all.
+- **SnowRunner**, **Euro Truck Simulator 2** and **American Truck Simulator** use the games' default keys for the common
+  functions; the rest are gamepad buttons, numbered on each control. **Expeditions**, **Farming Simulator 25**, **Assetto
+  Corsa Competizione** and **Microsoft Flight Simulator** are all gamepad buttons and axes: bind each once in the game.
+- **vJoy setup for the machine and gamepad-button profiles:** in *Configure vJoy* give device 1 at least 32 buttons and
+  tick all 8 axes, then press Apply. With fewer, the companion shows a warning strip on the phone naming what is missing,
+  because vJoy would silently drop those buttons and axes.
+- **Binding sticks in a game:** turn on **Bind helper** (editor > settings > Binding) while you assign controls in the game's
+  menu. Each joystick then moves one axis at a time, so the game captures the axis you meant. Turn it off to play.
+- **Automatic profile switching:** each built-in profile knows its game's program (for example `BeamNG.drive.x64.exe`).
+  When that program comes to the front on the PC, the phone opens the profile. Set the program for your own profiles in the
+  editor (**Game program**); turn the feature off with **Open profiles automatically**.
 - Make your own: **New profile**, then **Edit**. Add controls from the palette, drag to move, drag the corner to
   resize, and set what each one does in the inspector: keys, gamepad buttons/axes, macros, BeamNG commands or Xbox
   buttons. Profiles export and import as `.simdeck.json` files.
@@ -116,7 +132,9 @@ panel comes first: use the companion.
   the phone tap **MAKE DISCOVERABLE** and add it again.
 - **The PC's sound moved to the phone after pairing.** See section 2a, step 2.
 - **No lamps in BeamNG.** Check that **SimDeck for BeamNG** is enabled in BeamNG's mod manager and that the companion window shows
-  "Mod 1.0.0 connected".
+  "Mod 1.1.0 connected".
+- **A machine or utility profile does nothing in the game.** Look for the amber warning strip on the phone: it names the vJoy
+  buttons or axes to enable in *Configure vJoy*. Then rebind in the game with **Bind helper** on.
 - **Reporting a problem.** The companion's settings and log are in `%APPDATA%\SimDeck\` (`companion.json`,
   `companion.log`); **Settings > Settings and log > OPEN FOLDER** in the companion opens it. Attach `companion.log` (a second copy started with `--allow-second` writes `companion-second.log`). The pairing PIN is masked in the log.
 

@@ -4,7 +4,7 @@ This file guides Claude Code (claude.ai/code), or any developer, working in this
 
 ## Status
 
-Version 1.0.0 has been released. The Reviewer signed off on it with 0 open comments (`docs/review/rc3.md`). The project overview for a new developer is in [docs/HANDOVER.md](docs/HANDOVER.md). Read it first.
+Version 1.0.0 has been released (the Reviewer signed off with 0 open comments, `docs/review/rc3.md`). 1.1.0 (this tree) adds the BeamNG Vehicle page, vJoy checks, automatic profile switching and more games; it is untested in game, see RELEASE_NOTES. The project overview for a new developer is in [docs/HANDOVER.md](docs/HANDOVER.md). Read it first.
 
 ## What this project is
 

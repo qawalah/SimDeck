@@ -215,11 +215,45 @@ Phone to companion, to ask the mod to write in-game bindings for the vJoy button
 {"v":1,"type":"beamng.bindings.apply","device":"vjoy1","bindings":[{"beamngAction":"toggle_headlights","button":5}]}
 ```
 
+### Vehicle features (SimDeck 1.1)
+
+The mod reports what the vehicle being driven can do beyond the standard car functions, so the phone's **Vehicle** page (an auto page, see the profile format) fills itself and needs no binding. Mod to companion, after every vehicle change and whenever vehicle Lua finishes its scan:
+
+```json
+{"v":1,"type":"features","vehicle":"pickup","list":[
+  {"id":"action.toggle_tailgate","title":"Tailgate","kind":"button","source":"input_actions"},
+  {"id":"coupler.tailgateCoupler.toggle","title":"Tailgate latch","kind":"button","source":"coupler"},
+  {"id":"hydro.dump_bed","title":"Dump bed","kind":"axis","centered":true,"source":"hydro","stateKey":"hydro.dump_bed"}],
+ "diag":{"vehicle":"pickup","sources":{"global":412,"input_actions":3,"interaction":2,"interaction_common":5,"game":0},
+         "couplers":1,"hydros":1,"enabledInteractions":6,"vehicleScan":true,"gameList":false,"errors":[],"modVersion":"1.1.0"}}
+{"v":1,"type":"actions","vehicle":"pickup","list":[{"name":"toggle_tailgate","title":"Tailgate","cat":"vehicle_specific","vehicle":true,"axis":null}]}
+```
+
+- `kind`: `button` (press / release), `hold` (on while held), `axis` (-1..1 when `centered`, else 0..1; springs back). `source`: `input_actions` (the vehicle's `input_actions*.json`), `interaction` (the vehicle's `*.interaction.json`, enabled by its jbeam `actionsEnabled`), `interaction_common` (`vehicles/common/*.interaction.json` the vehicle enables), `game` (the game's own active-action list), `coupler` (a coupler controller with a toggle group, e.g. a tailgate latch or fifth wheel), `hydro` (a hydraulic whose input is an electrics value).
+- An empty list arrives as `[]` or `{}` (a Lua empty table). `diag` is informational: it says which source found what, for troubleshooting.
+- The companion relays them to the phone as `{"v":1,"type":"beamng.features",...}` and `{"v":1,"type":"beamng.actions",...}` (same fields), sends the last ones to every new session, and sends an empty `beamng.features` when the mod disconnects.
+- In the console, `simdeckLink.report()` prints the same diagnostics and every feature found.
+
+New commands: `coupler.<controller>.toggle` (edge: opens or closes that coupler group), `hydro.<electricsName>` (level -1..1 while held, 0 on release; the vehicle's hydraulic follows it like its own input), and `action.<name>` now also takes analog values: the action's `onDown` runs on the rising edge, `onUp` on the falling edge, and `onChange` with the value itself, so a slider can drive an analog action such as `action.accelerate` or `action.steering`. The state key `hydro.<electricsName>` reports the hydraulic's input.
+
 ### BeamNG command names
 
 `<feature>.toggle` flips state once per event it receives (the phone sends it on the rising edge from a `momentary` control and on every change from a `latching` one, see Duplicates above); `<feature>` with value 1/0 sets state idempotently (setters exist for every toggle feature below); plain names for one-shots. The mod owns the exact list and reports it in `commands`. Minimum set used by the built-in profile:
 
 `action.<beamngActionName>` (value 1 = press, 0 = release; runs any BeamNG input action by name, passes the value through), `ignition.toggle`, `starter` (value 1 = crank, 0 = stop), `lights.low.toggle`, `lights.high.toggle`, `lights.fog.toggle`, `lights.light_bar.toggle`, `signal.left.toggle`, `signal.right.toggle`, `hazard.toggle`, `horn` (value 1/0), `parkingbrake.toggle`, `esc.toggle`, `tcs.toggle`, `diff.front.toggle`, `diff.center.toggle`, `diff.rear.toggle`, `awd.toggle`, `range.toggle`, `gearbox.mode` (value = index into P,R,N,D,S,M), `gear.up`, `gear.down`, `cruise.toggle`, `cruise.set`, `cruise.up`, `cruise.down`, `camera.next`, `camera.prev`, `recover` (value 1/0, hold to rewind), `reset`, `reset.full`, `slowmo.toggle`, `slowmo.faster`, `slowmo.slower`, `pause.toggle`.
+
+## Companion notices and foreground game (SimDeck 1.1)
+
+Companion to phone:
+
+```json
+{"v":1,"type":"notice","level":"warn","code":"vjoy_config","message":"vJoy device 1 has 8 buttons, this profile uses up to 32. Open Configure vJoy, set 32 or more buttons and tick every axis it uses (RX, SL0)."}
+{"v":1,"type":"foreground","exe":"BeamNG.drive.x64.exe"}
+```
+
+- `notice` follows every `profile.sync` when something in the PC's setup stops the profile from working. `vjoy_config`: vJoy silently drops buttons above the device's configured count and moves on axes that are not enabled, so the companion compares each vJoy binding with the device's configuration. A notice with an empty `message` clears that `code`.
+- `foreground` is sent when the program in front on the PC changes (and to each new session). The phone opens the profile whose `processNames` contain that exe, if the user allows automatic switching.
+- `capabilities` gains `vjoyInfo`: `[{"device":1,"buttons":8,"axes":["X","Y","Z"]}]` for each vJoy device the companion can read.
 
 ## Key names
 
@@ -233,4 +267,6 @@ Extended (need `KEYEVENTF_EXTENDEDKEY`): `RCTRL RALT LWIN RWIN APPS UP DOWN LEFT
 
 ## Profile file format (import / export)
 
-A profile is exported as one JSON file, `<name>.simdeck.json`, with `"schema": 1`. It is the Android `Profile` model serialized with kotlinx.serialization (`classDiscriminator = "type"` for actions). See `examples/profile-example.json`. Importers ignore unknown fields and fill missing ones with defaults.
+A profile is exported as one JSON file, `<name>.simdeck.json`, with the lowest `"schema"` that can hold it: 1, 2 for joysticks, 3 for anything new in SimDeck 1.1 (rocker, gauge, indicator and page controls; `guard`; slider `detents`; auto pages; `processNames`; the newer games). An app refuses a schema newer than it knows.
+
+Schema 3 fields: on a profile, `processNames` (Windows exe names for automatic switching). On a page, `auto` (`"beamng.vehicle"`: the page's controls are generated from `beamng.features` and are not saved). On a control, `guard` (safety cover: first tap lifts it), `detents` (slider notches), `scale`, `decimals`, `unit` (gauge), `pageTarget` (`next`, `prev` or a page id). Control `type` adds `rocker` (two momentary halves on the wire, `<id>.up` from `cw` and `<id>.down` from `ccw`), `gauge`, `indicator` and `page` (display or in-app only: never in `profile.sync`). It is the Android `Profile` model serialized with kotlinx.serialization (`classDiscriminator = "type"` for actions). See `examples/profile-example.json`. Importers ignore unknown fields and fill missing ones with defaults.

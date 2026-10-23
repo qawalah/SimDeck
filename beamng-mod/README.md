@@ -4,7 +4,9 @@ This optional add-on lets the SimDeck phone app work hand in hand with BeamNG.dr
 
 - reports what the car is doing (lights, signals, ESC, diff locks, 4WD, gear, speed, and more), so buttons on the phone light up and controls the car doesn't have are hidden;
 - runs car functions directly when you press a button on the phone, without needing a key binding;
-- binds the phone's vJoy or Bluetooth controller buttons to BeamNG actions for you, when you pick "Apply bindings in BeamNG" in the app.
+- binds the phone's vJoy or Bluetooth controller buttons to BeamNG actions for you, when you pick "Apply bindings in BeamNG" in the app;
+- tells the phone what the vehicle you drive can do beyond the basics (tailgate, doors, bed, crane, outriggers...), so the
+  BeamNG profile's **Vehicle** page fills itself and drives them with no binding.
 
 ## Install
 
@@ -14,7 +16,7 @@ This optional add-on lets the SimDeck phone app work hand in hand with BeamNG.dr
    ```
 2. Copy `simdeck.zip` into your BeamNG user folder's `mods` folder. That is usually
    `%LOCALAPPDATA%\BeamNG.drive\<version>\mods` (older versions use `Documents\BeamNG.drive\mods`). In game you can open it from **Options > Other > Open user folder**.
-3. Start BeamNG.drive and make sure **SimDeck for BeamNG** is enabled in **Mods** (it shows version 1.0.0 and author ALI).
+3. Start BeamNG.drive and make sure **SimDeck for BeamNG** is enabled in **Mods** (it shows version 1.1.0 and author ALI). Remove older copies (`gamecontroller.zip`, `simdeck_bridge.zip`) first.
 4. Start the SimDeck companion on the same PC. The mod connects by itself within a few seconds and shows "Connected to the SimDeck companion". It keeps retrying every 3 seconds while the companion is closed, so the start order doesn't matter.
 
 To remove it, delete the zip or disable it in **Mods**. If you applied bindings from the app, they live in `settings/inputmaps/<vidpid>_simdeck.json` in the user folder; delete that file to remove them, or change them as usual in **Options > Controls**.
@@ -36,6 +38,23 @@ Commands use the most direct route that is reliable:
 - If a direct route is missing on a vehicle, the mod falls back to the matching action (for example `toggle4WDStatus` or `toggleESCMode`), and the other way round.
 
 The protocol is in [`protocol/PROTOCOL.md`](../protocol/PROTOCOL.md), section "BeamNG mod link". The mod reports its exact command list in the `commands` message.
+
+### Vehicle features (the Vehicle page)
+
+Vehicle-specific functions live in different places depending on the vehicle and the game version, so the mod looks in all of them and merges what it finds:
+
+| Source | What it is |
+|---|---|
+| `vehicles/<model>/input_actions*.json` | The classic vehicle-specific bindings (for example a pickup's tailgate) |
+| `vehicles/<model>/*.interaction.json` | The newer interaction actions ("Triggers2"), switched on per vehicle by `actionsEnabled` in its jbeam |
+| `vehicles/common/*.interaction.json` | Shared interaction maps, kept only when the vehicle enables them |
+| `core_input_actions.getActiveActions()` | The game's own list of active actions, when this version has it |
+| Vehicle Lua: couplers | Coupler controllers with a toggle group (tailgate latches, fifth wheels, hitches): `coupler.<name>.toggle` |
+| Vehicle Lua: hydraulics | Hydraulics whose input is an electrics value (beds, cranes, outriggers): `hydro.<name>`, -1..1 while held |
+
+Each found function goes to the phone as a feature with a title (translated where the game has a translation), a kind (button, hold or axis) and its source. The console line `vehicle features for <vehicle>: <count> (input_actions=… interaction=… common=… game=… couplers=… hydros=…)` says how many came from each source.
+
+**If a function is missing**, open the console and run `simdeckLink.report()`: it prints the diagnostics (which files were read, what the vehicle Lua scan found, any errors) and every feature with its command id. Those lines are what to send in a bug report.
 
 ### Notes on specific features
 

@@ -23,14 +23,16 @@ The app has two routes, and it can use both at once:
 
 ### Android module layout
 
-- `:core` is plain JVM with no Android dependency: the model (`Profile`, `Page`, `Control`, `Action`), `InputEngine`, `Feedback`, `Protocol`, the HID descriptor, `BuiltInProfiles`, `LayoutOps`, and `ProfileJson` (import and export as `.simdeck.json`, schema 2). `-PcoreOnly=true` builds and tests it without the Android SDK.
+- `:core` is plain JVM with no Android dependency: the model (`Profile`, `Page`, `Control`, `Action`), `InputEngine`, `Feedback`, `Protocol`, the HID descriptor, `BuiltInProfiles`, `LayoutOps`, and `ProfileJson` (import and export as `.simdeck.json`, schema 3), and `VehicleFeaturePages` (fills auto pages from the mod's `beamng.features`). `-PcoreOnly=true` builds and tests it without the Android SDK.
 - `:app` holds the Compose UI (`ui/screens`, `ui/components`, `ui/theme`, `ui/icons`), `AppViewModel`, `BluetoothHidLink`, `CompanionClient`, and storage.
 
-Control types are momentary, latching, switch, button group, slider, rotary, and joystick. A joystick is two spring-centred slider axes on the wire: `<id>.x` and `<id>.y`.
+Control types are momentary, latching, switch, button group, slider, rotary, joystick, rocker, gauge, lamp (indicator) and page key. A joystick is two spring-centred slider axes on the wire: `<id>.x` and `<id>.y`; a rocker is two momentary buttons: `<id>.up` and `<id>.down`. Gauges, lamps and page keys never go on the wire (`ControlType.displayOnly`).
+
+`AppViewModel` keeps the stored profile (`baseProfile`) apart from the one being played (`activeProfile`), which is the stored one with its auto pages filled for the current vehicle; every `beamng.features` refills it and re-syncs the companion. It also handles `notice` (warning strip), `foreground` (automatic profile switching by `Profile.processNames`) and the bind helper (joystick axis lock).
 
 ### Built-in profiles
 
-`BuiltInProfiles.kt` has seven: Generic gamepad, Keyboard keys, BeamNG.drive, BeamNG.drive (Bluetooth pad), MudRunner, Bulldozer, and Utility vehicles (loader, excavator, crane, plough & tow). The machine profiles keep button numbers at 32 or below, and common jobs share one number across machines. The comment above `bulldozer()` lists them.
+`BuiltInProfiles.kt` has fourteen: Generic gamepad, Keyboard keys, BeamNG.drive (with the auto Vehicle page), BeamNG.drive (Bluetooth pad), MudRunner, SnowRunner, Expeditions, Euro Truck Simulator 2, American Truck Simulator, Farming Simulator 25, Assetto Corsa Competizione, Microsoft Flight Simulator, Bulldozer, and Utility vehicles (loader, excavator, crane, plough & tow). Every game profile lists its executables in `processNames` (a test checks it). The machine profiles keep button numbers at 32 or below, and common jobs share one number across machines. The comment above `bulldozer()` lists them.
 
 ### Design
 
@@ -69,6 +71,8 @@ Before each release:
 Unit tests cannot cover Bluetooth pairing, vJoy, ViGEm, SendInput, or BeamNG in game. [SMOKE_TEST.md](SMOKE_TEST.md) is the end-to-end script for these, and takes about an hour. Run it before every release. `beamng-mod/EXPECTED.md` lists the log lines the mod should print in game.
 
 ## History and known limits
+
+- 1.1.0 merged the earlier SimDeck prototype into this codebase (which was called GameControl until then) and renamed it SimDeck throughout, including the Android package (`com.simdeck.app`). It added the multi-source vehicle feature discovery in the mod, vJoy configuration checks in the companion, and the controls, profiles and icons the prototype had. None of 1.1.0 has been run in BeamNG or with vJoy yet: run SMOKE_TEST plus the Vehicle page and utility checks in RELEASE_NOTES before calling it released.
 
 - `docs/review/` holds every review round, round 1 to rc3, with each part's replies. When a comment in the code cites an item id (A19, M1, B-3, U28, and so on), you can trace it back there. The 1.0 release candidate was signed off with 0 open comments in `rc3.md`.
 - Known limits are listed in RELEASE_NOTES (Known limits) and `beamng-mod/README.md` (Known limits). They include:
