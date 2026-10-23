@@ -110,6 +110,9 @@ components:
 
 # Design System: SimDeck
 
+This is the house style. Equipment themes for the play surface (airliner, heavy equipment, motorsport and others) are
+specified in [docs/THEMES.md](docs/THEMES.md); this style stays the default theme and the look of everything else.
+
 ## Overview
 
 **Creative North Star: "Race Front-End"**
