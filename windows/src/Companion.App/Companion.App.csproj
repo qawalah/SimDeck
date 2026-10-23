@@ -5,11 +5,11 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <AssemblyName>GameCtlCompanion</AssemblyName>
-    <RootNamespace>GameController.Companion.App</RootNamespace>
+    <AssemblyName>SimDeckCompanion</AssemblyName>
+    <RootNamespace>SimDeck.Companion.App</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\companion.ico</ApplicationIcon>
-    <AssemblyTitle>GameCtl Companion</AssemblyTitle>
+    <AssemblyTitle>SimDeck Companion</AssemblyTitle>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
 

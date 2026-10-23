@@ -2,14 +2,14 @@ using System.Collections.ObjectModel;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using GameController.Companion.App.Controls;
-using GameController.Companion.App.Services;
-using GameController.Companion.Engine;
-using GameController.Companion.Input;
-using GameController.Companion.Net;
-using GameController.Companion.Protocol;
+using SimDeck.Companion.App.Controls;
+using SimDeck.Companion.App.Services;
+using SimDeck.Companion.Engine;
+using SimDeck.Companion.Input;
+using SimDeck.Companion.Net;
+using SimDeck.Companion.Protocol;
 
-namespace GameController.Companion.App.ViewModels;
+namespace SimDeck.Companion.App.ViewModels;
 
 public sealed partial class MainViewModel : ObservableObject, IDisposable
 {
@@ -108,7 +108,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         Outputs.Add(new OutputRow { Key = "keyboard", Title = "Keyboard", Icon = "keyboard", Purpose = "Key presses as hardware scancodes, which DirectInput and raw-input games read." });
         Outputs.Add(new OutputRow { Key = "vjoy", Title = "vJoy joystick", Icon = "joystick", Purpose = "Up to 128 buttons and 8 axes on a virtual joystick, so controls do not use up keyboard keys." });
         Outputs.Add(new OutputRow { Key = "xbox", Title = "Xbox pad", Icon = "gamepad", Purpose = "A virtual Xbox 360 controller for games that only read XInput. Optional." });
-        Outputs.Add(new OutputRow { Key = "beamng", Title = "BeamNG mod", Icon = "car", Purpose = "Game commands and live vehicle state, both ways, through the GameCtl for BeamNG mod." });
+        Outputs.Add(new OutputRow { Key = "beamng", Title = "BeamNG mod", Icon = "car", Purpose = "Game commands and live vehicle state, both ways, through the SimDeck for BeamNG mod." });
         Outputs.Add(new OutputRow { Key = "telemetry", Title = "Telemetry", Icon = "telemetry", Purpose = "OutGauge dashboard data (speed, gear, lamps) when the mod is not installed." });
 
         Action pin = () => Ui(RefreshPin), phones = () => Ui(RefreshPhones), outputs = () => Ui(RefreshOutputs);
@@ -286,7 +286,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         bn.Status = modOk ? (Host.BeamNg?.ModVersion is { } v ? $"Mod {v} connected" : "Mod connected") : "Game not running";
         bn.Detail = modOk ? $"{Host.BeamNg?.KnownCommands.Count ?? 0} commands, live vehicle state" : "Waiting for BeamNG.drive";
         bn.Optional = !modOk;
-        bn.Setup = modOk ? "" : "For BeamNG.drive only. Copy gamecontroller.zip into Documents\\BeamNG.drive\\current\\mods (or BeamNG's user folder \\mods), start the game and load a vehicle. It connects to this PC by itself.";
+        bn.Setup = modOk ? "" : "For BeamNG.drive only. Copy simdeck.zip into Documents\\BeamNG.drive\\current\\mods (or BeamNG's user folder \\mods), start the game and load a vehicle. It connects to this PC by itself.";
 
         var tm = Outputs[4];
         bool ogOn = Host.Config.EnableOutGauge, ogLive = Host.OutGaugeActive, ogFailed = ogOn && Host.OutGaugeFailed;

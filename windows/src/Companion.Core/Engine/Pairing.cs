@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
-using GameController.Companion.Config;
+using SimDeck.Companion.Config;
 
-namespace GameController.Companion.Engine;
+namespace SimDeck.Companion.Engine;
 
 public enum PairOutcome { Ok, BadPin, BadToken, RateLimited, Missing, SaveFailed }
 

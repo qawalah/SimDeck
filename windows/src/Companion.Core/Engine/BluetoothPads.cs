@@ -1,11 +1,11 @@
-namespace GameController.Companion.Engine;
+namespace SimDeck.Companion.Engine;
 
-/// <summary>A phone connected to this PC as the "GameCtl Pad" Bluetooth HID controller.</summary>
+/// <summary>A phone connected to this PC as the "SimDeck Pad" Bluetooth HID controller.</summary>
 /// <param name="Id">Stable per physical device (all HID collections of one pad share it).</param>
 public sealed record BluetoothPad(string Id, string Name);
 
 /// <summary>
-/// Lists the GameCtl Pad devices Windows currently has connected. Bluetooth input goes straight from
+/// Lists the SimDeck Pad devices Windows currently has connected. Bluetooth input goes straight from
 /// the phone to Windows and never through the companion, so this is how the window knows about it.
 /// </summary>
 public interface IBluetoothPads
@@ -29,7 +29,7 @@ public static class PhoneLinks
 {
     /// <summary>
     /// Pairs Wi-Fi sessions with Bluetooth pads so a phone with both links counts once. Every phone
-    /// presents the same "GameCtl Pad" name and Android does not expose its Bluetooth address, so the
+    /// presents the same "SimDeck Pad" name and Android does not expose its Bluetooth address, so the
     /// pairing is by order: with one phone (the normal case) it is exact; extra pads or sessions
     /// show on their own.
     /// </summary>

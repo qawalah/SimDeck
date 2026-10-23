@@ -1,7 +1,7 @@
 <!-- Race Front-End tokens and control styles (DESIGN.md at the project root), shared with the phone app's theme. -->
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:c="using:GameController.Companion.App.Controls">
+        xmlns:c="using:SimDeck.Companion.App.Controls">
 
   <Styles.Resources>
     <ResourceDictionary>
@@ -64,13 +64,13 @@
       </LinearGradientBrush>
 
       <!-- Italic condensed for names and numbers; upright Barlow for sentences. -->
-      <FontFamily x:Key="CondBold">avares://GameCtlCompanion/Assets/Fonts#Barlow Condensed</FontFamily>
-      <FontFamily x:Key="CondXBold">avares://GameCtlCompanion/Assets/Fonts#Barlow Condensed ExtraBold</FontFamily>
-      <FontFamily x:Key="CondSemi">avares://GameCtlCompanion/Assets/Fonts#Barlow Condensed SemiBold</FontFamily>
-      <FontFamily x:Key="CondMedium">avares://GameCtlCompanion/Assets/Fonts#Barlow Condensed Medium</FontFamily>
-      <FontFamily x:Key="Body">avares://GameCtlCompanion/Assets/Fonts#Barlow</FontFamily>
-      <FontFamily x:Key="BodyMedium">avares://GameCtlCompanion/Assets/Fonts#Barlow Medium</FontFamily>
-      <FontFamily x:Key="BodySemi">avares://GameCtlCompanion/Assets/Fonts#Barlow SemiBold</FontFamily>
+      <FontFamily x:Key="CondBold">avares://SimDeckCompanion/Assets/Fonts#Barlow Condensed</FontFamily>
+      <FontFamily x:Key="CondXBold">avares://SimDeckCompanion/Assets/Fonts#Barlow Condensed ExtraBold</FontFamily>
+      <FontFamily x:Key="CondSemi">avares://SimDeckCompanion/Assets/Fonts#Barlow Condensed SemiBold</FontFamily>
+      <FontFamily x:Key="CondMedium">avares://SimDeckCompanion/Assets/Fonts#Barlow Condensed Medium</FontFamily>
+      <FontFamily x:Key="Body">avares://SimDeckCompanion/Assets/Fonts#Barlow</FontFamily>
+      <FontFamily x:Key="BodyMedium">avares://SimDeckCompanion/Assets/Fonts#Barlow Medium</FontFamily>
+      <FontFamily x:Key="BodySemi">avares://SimDeckCompanion/Assets/Fonts#Barlow SemiBold</FontFamily>
 
       <!-- Fluent overrides so stock parts of controls carry the palette. -->
       <SolidColorBrush x:Key="TextControlSelectionHighlightColor" Color="#80FF2E7E" />

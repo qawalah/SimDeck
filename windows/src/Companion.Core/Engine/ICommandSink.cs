@@ -1,4 +1,4 @@
-namespace GameController.Companion.Engine;
+namespace SimDeck.Companion.Engine;
 
 /// <summary>Where game-native commands go (today: the BeamNG mod link).</summary>
 public interface ICommandSink

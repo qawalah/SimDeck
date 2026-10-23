@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 
-namespace GameController.Companion.App.Views;
+namespace SimDeck.Companion.App.Views;
 
 public partial class PhonesView : UserControl
 {

@@ -1,17 +1,17 @@
 using Avalonia;
 
-namespace GameController.Companion.App;
+namespace SimDeck.Companion.App;
 
 static class Program
 {
-    const string ShowEventName = @"Local\GameControllerCompanion.Show";
+    const string ShowEventName = @"Local\SimDeckCompanion.Show";
 
     [STAThread]
     public static int Main(string[] args)
     {
         // One companion per PC: a second copy could not bind the ports anyway. Starting it again
         // brings the running copy's window forward instead.
-        using var single = new Mutex(true, @"Local\GameControllerCompanion", out bool first);
+        using var single = new Mutex(true, @"Local\SimDeckCompanion", out bool first);
         if (!first && !args.Contains("--allow-second"))
         {
             if (OperatingSystem.IsWindows())

@@ -1,7 +1,7 @@
-using GameController.Companion;
-using GameController.Companion.Config;
-using GameController.Companion.Input;
-using GameController.Companion.Windows;
+using SimDeck.Companion;
+using SimDeck.Companion.Config;
+using SimDeck.Companion.Input;
+using SimDeck.Companion.Windows;
 
 // Console host: runs the full companion without the tray UI. On Windows it injects real input;
 // elsewhere (or with --dry-run) it prints what it would inject, for end-to-end tests.
@@ -16,9 +16,9 @@ bool Flag(string name) => argv.Contains(name);
 if (Flag("--help") || Flag("-h"))
 {
     Console.WriteLine("""
-        GameCtl Companion (console)
+        SimDeck Companion (console)
 
-          --config <path>   settings file (default: %APPDATA%\GameController\companion.json)
+          --config <path>   settings file (default: %APPDATA%\SimDeck\companion.json)
           --pin <6 digits>  use a fixed pairing PIN instead of a random one
           --name <name>     PC name shown to phones
           --dry-run         print input instead of injecting it (always on outside Windows)

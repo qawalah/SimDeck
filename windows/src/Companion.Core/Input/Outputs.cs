@@ -1,4 +1,4 @@
-namespace GameController.Companion.Input;
+namespace SimDeck.Companion.Input;
 
 /// <summary>Injects keyboard input. On Windows this is SendInput with scancodes.</summary>
 public interface IKeyboardOutput

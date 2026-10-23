@@ -1,14 +1,14 @@
-# GameCtl 1.0.0
+# SimDeck 1.0.0
 
-The first full release of GameCtl: an Android phone or tablet as an extra control surface for Windows games.
+The first full release of SimDeck: an Android phone or tablet as an extra control surface for Windows games.
 
 ## Download
 
 | File | For |
 |---|---|
-| `GameCtl.apk` | The phone app (Android 9 or newer) |
-| `GameCtl-companion-win-x64.zip` | The PC companion (Windows 10/11, 64-bit, no .NET install needed) |
-| `gamecontroller.zip` | The BeamNG.drive mod |
+| `SimDeck.apk` | The phone app (Android 9 or newer) |
+| `SimDeck-companion-win-x64.zip` | The PC companion (Windows 10/11, 64-bit, no .NET install needed) |
+| `simdeck.zip` | The BeamNG.drive mod |
 | `INSTALL.md` | How to install and connect |
 | `SMOKE_TEST.md` | One end-to-end test of everything |
 | `SHA256SUMS.txt` | Checksums of the files above |
@@ -22,7 +22,7 @@ and enter the companion's PIN once. A later version signed with a permanent rele
 ## What's in 1.0
 
 **Two ways to connect, together or apart**
-- **Bluetooth controller**: the phone pairs with Windows as "GameCtl Pad", a keyboard plus a 64-button, 8-axis gamepad. No PC
+- **Bluetooth controller**: the phone pairs with Windows as "SimDeck Pad", a keyboard plus a 64-button, 8-axis gamepad. No PC
   software needed.
 - **PC companion over Wi-Fi**: scancode keyboard input, vJoy buttons and axes, an optional virtual Xbox pad, macros, BeamNG
   commands, and live game state back to the phone. Found automatically on the network, paired once with a PIN.
@@ -34,7 +34,7 @@ and enter the companion's PIN once. A later version signed with a permanent rele
   and Utility vehicles (loader, excavator, crane, plough & tow).
 - Controls: buttons, toggles, selectors, button groups, sliders and hydraulic levers, knobs, and pilot joysticks with two
   spring-centred axes. Lamps follow the game where it reports state.
-- A layout editor with pages, drag to move and resize, an icon library, and export and import as `.gcprofile.json`.
+- A layout editor with pages, drag to move and resize, an icon library, and export and import as `.simdeck.json`.
 
 **BeamNG.drive**
 - Every vehicle function from the phone: lights, signals, hazards, horn, ignition and starter, gearbox modes, ESC, diff
@@ -45,7 +45,7 @@ and enter the companion's PIN once. A later version signed with a permanent rele
 
 ## Known limits
 
-- Keep GameCtl on screen while playing. Leaving it lets go of held buttons and sliders; toggles stay on.
+- Keep SimDeck on screen while playing. Leaving it lets go of held buttons and sliders; toggles stay on.
 - Some phone makers remove Bluetooth HID support; on those phones use the companion over Wi-Fi.
 - When the phone pairs over Bluetooth, Windows may switch the PC's sound to the phone. INSTALL explains how to turn that off.
 - BeamNG: a held `action.*` command that targets the player's car is released in the new car after a vehicle switch

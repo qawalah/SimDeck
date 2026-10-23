@@ -6,30 +6,30 @@ plugins {
 }
 
 android {
-    namespace = "com.gamecontroller"
+    namespace = "com.simdeck"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.gamecontroller"
+        applicationId = "com.simdeck.app"
         minSdk = 28 // BluetoothHidDevice needs Android 9
         targetSdk = 35
-        versionCode = 3
-        versionName = "1.0.0"
+        versionCode = 10
+        versionName = "1.1.0"
     }
 
     // Release signing comes from the environment (CI secrets), never from the repository:
-    // GAMECTL_KEYSTORE (path to the .jks), GAMECTL_KEYSTORE_PASSWORD, GAMECTL_KEY_ALIAS (default gamectl),
-    // and GAMECTL_KEY_PASSWORD when the key's password differs from the store's.
+    // SIMDECK_KEYSTORE (path to the .jks), SIMDECK_KEYSTORE_PASSWORD, SIMDECK_KEY_ALIAS (default simdeck),
+    // and SIMDECK_KEY_PASSWORD when the key's password differs from the store's.
     // Without them (local builds, forks) the release APK is signed with the debug key.
-    val releaseKeystore = System.getenv("GAMECTL_KEYSTORE")?.let { file(it) }?.takeIf { it.exists() }
+    val releaseKeystore = System.getenv("SIMDECK_KEYSTORE")?.let { file(it) }?.takeIf { it.exists() }
     signingConfigs {
         if (releaseKeystore != null) create("release") {
             storeFile = releaseKeystore
-            storePassword = System.getenv("GAMECTL_KEYSTORE_PASSWORD")
-            keyAlias = System.getenv("GAMECTL_KEY_ALIAS")?.takeIf { it.isNotBlank() } ?: "gamectl"
-            // A PKCS12 store has one password for the store and its key; GAMECTL_KEY_PASSWORD overrides it for JKS.
-            keyPassword = System.getenv("GAMECTL_KEY_PASSWORD")?.takeIf { it.isNotBlank() }
-                ?: System.getenv("GAMECTL_KEYSTORE_PASSWORD")
+            storePassword = System.getenv("SIMDECK_KEYSTORE_PASSWORD")
+            keyAlias = System.getenv("SIMDECK_KEY_ALIAS")?.takeIf { it.isNotBlank() } ?: "simdeck"
+            // A PKCS12 store has one password for the store and its key; SIMDECK_KEY_PASSWORD overrides it for JKS.
+            keyPassword = System.getenv("SIMDECK_KEY_PASSWORD")?.takeIf { it.isNotBlank() }
+                ?: System.getenv("SIMDECK_KEYSTORE_PASSWORD")
         }
     }
 

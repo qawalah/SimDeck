@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-namespace GameController.Companion.Protocol;
+namespace SimDeck.Companion.Protocol;
 
 public static class ProtocolInfo
 {
@@ -11,7 +11,7 @@ public static class ProtocolInfo
     public const int DiscoveryPort = 47802;
     public const int BeamNgPort = 47803;
     public const int OutGaugePort = 4444;
-    public const string MdnsService = "_gamectl._tcp";
+    public const string MdnsService = "_simdeck._tcp";
 }
 
 /// <summary>Small helpers for reading loosely-typed protocol JSON without throwing.</summary>

@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace GameController.Companion.Config;
+namespace SimDeck.Companion.Config;
 
 public sealed class PairedDevice
 {
@@ -107,7 +107,7 @@ public sealed class ConfigStore
 
     public static string DefaultPath()
     {
-        var dir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "GameController");
+        var dir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SimDeck");
         return System.IO.Path.Combine(dir, "companion.json");
     }
 

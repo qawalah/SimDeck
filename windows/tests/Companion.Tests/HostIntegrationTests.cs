@@ -3,10 +3,10 @@ using System.Net.Sockets;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json.Nodes;
-using GameController.Companion.Config;
-using GameController.Companion.Input;
+using SimDeck.Companion.Config;
+using SimDeck.Companion.Input;
 
-namespace GameController.Companion.Tests;
+namespace SimDeck.Companion.Tests;
 
 /// <summary>Runs the real host on loopback with free ports and talks to it like a phone and like the mod.</summary>
 public sealed class HostIntegrationTests : IDisposable
@@ -16,10 +16,10 @@ public sealed class HostIntegrationTests : IDisposable
     readonly ConfigStore _store;
     readonly FakePads _pads = new();
 
-    sealed class FakePads : GameController.Companion.Engine.IBluetoothPads
+    sealed class FakePads : SimDeck.Companion.Engine.IBluetoothPads
     {
-        public List<GameController.Companion.Engine.BluetoothPad> Now { get; } = new();
-        public IReadOnlyList<GameController.Companion.Engine.BluetoothPad> Present() { lock (Now) return Now.ToList(); }
+        public List<SimDeck.Companion.Engine.BluetoothPad> Now { get; } = new();
+        public IReadOnlyList<SimDeck.Companion.Engine.BluetoothPad> Present() { lock (Now) return Now.ToList(); }
     }
 
     static int FreeTcp() { var l = new TcpListener(IPAddress.Loopback, 0); l.Start(); int p = ((IPEndPoint)l.LocalEndpoint).Port; l.Stop(); return p; }
@@ -271,11 +271,11 @@ public sealed class HostIntegrationTests : IDisposable
         _host.BluetoothChanged += () => Interlocked.Increment(ref changes);
 
         // Bluetooth only: one phone, no Wi-Fi link.
-        lock (_pads.Now) _pads.Now.Add(new("pad1", "GameCtl Pad"));
+        lock (_pads.Now) _pads.Now.Add(new("pad1", "SimDeck Pad"));
         _host.ScanBluetooth();
         var only = Assert.Single(_host.Phones());
         Assert.Null(only.Wifi);
-        Assert.Equal("GameCtl Pad", only.Name);
+        Assert.Equal("SimDeck Pad", only.Name);
         Assert.Equal(1, changes);
         _host.ScanBluetooth();
         Assert.Equal(1, changes); // no change, no event
@@ -394,7 +394,7 @@ public sealed class HostIntegrationTests : IDisposable
         int threadOfScan = -1;
         host.BluetoothChanged += () => threadOfScan = Environment.CurrentManagedThreadId;
         host.Start();
-        lock (pads.Now) pads.Now.Add(new("pad1", "GameCtl Pad"));
+        lock (pads.Now) pads.Now.Add(new("pad1", "SimDeck Pad"));
         await WaitFor(() => host.BluetoothPads.Count == 1, 2000);
         Assert.Single(host.BluetoothPads);
         Assert.NotEqual(Environment.CurrentManagedThreadId, threadOfScan);
@@ -405,9 +405,9 @@ public sealed class HostIntegrationTests : IDisposable
         Assert.Single(host.BluetoothPads);
     }
 
-    sealed class FailingPads : GameController.Companion.Engine.IBluetoothPads
+    sealed class FailingPads : SimDeck.Companion.Engine.IBluetoothPads
     {
-        public IReadOnlyList<GameController.Companion.Engine.BluetoothPad> Present() => throw new InvalidOperationException("SetupAPI said no");
+        public IReadOnlyList<SimDeck.Companion.Engine.BluetoothPad> Present() => throw new InvalidOperationException("SetupAPI said no");
     }
 
     [Fact]

@@ -1,8 +1,8 @@
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
-using GameController.Companion.Input;
+using SimDeck.Companion.Input;
 
-namespace GameController.Companion.Windows;
+namespace SimDeck.Companion.Windows;
 
 /// <summary>
 /// Keyboard injection with SendInput and hardware scancodes (KEYEVENTF_SCANCODE), which

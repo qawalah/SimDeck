@@ -1,4 +1,4 @@
-namespace GameController.Companion.Input;
+namespace SimDeck.Companion.Input;
 
 /// <summary>A key as Windows SendInput needs it: a set-1 scancode plus the extended-key flag.</summary>
 public readonly record struct ScanKey(string Name, ushort Scan, bool Extended);

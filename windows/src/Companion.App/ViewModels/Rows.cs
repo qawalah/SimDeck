@@ -1,8 +1,8 @@
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
-using GameController.Companion.App.Controls;
+using SimDeck.Companion.App.Controls;
 
-namespace GameController.Companion.App.ViewModels;
+namespace SimDeck.Companion.App.ViewModels;
 
 public sealed partial class NavItem : ObservableObject
 {
@@ -19,7 +19,7 @@ public sealed partial class PhoneRow : ObservableObject
     [ObservableProperty] private string _name = "";
     /// <summary>Linked to the companion over Wi-Fi (lamps, game state, BeamNG commands).</summary>
     [ObservableProperty] private bool _wifi;
-    /// <summary>Connected to Windows as the GameCtl Pad Bluetooth controller.</summary>
+    /// <summary>Connected to Windows as the SimDeck Pad Bluetooth controller.</summary>
     [ObservableProperty] private bool _bluetooth;
     /// <summary>False for a Bluetooth pad that matches no paired phone (nothing to forget).</summary>
     public bool IsPaired { get; init; } = true;

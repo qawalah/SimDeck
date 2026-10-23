@@ -1,8 +1,8 @@
 using System.Text.Json.Nodes;
-using GameController.Companion.Config;
-using GameController.Companion.Engine;
+using SimDeck.Companion.Config;
+using SimDeck.Companion.Engine;
 
-namespace GameController.Companion.Tests;
+namespace SimDeck.Companion.Tests;
 
 public class ConfigMigrationTests
 {
@@ -179,7 +179,7 @@ public class FileLogTests
     {
         var dir = Path.Combine(Path.GetTempPath(), $"gc-log-{Guid.NewGuid():N}");
         var path = Path.Combine(dir, "companion.log");
-        using (var log = new GameController.Companion.Logging.FileLog(path))
+        using (var log = new SimDeck.Companion.Logging.FileLog(path))
         {
             log.Write(DateTimeOffset.Now, "info", "hello");
             var big = new string('x', 2000);
@@ -187,7 +187,7 @@ public class FileLogTests
             log.Write(DateTimeOffset.Now, "error", "last line");
         }
         Assert.True(File.Exists(path + ".1"));
-        Assert.True(new FileInfo(path).Length <= GameController.Companion.Logging.FileLog.MaxBytes + 4096);
+        Assert.True(new FileInfo(path).Length <= SimDeck.Companion.Logging.FileLog.MaxBytes + 4096);
         Assert.Contains("last line", File.ReadAllText(path));
         Assert.Equal(new[] { "companion.log", "companion.log.1" }, Directory.GetFiles(dir).Select(Path.GetFileName).Order());
     }
@@ -197,7 +197,7 @@ public class FileLogTests
     {
         var dir = Path.Combine(Path.GetTempPath(), $"gc-log-{Guid.NewGuid():N}");
         Directory.CreateDirectory(Path.Combine(dir, "companion.log")); // a folder where the file should be
-        using var log = new GameController.Companion.Logging.FileLog(Path.Combine(dir, "companion.log"));
+        using var log = new SimDeck.Companion.Logging.FileLog(Path.Combine(dir, "companion.log"));
         log.Write(DateTimeOffset.Now, "info", "dropped");
     }
 
@@ -208,12 +208,12 @@ public class FileLogTests
         var path = Path.Combine(dir, "companion.log");
         Directory.CreateDirectory(path + ".1");
         File.WriteAllText(Path.Combine(path + ".1", "keep"), "x"); // a non-empty folder: the move always fails
-        using (var log = new GameController.Companion.Logging.FileLog(path))
+        using (var log = new SimDeck.Companion.Logging.FileLog(path))
         {
             var big = new string('x', 2000);
             for (int i = 0; i < 1500; i++) log.Write(DateTimeOffset.Now, "info", big);
         }
-        Assert.True(new FileInfo(path).Length <= GameController.Companion.Logging.FileLog.MaxBytes + 4096);
+        Assert.True(new FileInfo(path).Length <= SimDeck.Companion.Logging.FileLog.MaxBytes + 4096);
         Assert.Contains("Log restarted", File.ReadAllText(path));
     }
 }

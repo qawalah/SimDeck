@@ -1,6 +1,6 @@
-# GameCtl for BeamNG
+# SimDeck for BeamNG
 
-This optional add-on lets the GameCtl phone app work hand in hand with BeamNG.drive. The phone already works with any Windows game as a controller. With this mod installed, BeamNG also:
+This optional add-on lets the SimDeck phone app work hand in hand with BeamNG.drive. The phone already works with any Windows game as a controller. With this mod installed, BeamNG also:
 
 - reports what the car is doing (lights, signals, ESC, diff locks, 4WD, gear, speed, and more), so buttons on the phone light up and controls the car doesn't have are hidden;
 - runs car functions directly when you press a button on the phone, without needing a key binding;
@@ -8,24 +8,24 @@ This optional add-on lets the GameCtl phone app work hand in hand with BeamNG.dr
 
 ## Install
 
-1. Build the zip (or take `gamecontroller.zip` from a release):
+1. Build the zip (or take `simdeck.zip` from a release):
    ```sh
-   sh build.sh           # writes dist/gamecontroller.zip
+   sh build.sh           # writes dist/simdeck.zip
    ```
-2. Copy `gamecontroller.zip` into your BeamNG user folder's `mods` folder. That is usually
+2. Copy `simdeck.zip` into your BeamNG user folder's `mods` folder. That is usually
    `%LOCALAPPDATA%\BeamNG.drive\<version>\mods` (older versions use `Documents\BeamNG.drive\mods`). In game you can open it from **Options > Other > Open user folder**.
-3. Start BeamNG.drive and make sure **GameCtl for BeamNG** is enabled in **Mods** (it shows version 1.0.0 and author ALI).
-4. Start the GameCtl companion on the same PC. The mod connects by itself within a few seconds and shows "Connected to the GameCtl companion". It keeps retrying every 3 seconds while the companion is closed, so the start order doesn't matter.
+3. Start BeamNG.drive and make sure **SimDeck for BeamNG** is enabled in **Mods** (it shows version 1.0.0 and author ALI).
+4. Start the SimDeck companion on the same PC. The mod connects by itself within a few seconds and shows "Connected to the SimDeck companion". It keeps retrying every 3 seconds while the companion is closed, so the start order doesn't matter.
 
-To remove it, delete the zip or disable it in **Mods**. If you applied bindings from the app, they live in `settings/inputmaps/<vidpid>_gamecontroller.json` in the user folder; delete that file to remove them, or change them as usual in **Options > Controls**.
+To remove it, delete the zip or disable it in **Mods**. If you applied bindings from the app, they live in `settings/inputmaps/<vidpid>_simdeck.json` in the user folder; delete that file to remove them, or change them as usual in **Options > Controls**.
 
 ## How it works
 
 | Part | File | Runs in |
 |---|---|---|
-| Loader | `scripts/gamecontroller/modScript.lua` | Loads the game engine extension when the mod is active |
-| Link | `lua/ge/extensions/gameControllerLink.lua` | Game engine Lua. TCP client to `127.0.0.1:47803`, commands, bindings, game state (pause, slow motion, camera) |
-| Vehicle | `lua/vehicle/extensions/gameControllerVehicle.lua` | Player vehicle Lua. Reads electrics, powertrain devices and the ESC controller, applies vehicle commands |
+| Loader | `scripts/simdeck/modScript.lua` | Loads the game engine extension when the mod is active |
+| Link | `lua/ge/extensions/simdeckLink.lua` | Game engine Lua. TCP client to `127.0.0.1:47803`, commands, bindings, game state (pause, slow motion, camera) |
+| Vehicle | `lua/vehicle/extensions/simdeckVehicle.lua` | Player vehicle Lua. Reads electrics, powertrain devices and the ESC controller, applies vehicle commands |
 
 The link loads the vehicle part into whatever vehicle you drive, and loads it again after a vehicle switch, a new spawn, or a reload. The vehicle part checks state 10 times a second and only sends what changed. A full snapshot goes out after connecting, after a vehicle switch, and when the companion sends `state.request`.
 
@@ -68,7 +68,7 @@ The test mocks follow the mod's own understanding of the BeamNG APIs, so they ca
 
 Run this once in BeamNG.drive with the PC companion running and the phone connected to it. It takes about 25 minutes. Control names below are exactly as they appear on the phone.
 
-**Where to look.** Press the ` key (left of 1) to open the in-game console, and type `gameController` in its filter box to see only this mod's lines. The same lines are saved in `beamng.log` in the BeamNG user folder (in game: **Options > Other > Open user folder**).
+**Where to look.** Press the ` key (left of 1) to open the in-game console, and type `simdeck` in its filter box to see only this mod's lines. The same lines are saved in `beamng.log` in the BeamNG user folder (in game: **Options > Other > Open user folder**).
 
 **Cars.**
 - **Gavril D-Series**: 4WD, low range, front and rear diff locks, ESC, cruise control. It has a part-time transfer case, so the phone hiding **Center diff** for it is expected.
@@ -77,7 +77,7 @@ Run this once in BeamNG.drive with the PC companion running and the phone connec
 
 **Profiles.** Steps 1-3 and 5-12 use the **BeamNG.drive** profile. It has two pages: **Drive** and **4x4** (switch with the tabs at the top). Step 4 uses the **BeamNG.drive (Bluetooth pad)** profile.
 
-1. **Connection.** Start BeamNG, then the companion. Within about 3 seconds a message says "Connected to the GameCtl companion" and the phone shows BeamNG as connected. Close the companion: a message says it disconnected. Start it again: it reconnects within about 3 seconds.
+1. **Connection.** Start BeamNG, then the companion. Within about 3 seconds a message says "Connected to the SimDeck companion" and the phone shows BeamNG as connected. Close the companion: a message says it disconnected. Start it again: it reconnects within about 3 seconds.
 2. **What the mod found.** Get into each of the three cars once. Each time, the console shows a line that starts `vehicle <name>:` followed by `has.esc=…`, `has.cruise=…` and others. **Copy all three lines into your report**, whatever they say. (`unknown` means the mod couldn't tell, so the phone keeps that control visible.)
 3. **Game actions.** In the D-Series, on the **Drive** page: switch the gearbox to manual (in game, Q), then press **Shift up** and **Shift down**. Hold **Recover** for two seconds and let go: the car rewinds while you hold it. Then try **Reset**, **Slow-mo** (on, then off), hold **Look back**, and on the **4x4** page **Center cam**. Each one does what its keyboard key does. In the console, a line "action failed in game engine Lua, running it in vehicle Lua (this is normal for some actions)" is fine. Write down any line that says "action failed in vehicle Lua" or "action not available".
 4. **Bind in game.** This needs the companion connected and BeamNG running with the mod, and the companion must know the pad: either the phone is paired over Bluetooth or vJoy is installed. Open the **BeamNG.drive (Bluetooth pad)** profile and tap **Edit**. On a phone, tap the **gear icon** in the top bar (on a tablet the panel is already on the right), scroll to **BEAMNG** and tap **Bind in game**. A dialog lists every button and the BeamNG action it will get; confirm. About a second later a result row appears under the button:
@@ -85,7 +85,7 @@ Run this once in BeamNG.drive with the PC companion running and the phone connec
    - "Saved N bindings … BeamNG could not confirm they are active" means the file was written, but BeamNG doesn't see the controller yet. Check that vJoy is installed or the phone is paired over Bluetooth, then tap **Bind in game** again.
    - Tap **Bind in game** twice quickly: the second attempt shows "BeamNG is still writing the last request", and the button stays usable.
 
-   Then, in BeamNG, close and reopen **Options > Controls** (it only refreshes when opened), pick the vJoy device or "GameCtl Pad", and check its buttons are bound. Tap **Done**, go back to play, and press **Horn** and **Hazard** in this profile: they work. In the user folder, `settings/inputmaps/` has a new file ending in `_gamecontroller.json`, and your other files there are unchanged.
+   Then, in BeamNG, close and reopen **Options > Controls** (it only refreshes when opened), pick the vJoy device or "SimDeck Pad", and check its buttons are bound. Tap **Done**, go back to play, and press **Horn** and **Hazard** in this profile: they work. In the user folder, `settings/inputmaps/` has a new file ending in `_simdeck.json`, and your other files there are unchanged.
 5. **4WD, diff locks, range.** In the D-Series, on the **4x4** page, press **4WD**, **Low range**, **Front diff** and **Rear diff**. The dash or the Drivetrain app (add it with **UI Apps**) shows each change, and the control's lamp on the phone follows. Turn **4WD** off and on again: it comes back in the same mode it was in.
 6. **ESC.** In the D-Series, on the **4x4** page, press **ESC / TC** a few times: the game shows the ESC mode name at the top of the screen each time, and the phone's lamp is off for the mode that turns ESC off. In the Ibishu Pigeon, the `vehicle …` line from step 2 must say `has.esc=unknown`, not `has.esc=true`.
 7. **Cruise control.** In the D-Series, on the **Drive** page, drive at about 50 km/h and press **Set**: the car holds its speed, and **Cruise** lights up. Turn the **Cruise speed** dial one click each way: the target changes by 5 km/h. Press **Cruise** to turn it off.

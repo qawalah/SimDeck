@@ -1,9 +1,9 @@
 using System.Diagnostics;
-using GameController.Companion.Config;
-using GameController.Companion.Input;
-using GameController.Companion.Windows;
+using SimDeck.Companion.Config;
+using SimDeck.Companion.Input;
+using SimDeck.Companion.Windows;
 
-namespace GameController.Companion.App.Services;
+namespace SimDeck.Companion.App.Services;
 
 /// <summary>What the window needs from the OS. Windows gets the real thing; elsewhere a preview stand-in.</summary>
 public interface IPlatform : IDisposable

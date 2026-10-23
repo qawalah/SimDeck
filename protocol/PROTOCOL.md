@@ -1,4 +1,4 @@
-# GameCtl protocol, version 1
+# SimDeck protocol, version 1
 
 Owner: Lead developer. Shared by the Android app (`android/`), the Windows companion (`windows/`) and the BeamNG mod (`beamng-mod/`). Change it only through the Lead developer so all three stay in sync. Machine-readable examples live in `protocol/examples/`.
 
@@ -10,12 +10,12 @@ Forward compatibility: receivers ignore unknown fields and unknown message types
 
 The phone is a game controller for **any** Windows game. BeamNG.drive is one fully supported example, not the only target. Input reaches Windows by two routes, and a profile can use either or both:
 
-1. **Bluetooth HID (no PC software needed).** The app registers with Android's `BluetoothHidDevice` profile (Android 9+) as a composite HID device named **"GameCtl Pad"**: a keyboard (report id 1, boot-style 8-byte report) and a gamepad (report id 2: 64 buttons, 8 axes X Y Z RX RY RZ SL0 SL1, 16-bit each). Windows pairs it like any Bluetooth controller and every DirectInput / raw-HID game sees it. `key` actions go out as keyboard usages, `vjoy_button` / `vjoy_axis` actions with `device: 1` go out as the HID gamepad's buttons 1-64 and axes. XInput-only games need the companion's ViGEm route.
+1. **Bluetooth HID (no PC software needed).** The app registers with Android's `BluetoothHidDevice` profile (Android 9+) as a composite HID device named **"SimDeck Pad"**: a keyboard (report id 1, boot-style 8-byte report) and a gamepad (report id 2: 64 buttons, 8 axes X Y Z RX RY RZ SL0 SL1, 16-bit each). Windows pairs it like any Bluetooth controller and every DirectInput / raw-HID game sees it. `key` actions go out as keyboard usages, `vjoy_button` / `vjoy_axis` actions with `device: 1` go out as the HID gamepad's buttons 1-64 and axes. XInput-only games need the companion's ViGEm route.
 2. **Wi-Fi companion.** The Windows companion receives the events below and injects them (scancode `SendInput`, vJoy, ViGEm). It also carries everything HID cannot: macros with precise timing, `beamng` game commands, more than 64 buttons, and **game feedback** back to the phone.
 
 Both routes can run at once: buttons over Bluetooth HID, feedback and BeamNG commands over Wi-Fi. When a profile is in HID mode the phone still sends `profile.sync`, but marks each binding it routes over HID with `"route":"hid"`; the companion must not inject those (it still uses them to know which ids exist).
 
-`bindings.apply` device names: `"vjoy1"` (first device whose product name contains "vJoy") or `"hid"` (the device whose product name contains "GameCtl Pad").
+`bindings.apply` device names: `"vjoy1"` (first device whose product name contains "vJoy") or `"hid"` (the device whose product name contains "SimDeck Pad").
 
 ## Ports and transports
 
@@ -29,7 +29,7 @@ Both routes can run at once: buttons over Bluetooth HID, feedback and BeamNG com
 
 ## Discovery
 
-1. **mDNS / NSD**: the companion advertises service type `_gamectl._tcp.` on port 47800 with TXT records `v=1`, `name=<PC name>`, `udp=47801`.
+1. **mDNS / NSD**: the companion advertises service type `_simdeck._tcp.` on port 47800 with TXT records `v=1`, `name=<PC name>`, `udp=47801`.
 2. **Broadcast fallback** (for networks that block multicast): the phone sends `{"v":1,"type":"discover"}` to `255.255.255.255:47802`. The companion answers unicast with `{"v":1,"type":"discover.reply","name":"<PC name>","wsPort":47800,"udpPort":47801}`.
 3. The user can also type an IP address manually.
 
@@ -199,7 +199,7 @@ Companion to mod:
 
 `bindings.result` fields: `ok` (true only once BeamNG's input system shows the bindings loaded), `message` (always shown to the user when `ok` is false), `written` (the inputmap file was saved), `count` (bindings written), `unknown` (action names this game version does not have), `device`, `busy` (a previous apply is still being confirmed; retry in a second), `alreadyBound` (the same pairs were already live in the game before this apply, from an earlier apply or the user's own bindings; the file is still written and `written` is true).
 
-`bindings.apply`: BeamNG keys joystick input maps by `vidpid` (lowercase PID+VID hex, e.g. vJoy = `bead1234`). GE Lua has no device-list API, so the **companion adds `"vidpid"`** to every `bindings.apply` it forwards: it reads the VID/PID of the vJoy device (`device:"vjoy1"`) or of the paired "GameCtl Pad" Bluetooth HID device (`device:"hid"`) from Windows. Without it the mod falls back to `bead1234` for `vjoy1` and answers `ok:false` for `hid`. Protocol button N maps to BeamNG `button{N-1}`. The mod writes `settings/inputmaps/<vidpid>_gamecontroller.json` in the user folder and reloads input; users can still rebind in Options > Controls.
+`bindings.apply`: BeamNG keys joystick input maps by `vidpid` (lowercase PID+VID hex, e.g. vJoy = `bead1234`). GE Lua has no device-list API, so the **companion adds `"vidpid"`** to every `bindings.apply` it forwards: it reads the VID/PID of the vJoy device (`device:"vjoy1"`) or of the paired "SimDeck Pad" Bluetooth HID device (`device:"hid"`) from Windows. Without it the mod falls back to `bead1234` for `vjoy1` and answers `ok:false` for `hid`. Protocol button N maps to BeamNG `button{N-1}`. The mod writes `settings/inputmaps/<vidpid>_simdeck.json` in the user folder and reloads input; users can still rebind in Options > Controls.
 
 ```json
 {"v":1,"type":"bindings.apply","device":"hid","vidpid":"c0de1209","bindings":[{"beamngAction":"toggle_headlights","button":5}]}
@@ -233,4 +233,4 @@ Extended (need `KEYEVENTF_EXTENDEDKEY`): `RCTRL RALT LWIN RWIN APPS UP DOWN LEFT
 
 ## Profile file format (import / export)
 
-A profile is exported as one JSON file, `<name>.gcprofile.json`, with `"schema": 1`. It is the Android `Profile` model serialized with kotlinx.serialization (`classDiscriminator = "type"` for actions). See `examples/profile-example.json`. Importers ignore unknown fields and fill missing ones with defaults.
+A profile is exported as one JSON file, `<name>.simdeck.json`, with `"schema": 1`. It is the Android `Profile` model serialized with kotlinx.serialization (`classDiscriminator = "type"` for actions). See `examples/profile-example.json`. Importers ignore unknown fields and fill missing ones with defaults.

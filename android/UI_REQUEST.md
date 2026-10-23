@@ -1,6 +1,6 @@
 # Screens the Lead developer needs from the UI designer (v2, matches MainActivity.kt)
 
-All stateless composables in com.gamecontroller.ui.screens, taking core/model types plus lambdas.
+All stateless composables in com.simdeck.ui.screens, taking core/model types plus lambdas.
 MainActivity.kt already calls these exact signatures, so please match names and parameter order.
 
 ```kotlin
@@ -20,7 +20,7 @@ MainActivity.kt already calls these exact signatures, so please match names and 
     onBack: () -> Unit,
 )
 // Two panels: "Bluetooth controller (no PC software)" showing hid.status / hostName / bondedHosts / message,
-// with short pairing steps (Windows Settings > Bluetooth > Add device > "GameCtl Pad"); and
+// with short pairing steps (Windows Settings > Bluetooth > Add device > "SimDeck Pad"); and
 // "PC companion (Wi-Fi)" with discovered servers, manual IP field, PIN entry when status == PAIRING,
 // capabilities chips, latency.
 
@@ -43,7 +43,7 @@ MainActivity.kt already calls these exact signatures, so please match names and 
 ```
 
 Inspector fields: label, icon (IconPicker), accent, size; Action editor for action / positions[i].action / cw / ccw
-covering none, key combo (HidKeys.ALL_NAMES from com.gamecontroller.hid) + trigger (hold/tap/press),
+covering none, key combo (HidKeys.ALL_NAMES from com.simdeck.hid) + trigger (hold/tap/press),
 gamepad button (VJoyButton: device, button 1-128; note buttons 1-64 also work over Bluetooth),
 gamepad axis (VJoyAxis: axis X Y Z RX RY RZ SL0 SL1, range), macro steps, BeamNG command (free text + beamngCommands
 suggestions), XInput button/axis. Plus feedbackKey, visibleWhen, positionKey + per-position stateValue,

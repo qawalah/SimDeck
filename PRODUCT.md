@@ -36,7 +36,7 @@ Works with any Windows game as a generic input device. Goes further for BeamNG.d
 ## Brand Commitments
 
 - The UI should be inspired by gaming and driving games (user's explicit brief).
-- Product name not yet decided; working name "Game Controller".
+- Product name not yet decided; working name "SimDeck".
 
 ## Evidence on Hand
 

@@ -4,12 +4,12 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
-using GameController.Companion.App.Services;
-using GameController.Companion.App.ViewModels;
-using GameController.Companion.App.Views;
-using GameController.Companion.Config;
+using SimDeck.Companion.App.Services;
+using SimDeck.Companion.App.ViewModels;
+using SimDeck.Companion.App.Views;
+using SimDeck.Companion.Config;
 
-namespace GameController.Companion.App;
+namespace SimDeck.Companion.App;
 
 public partial class App : Application
 {
@@ -23,7 +23,7 @@ public partial class App : Application
     WindowIcon? _iconLive, _iconIdle;
 
     CompanionHost? _host;
-    static GameController.Companion.Logging.FileLog? _fileLog;
+    static SimDeck.Companion.Logging.FileLog? _fileLog;
     IPlatform? _platform;
     MainViewModel? _vm;
     MainWindow? _window;
@@ -46,12 +46,12 @@ public partial class App : Application
                 e.Handled = true;
             };
 
-            _fileLog = new GameController.Companion.Logging.FileLog(GameController.Companion.Logging.FileLog.DefaultPath(SecondInstance));
+            _fileLog = new SimDeck.Companion.Logging.FileLog(SimDeck.Companion.Logging.FileLog.DefaultPath(SecondInstance));
             var store = new ConfigStore();
             _platform = PlatformFactory.Create(store.Config);
             _host = new CompanionHost(store, _platform.Router, _platform.Options);
             _host.Logged += e => _fileLog?.Write(e.At, e.Level, e.Message);
-            _host.Log("info", $"GameCtl Companion {MainViewModel.Version} starting; settings in {store.Path}");
+            _host.Log("info", $"SimDeck Companion {MainViewModel.Version} starting; settings in {store.Path}");
             _vm = new MainViewModel(_host, _platform);
             _host.Start();
 
@@ -124,12 +124,12 @@ public partial class App : Application
     void BuildTray()
     {
         var menu = new NativeMenu();
-        var open = new NativeMenuItem("Open GameCtl Companion");
+        var open = new NativeMenuItem("Open SimDeck Companion");
         open.Click += (_, _) => ShowWindow();
         _pinItem = new NativeMenuItem("Pairing PIN") { IsEnabled = false };
         var release = new NativeMenuItem("Release all held input");
         release.Click += (_, _) => _host?.ReleaseEverything();
-        var quit = new NativeMenuItem("Quit GameCtl Companion");
+        var quit = new NativeMenuItem("Quit SimDeck Companion");
         quit.Click += (_, _) => _vm?.QuitCommand.Execute(null);
         menu.Add(open);
         menu.Add(_pinItem);
@@ -148,7 +148,7 @@ public partial class App : Application
         var phones = _host.Phones();
         int n = phones.Count, btOnly = phones.Count(p => p.Wifi == null);
         var pin = _host.Pairing.Pin;
-        var name = $"GameCtl Companion {MainViewModel.Version}";
+        var name = $"SimDeck Companion {MainViewModel.Version}";
         var tip = n == 0 ? $"{name}: waiting for a phone (PIN {pin})"
             : btOnly == n ? $"{name}: {n} phone{(n == 1 ? "" : "s")} on Bluetooth only (Wi-Fi not linked, PIN {pin})"
             : $"{name}: {n} phone{(n == 1 ? "" : "s")} connected" + (btOnly > 0 ? $", {btOnly} on Bluetooth only" : "");
@@ -162,7 +162,7 @@ public partial class App : Application
 
     static WindowIcon LoadIcon(string asset)
     {
-        using var s = AssetLoader.Open(new Uri($"avares://GameCtlCompanion/Assets/{asset}"));
+        using var s = AssetLoader.Open(new Uri($"avares://SimDeckCompanion/Assets/{asset}"));
         return new WindowIcon(new Bitmap(s));
     }
 
@@ -183,6 +183,6 @@ public partial class App : Application
         catch { try { _platform?.Router.ReleaseAll(); } catch { } }
         try { _platform?.Dispose(); } catch { }
         try { ShowSignal?.Dispose(); } catch { }
-        try { _host?.Log("info", "GameCtl Companion stopped"); _fileLog?.Dispose(); } catch { }
+        try { _host?.Log("info", "SimDeck Companion stopped"); _fileLog?.Dispose(); } catch { }
     }
 }

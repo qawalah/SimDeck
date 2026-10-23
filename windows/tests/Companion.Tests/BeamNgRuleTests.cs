@@ -1,6 +1,6 @@
-using GameController.Companion.BeamNG;
+using SimDeck.Companion.BeamNG;
 
-namespace GameController.Companion.Tests;
+namespace SimDeck.Companion.Tests;
 
 public class BeamNgRuleTests
 {

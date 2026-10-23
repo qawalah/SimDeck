@@ -1,7 +1,7 @@
 using Avalonia;
 using Avalonia.Media;
 
-namespace GameController.Companion.App.Controls;
+namespace SimDeck.Companion.App.Controls;
 
 /// <summary>
 /// Reads the DESIGN.md colour tokens defined in Styles/Rig.axaml, so code-drawn parts (the signal

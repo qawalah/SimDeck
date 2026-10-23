@@ -2,7 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 
-namespace GameController.Companion.App.Controls;
+namespace SimDeck.Companion.App.Controls;
 
 public enum PlateShape { Slant, Cut }
 

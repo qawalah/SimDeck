@@ -1,7 +1,7 @@
 using System.Globalization;
 using Avalonia.Data.Converters;
 
-namespace GameController.Companion.App.Controls;
+namespace SimDeck.Companion.App.Controls;
 
 public static class Converters
 {

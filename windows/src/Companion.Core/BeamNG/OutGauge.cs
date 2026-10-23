@@ -1,7 +1,7 @@
 using System.Buffers.Binary;
 using System.Text;
 
-namespace GameController.Companion.BeamNG;
+namespace SimDeck.Companion.BeamNG;
 
 /// <summary>
 /// Parses the OutGauge UDP packet (LFS format, which BeamNG emits when OutGauge is enabled in

@@ -1,7 +1,7 @@
 using System.Text.Json;
-using GameController.Companion.Input;
+using SimDeck.Companion.Input;
 
-namespace GameController.Companion.Protocol;
+namespace SimDeck.Companion.Protocol;
 
 public enum ControlKind { Momentary, Latching, Switch, Radio, Slider, Rotary }
 

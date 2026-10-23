@@ -1,9 +1,9 @@
 using System.Text.Json;
-using GameController.Companion.Engine;
-using GameController.Companion.Input;
-using GameController.Companion.Protocol;
+using SimDeck.Companion.Engine;
+using SimDeck.Companion.Input;
+using SimDeck.Companion.Protocol;
 
-namespace GameController.Companion.Tests;
+namespace SimDeck.Companion.Tests;
 
 sealed class FakeCommands : ICommandSink
 {

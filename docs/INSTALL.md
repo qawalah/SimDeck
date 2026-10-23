@@ -1,12 +1,12 @@
-# Installing and using GameCtl
+# Installing and using SimDeck
 
-GameCtl turns an Android phone or tablet (Android 9 or newer) into an extra controller for Windows games.
+SimDeck turns an Android phone or tablet (Android 9 or newer) into an extra controller for Windows games.
 There are two ways to connect, and you can use both at the same time.
 
 | | Bluetooth controller | PC companion (Wi-Fi) |
 |---|---|---|
-| PC software needed | None | GameCtl Companion (tray app) |
-| What Windows sees | A Bluetooth keyboard + gamepad called **GameCtl Pad** (64 buttons, 8 axes) | Keyboard scancodes, vJoy joystick, optional virtual Xbox pad |
+| PC software needed | None | SimDeck Companion (tray app) |
+| What Windows sees | A Bluetooth keyboard + gamepad called **SimDeck Pad** (64 buttons, 8 axes) | Keyboard scancodes, vJoy joystick, optional virtual Xbox pad |
 | Works with | Any game that reads a keyboard or a DirectInput / HID gamepad | Any game, including XInput-only games (with ViGEm) |
 | Lamps on the phone follow the game | No (lamps follow your own taps) | Yes, with the BeamNG mod or OutGauge |
 | BeamNG game commands and macros | Macros yes, BeamNG commands no | Yes |
@@ -17,7 +17,7 @@ There are two ways to connect, and you can use both at the same time.
 - A Windows 10 or 11 PC, 64-bit. .NET is not needed: the companion is a self-contained exe.
 
 Download the latest release from https://github.com/alialyami90/GameControl/releases. It has
-`GameCtl.apk` (phone app), `GameCtl-companion-win-x64.zip` (PC companion), `gamecontroller.zip` (BeamNG mod),
+`SimDeck.apk` (phone app), `SimDeck-companion-win-x64.zip` (PC companion), `simdeck.zip` (BeamNG mod),
 this guide and `SMOKE_TEST.md`, the single end-to-end test to run after installing.
 
 Install the optional drivers (vJoy, ViGEmBus, section 2b) **before** you start the companion, or restart the companion after
@@ -34,34 +34,34 @@ installing them, so it finds them.
 >
 > Later versions install over 1.0 directly.
 
-1. Open `GameCtl.apk` on the phone. Allow "Install unknown apps" for your browser or file manager when asked. Because the
+1. Open `SimDeck.apk` on the phone. Allow "Install unknown apps" for your browser or file manager when asked. Because the
    app comes from outside the Play Store, Play Protect may ask to scan it or warn once: choose **Install anyway**.
-2. Open **GameCtl**. The app runs in landscape.
+2. Open **SimDeck**. The app runs in landscape.
 
 ## 2a. Connect over Bluetooth (no PC software)
 
-1. In GameCtl tap the **PAIRED / OFF** badges at the top right of the profile list to open Connect, then in the Bluetooth
+1. In SimDeck tap the **PAIRED / OFF** badges at the top right of the profile list to open Connect, then in the Bluetooth
    panel tap **MAKE DISCOVERABLE**. Allow the "Nearby devices" permission and allow the phone to be visible.
-2. On the PC: **Settings > Bluetooth & devices > Add device > Bluetooth**, pick **GameCtl Pad**. If Windows shows a code,
-   confirm it on the phone too. If **GameCtl Pad** never shows up, discoverable mode has ended (it lasts about 2 minutes):
+2. On the PC: **Settings > Bluetooth & devices > Add device > Bluetooth**, pick **SimDeck Pad**. If Windows shows a code,
+   confirm it on the phone too. If **SimDeck Pad** never shows up, discoverable mode has ended (it lasts about 2 minutes):
    tap **MAKE DISCOVERABLE** again and search again.
    **Game sound gone after pairing?** Windows also adds the phone's own audio (headset / hands-free) when it pairs and can
    switch the PC's sound output to the phone. Open **Control Panel > Devices and Printers**, right-click the phone,
    **Properties > Services**, untick the audio, headset and hands-free services, and set your speakers or headphones back as
    the default output (sound icon in the taskbar). Restart the game if it still has no sound.
-3. Next time, open GameCtl and pick your PC under **Paired PCs**; it reconnects.
+3. Next time, open SimDeck and pick your PC under **Paired PCs**; it reconnects.
    With several phones on one PC, the companion matches each Bluetooth pad to a Wi-Fi phone in the order they connected,
    so connect one phone at a time if the Phones list should show which pad is which.
-4. Check it in Windows: press `Win+R`, run `joy.cpl`, select **GameCtl Pad**, and press buttons on the phone.
+4. Check it in Windows: press `Win+R`, run `joy.cpl`, select **SimDeck Pad**, and press buttons on the phone.
 
 Some phone makers remove Bluetooth HID support. Then the Bluetooth panel is a single grey line saying so, and the PC companion
 panel comes first: use the companion.
 
 ## 2b. Connect over Wi-Fi with the PC companion
 
-1. Unzip `GameCtl-companion-win-x64.zip` and run `GameCtlCompanion.exe`. If SmartScreen says it protected your PC,
+1. Unzip `SimDeck-companion-win-x64.zip` and run `SimDeckCompanion.exe`. If SmartScreen says it protected your PC,
    choose **More info > Run anyway**. Allow it through the Windows firewall on **Private networks** when asked (your Wi-Fi
-   must be set to Private in Windows). The window "GameCtl Companion" opens, a tray icon appears, and it
+   must be set to Private in Windows). The window "SimDeck Companion" opens, a tray icon appears, and it
    shows a 6-digit PIN.
 2. Optional drivers:
    - **vJoy** (extra joystick buttons and axes through the companion): install the maintained fork from
@@ -75,7 +75,7 @@ panel comes first: use the companion.
 
 ## 3. BeamNG.drive
 
-1. Copy `gamecontroller.zip` (still zipped) into `%LOCALAPPDATA%\BeamNG.drive\<version>\mods\`. In BeamNG,
+1. Copy `simdeck.zip` (still zipped) into `%LOCALAPPDATA%\BeamNG.drive\<version>\mods\`. In BeamNG,
    **Options > Other > Open user folder** opens that folder; the zip goes in its `mods` folder.
 2. Start BeamNG with the companion running. In the companion window the node **BeamNG mod** shows "Mod 1.0.0 connected".
 3. On the phone open the **BeamNG.drive** profile: every vehicle function, lamps light from the real game state,
@@ -103,7 +103,7 @@ panel comes first: use the companion.
   Every machine button is 32 or below, so games that only read 32 joystick buttons see them all.
 - Make your own: **New profile**, then **Edit**. Add controls from the palette, drag to move, drag the corner to
   resize, and set what each one does in the inspector: keys, gamepad buttons/axes, macros, BeamNG commands or Xbox
-  buttons. Profiles export and import as `.gcprofile.json` files.
+  buttons. Profiles export and import as `.simdeck.json` files.
 
 ## Troubleshooting
 
@@ -112,36 +112,36 @@ panel comes first: use the companion.
   phone on mobile data, has the same effect. Type the PC's IP address from the companion window if the list stays empty.
 - **The PIN is rejected.** Type the PIN currently shown in the companion window (it changes after each pairing). After 5 wrong
   tries the companion waits a minute.
-- **Bluetooth pairs but nothing moves in joy.cpl.** On the PC remove **GameCtl Pad** in Settings > Bluetooth & devices, then on
+- **Bluetooth pairs but nothing moves in joy.cpl.** On the PC remove **SimDeck Pad** in Settings > Bluetooth & devices, then on
   the phone tap **MAKE DISCOVERABLE** and add it again.
 - **The PC's sound moved to the phone after pairing.** See section 2a, step 2.
-- **No lamps in BeamNG.** Check that **GameCtl for BeamNG** is enabled in BeamNG's mod manager and that the companion window shows
+- **No lamps in BeamNG.** Check that **SimDeck for BeamNG** is enabled in BeamNG's mod manager and that the companion window shows
   "Mod 1.0.0 connected".
-- **Reporting a problem.** The companion's settings and log are in `%APPDATA%\GameController\` (`companion.json`,
+- **Reporting a problem.** The companion's settings and log are in `%APPDATA%\SimDeck\` (`companion.json`,
   `companion.log`); **Settings > Settings and log > OPEN FOLDER** in the companion opens it. Attach `companion.log` (a second copy started with `--allow-second` writes `companion-second.log`). The pairing PIN is masked in the log.
 
 ## Uninstalling
 
-- **Phone:** uninstall GameCtl like any app (this deletes its profiles; export the ones you want to keep first).
-- **PC:** in the companion turn off **Start with Windows**, quit it, then delete its folder and `%APPDATA%\GameController\`.
-  Optionally remove its firewall rule: `netsh advfirewall firewall delete rule name="GameCtl Companion"`.
-- **Bluetooth:** remove **GameCtl Pad** in Windows Settings > Bluetooth & devices.
-- **BeamNG:** delete `gamecontroller.zip` from the `mods` folder and the file ending in `_gamecontroller.json` from
+- **Phone:** uninstall SimDeck like any app (this deletes its profiles; export the ones you want to keep first).
+- **PC:** in the companion turn off **Start with Windows**, quit it, then delete its folder and `%APPDATA%\SimDeck\`.
+  Optionally remove its firewall rule: `netsh advfirewall firewall delete rule name="SimDeck Companion"`.
+- **Bluetooth:** remove **SimDeck Pad** in Windows Settings > Bluetooth & devices.
+- **BeamNG:** delete `simdeck.zip` from the `mods` folder and the file ending in `_simdeck.json` from
   `settings\inputmaps\` in the BeamNG user folder.
 
 ## Building from source
 
 - Android: JDK 17 and the Android SDK (API 35). `cd android && ./gradlew :core:test :app:assembleRelease`
   writes `app/build/outputs/apk/release/app-release.apk`. Release signing comes only from the environment, never from
-  the repository: set `GAMECTL_KEYSTORE` (path to the `.jks`), `GAMECTL_KEYSTORE_PASSWORD` and `GAMECTL_KEY_ALIAS`
-  (default `gamectl`). The key password is taken to be the store password; set `GAMECTL_KEY_PASSWORD` if yours differs.
+  the repository: set `SIMDECK_KEYSTORE` (path to the `.jks`), `SIMDECK_KEYSTORE_PASSWORD` and `SIMDECK_KEY_ALIAS`
+  (default `simdeck`). The key password is taken to be the store password; set `SIMDECK_KEY_PASSWORD` if yours differs.
   Without them the release APK is signed with your local debug key, which is fine for testing but won't install over the
   official app. `./gradlew -PcoreOnly=true :core:test` tests the core without the Android SDK.
 - Windows companion: .NET 8 SDK. See `windows/README.md`.
-- BeamNG mod: `sh beamng-mod/build.sh` writes `beamng-mod/dist/gamecontroller.zip`. Tests: `cd beamng-mod && luajit tests/run.lua`.
+- BeamNG mod: `sh beamng-mod/build.sh` writes `beamng-mod/dist/simdeck.zip`. Tests: `cd beamng-mod && luajit tests/run.lua`.
 - GitHub Actions (`.github/workflows/ci.yml`) builds and tests all three on every push and uploads the APK,
   the companion and the mod zip as artifacts. The release key lives in the repository secrets `ANDROID_KEYSTORE_B64`,
   `ANDROID_KEYSTORE_PASSWORD` and `ANDROID_KEY_ALIAS`; CI decodes it to a temporary file for the build. Running the
   workflow by hand with `release_tag` (for example `v1.0.0`) publishes a GitHub release; a `v*` release is refused unless
-  the APK is signed with the GameCtl release key (its SHA-256 certificate fingerprint is pinned in the workflow), unless
+  the APK is signed with the SimDeck release key (its SHA-256 certificate fingerprint is pinned in the workflow), unless
   `allow_test_key` is ticked. 1.0.0 was released that way, with a test key.

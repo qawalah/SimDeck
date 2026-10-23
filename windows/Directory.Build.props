@@ -5,11 +5,11 @@
   <PropertyGroup>
     <VersionPrefix>1.0.0</VersionPrefix>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
-    <Product>GameCtl Companion</Product>
-    <Company>GameCtl</Company>
-    <Copyright>GameCtl</Copyright>
+    <Product>SimDeck Companion</Product>
+    <Company>SimDeck</Company>
+    <Copyright>SimDeck</Copyright>
   </PropertyGroup>
-  <!-- Published builds carry their symbols inside the exe, so the release folder is just GameCtlCompanion.exe. -->
+  <!-- Published builds carry their symbols inside the exe, so the release folder is just SimDeckCompanion.exe. -->
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <DebugType>embedded</DebugType>
   </PropertyGroup>

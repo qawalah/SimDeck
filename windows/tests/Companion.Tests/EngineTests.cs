@@ -1,6 +1,6 @@
-using GameController.Companion.Engine;
+using SimDeck.Companion.Engine;
 
-namespace GameController.Companion.Tests;
+namespace SimDeck.Companion.Tests;
 
 public class EngineTests
 {
@@ -211,7 +211,7 @@ public class EngineTests
     {
         var a = new Rig(Horn);
         var b = new BindingEngine(a.Router, a.Commands, "other");
-        b.SetBindings("p", new[] { GameController.Companion.Protocol.BindingParser.ParseBinding(System.Text.Json.JsonDocument.Parse(Horn).RootElement)! });
+        b.SetBindings("p", new[] { SimDeck.Companion.Protocol.BindingParser.ParseBinding(System.Text.Json.JsonDocument.Parse(Horn).RootElement)! });
         a.Send("horn", 1);
         b.Apply("horn", 1, 1, 0);
         a.Engine.ReleaseAll();

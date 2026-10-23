@@ -20,7 +20,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "GameController"
+rootProject.name = "SimDeck"
 
 // Pure-Kotlin core (model, protocol, HID reports, input engine). Builds and tests without the Android SDK.
 include(":core")

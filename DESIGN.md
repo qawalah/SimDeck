@@ -1,5 +1,5 @@
 ---
-name: Game Controller
+name: SimDeck
 description: An Android rig controller for Windows games, dressed as a racing-game front end.
 colors:
   ground: "#0A0D14"
@@ -108,7 +108,7 @@ components:
     typography: "{typography.label}"
 ---
 
-# Design System: Game Controller
+# Design System: SimDeck
 
 ## Overview
 

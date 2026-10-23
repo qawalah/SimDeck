@@ -3,8 +3,8 @@
 Visual direction: **Race Front-End**, chosen by ALI. Slanted plates, italic condensed numerals, one electric magenta accent on a blue-black ground.
 
 ## Entry points
-- `com.gamecontroller.ui.theme.GcTheme { ... }` wraps the whole app (dark scheme, Barlow type scale, shapes).
-- Screens (`com.gamecontroller.ui.screens`): `ProfilesScreen`, `ConnectScreen`, `PlayScreen`, `EditorScreen`, `IconPicker`, signatures exactly as in UI_REQUEST.md v2.
+- `com.simdeck.ui.theme.GcTheme { ... }` wraps the whole app (dark scheme, Barlow type scale, shapes).
+- Screens (`com.simdeck.ui.screens`): `ProfilesScreen`, `ConnectScreen`, `PlayScreen`, `EditorScreen`, `IconPicker`, signatures exactly as in UI_REQUEST.md v2.
 - Reusable: `ControlView` (any control type, `interactive=false` for previews), `LayoutMiniature(page)`, `PageTabs`, `SlantButton`, `SlantTabs`, `LinkBadge`/`BluetoothLinkBadge`/`PcLinkBadge`.
 
 ## Files the UI owns

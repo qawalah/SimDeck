@@ -1,6 +1,6 @@
-using GameController.Companion.Engine;
+using SimDeck.Companion.Engine;
 
-namespace GameController.Companion.Tests;
+namespace SimDeck.Companion.Tests;
 
 public class BluetoothPadTests
 {

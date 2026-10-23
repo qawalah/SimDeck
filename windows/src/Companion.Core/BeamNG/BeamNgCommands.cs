@@ -1,4 +1,4 @@
-namespace GameController.Companion.BeamNG;
+namespace SimDeck.Companion.BeamNG;
 
 /// <summary>How a BeamNG command reacts to control values (PROTOCOL.md "Edge rules").</summary>
 public enum CommandStyle

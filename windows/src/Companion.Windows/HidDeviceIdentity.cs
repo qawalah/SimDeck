@@ -1,13 +1,13 @@
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text;
-using GameController.Companion.Engine;
+using SimDeck.Companion.Engine;
 using Microsoft.Win32.SafeHandles;
 
-namespace GameController.Companion.Windows;
+namespace SimDeck.Companion.Windows;
 
 /// <summary>
-/// Finds the VID/PID of vJoy or of the phone's "GameCtl Pad" Bluetooth HID device by walking
+/// Finds the VID/PID of vJoy or of the phone's "SimDeck Pad" Bluetooth HID device by walking
 /// the HID device interfaces (SetupAPI + HidD_GetAttributes), for BeamNG input-map file names.
 /// </summary>
 [SupportedOSPlatform("windows")]
@@ -46,7 +46,7 @@ public sealed class HidDeviceIdentity : IDeviceIdentity
         if (device.StartsWith("vjoy", StringComparison.OrdinalIgnoreCase))
             return Find("vJoy")?.VidPid ?? "bead1234";
         if (device.Equals("hid", StringComparison.OrdinalIgnoreCase))
-            return Find("GameCtl Pad")?.VidPid;
+            return Find("SimDeck Pad")?.VidPid;
         return null;
     }
 
@@ -97,13 +97,13 @@ public sealed class HidDeviceIdentity : IDeviceIdentity
 
 /// <summary>
 /// The phone's Bluetooth controller as Windows sees it: present HID interfaces whose product string is
-/// "GameCtl Pad". A classic Bluetooth HID device only has HID interfaces while its link is up, and
+/// "SimDeck Pad". A classic Bluetooth HID device only has HID interfaces while its link is up, and
 /// opening one must succeed, so a paired pad that is switched off or out of range is not listed.
 /// </summary>
 [SupportedOSPlatform("windows")]
 public sealed class WindowsBluetoothPads : IBluetoothPads
 {
-    public const string PadName = "GameCtl Pad";
+    public const string PadName = "SimDeck Pad";
 
     public IReadOnlyList<BluetoothPad> Present() =>
         HidDeviceIdentity.Enumerate()

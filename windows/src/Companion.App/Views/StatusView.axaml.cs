@@ -1,8 +1,8 @@
 using Avalonia;
 using Avalonia.Controls;
-using GameController.Companion.App.ViewModels;
+using SimDeck.Companion.App.ViewModels;
 
-namespace GameController.Companion.App.Views;
+namespace SimDeck.Companion.App.Views;
 
 public partial class StatusView : UserControl
 {

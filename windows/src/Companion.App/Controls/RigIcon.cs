@@ -2,7 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 
-namespace GameController.Companion.App.Controls;
+namespace SimDeck.Companion.App.Controls;
 
 /// <summary>
 /// A 24-unit stroke icon (2 px round stroke at 24 px), the same drawing rules as the phone app's

@@ -1,9 +1,9 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
-using GameController.Companion.Input;
+using SimDeck.Companion.Input;
 
-namespace GameController.Companion.Windows;
+namespace SimDeck.Companion.Windows;
 
 /// <summary>
 /// vJoy through its own vJoyInterface.dll (installed with the driver; the maintained fork is

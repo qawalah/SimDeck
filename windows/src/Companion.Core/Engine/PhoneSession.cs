@@ -3,7 +3,7 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json.Nodes;
 
-namespace GameController.Companion.Engine;
+namespace SimDeck.Companion.Engine;
 
 /// <summary>One connected, paired phone.</summary>
 public sealed class PhoneSession

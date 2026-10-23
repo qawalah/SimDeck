@@ -4,7 +4,7 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 
-namespace GameController.Companion.Net;
+namespace SimDeck.Companion.Net;
 
 /// <summary>Builds and parses the small subset of DNS used by mDNS service discovery (RFC 6762/6763).</summary>
 public static class DnsWire
@@ -132,7 +132,7 @@ public static class DnsWire
 }
 
 /// <summary>
-/// Advertises <c>_gamectl._tcp.local</c> so Android NSD finds the companion. It is a small
+/// Advertises <c>_simdeck._tcp.local</c> so Android NSD finds the companion. It is a small
 /// responder that shares UDP 5353 with any system responder (SO_REUSEADDR).
 /// </summary>
 public sealed class MdnsAdvertiser : IDisposable
@@ -141,9 +141,9 @@ public sealed class MdnsAdvertiser : IDisposable
     const int Port = 5353;
     const uint Ttl = 120;
 
-    readonly string _service;      // _gamectl._tcp.local
-    readonly string _instance;     // <name>._gamectl._tcp.local
-    readonly string _host;         // <name>-gamectl.local
+    readonly string _service;      // _simdeck._tcp.local
+    readonly string _instance;     // <name>._simdeck._tcp.local
+    readonly string _host;         // <name>-simdeck.local
     readonly ushort _port;
     readonly string[] _txt;
     readonly CancellationTokenSource _cts = new();
@@ -157,7 +157,7 @@ public sealed class MdnsAdvertiser : IDisposable
         var label = Sanitize(serverName);
         _service = serviceType.TrimEnd('.') + ".local";
         _instance = $"{label}.{_service}";
-        _host = $"{label}-gamectl.local";
+        _host = $"{label}-simdeck.local";
         _port = port;
         _txt = txt.ToArray();
     }
@@ -167,7 +167,7 @@ public sealed class MdnsAdvertiser : IDisposable
         var sb = new StringBuilder();
         foreach (var ch in s) sb.Append(char.IsLetterOrDigit(ch) || ch == '-' ? ch : '-');
         var r = sb.ToString().Trim('-');
-        if (r.Length == 0) r = "GameController";
+        if (r.Length == 0) r = "SimDeck";
         return r.Length > 40 ? r[..40] : r;
     }
 

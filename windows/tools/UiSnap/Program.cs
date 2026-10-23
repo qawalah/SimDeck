@@ -1,4 +1,4 @@
-using GameController.Companion.Engine;
+using SimDeck.Companion.Engine;
 using System.Net;
 using System.Net.Sockets;
 using System.Net.WebSockets;
@@ -6,12 +6,12 @@ using System.Text;
 using Avalonia;
 using Avalonia.Headless;
 using Avalonia.Threading;
-using GameController.Companion;
-using GameController.Companion.App;
-using GameController.Companion.App.Services;
-using GameController.Companion.App.ViewModels;
-using GameController.Companion.App.Views;
-using GameController.Companion.Config;
+using SimDeck.Companion;
+using SimDeck.Companion.App;
+using SimDeck.Companion.App.Services;
+using SimDeck.Companion.App.ViewModels;
+using SimDeck.Companion.App.Views;
+using SimDeck.Companion.Config;
 
 // UiSnap <out dir>: screenshots of every page in two states (first run, and a live session with
 // a simulated phone and BeamNG mod). The data is synthetic.
@@ -40,7 +40,7 @@ void Pump(int ms)
 void Snap(MainWindow w, string name)
 {
     // Headless has no render loop for self-animating controls; ask them to redraw.
-    foreach (var v in Avalonia.VisualTree.VisualExtensions.GetVisualDescendants(w).OfType<GameController.Companion.App.Controls.SignalPath>()) v.InvalidateVisual();
+    foreach (var v in Avalonia.VisualTree.VisualExtensions.GetVisualDescendants(w).OfType<SimDeck.Companion.App.Controls.SignalPath>()) v.InvalidateVisual();
     Pump(150);
     var frame = w.CaptureRenderedFrame();
     var path = Path.Combine(outDir, name + ".png");
@@ -72,7 +72,7 @@ vm.GoCommand.Execute("settings"); Snap(win, "04-settings");
 vm.GoCommand.Execute("status");
 
 // 1b. The phone connects over Bluetooth only (controls work, Wi-Fi not linked yet).
-pads.Now.Add(new BluetoothPad("pad-1", "GameCtl Pad"));
+pads.Now.Add(new BluetoothPad("pad-1", "SimDeck Pad"));
 host.ScanBluetooth(); Pump(300);
 Snap(win, "12-status-bluetooth-only");
 vm.GoCommand.Execute("phones"); Snap(win, "13-phones-bluetooth-only");

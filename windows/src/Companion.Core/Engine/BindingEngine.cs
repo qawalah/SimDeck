@@ -1,8 +1,8 @@
-using GameController.Companion.BeamNG;
-using GameController.Companion.Input;
-using GameController.Companion.Protocol;
+using SimDeck.Companion.BeamNG;
+using SimDeck.Companion.Input;
+using SimDeck.Companion.Protocol;
 
-namespace GameController.Companion.Engine;
+namespace SimDeck.Companion.Engine;
 
 public enum ApplyResult { Applied, Stale, UnknownControl, RoutedOverHid }
 

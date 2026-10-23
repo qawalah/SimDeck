@@ -1,10 +1,10 @@
 using System.Runtime.Versioning;
-using GameController.Companion.Input;
+using SimDeck.Companion.Input;
 using Nefarius.ViGEm.Client;
 using Nefarius.ViGEm.Client.Targets;
 using Nefarius.ViGEm.Client.Targets.Xbox360;
 
-namespace GameController.Companion.Windows;
+namespace SimDeck.Companion.Windows;
 
 /// <summary>
 /// Optional virtual Xbox 360 pad through ViGEmBus. ViGEmBus is archived upstream but its last

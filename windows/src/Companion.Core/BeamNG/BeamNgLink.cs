@@ -4,10 +4,10 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Channels;
-using GameController.Companion.Engine;
-using GameController.Companion.Protocol;
+using SimDeck.Companion.Engine;
+using SimDeck.Companion.Protocol;
 
-namespace GameController.Companion.BeamNG;
+namespace SimDeck.Companion.BeamNG;
 
 /// <summary>
 /// TCP server on 127.0.0.1:47803 that the BeamNG mod connects to (newline-delimited JSON).

@@ -1,6 +1,6 @@
-using GameController.Companion.Protocol;
+using SimDeck.Companion.Protocol;
 
-namespace GameController.Companion.Input;
+namespace SimDeck.Companion.Input;
 
 /// <summary>Something that can be held down: a key, a vJoy button or an Xbox button.</summary>
 public readonly record struct Holdable(ActionType Kind, int Device, int Code, string Name)

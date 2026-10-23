@@ -1,4 +1,4 @@
-# GameCtl end-to-end test
+# SimDeck end-to-end test
 
 One pass through everything: the phone app, the Bluetooth route, the Wi-Fi companion, the BeamNG mod, and the editor.
 It takes about 60 minutes. Control, profile and screen names are written exactly as they appear on the phone.
@@ -22,21 +22,21 @@ A step that matches needs no note.
 ## Part 0: Install (5 min)
 
 0.0 **Get the files.** Open https://github.com/alialyami90/GameControl/releases, pick the latest release and download
-    `GameCtl.apk` (to the phone), `GameCtl-companion-win-x64.zip` and `gamecontroller.zip` (to the PC).
+    `SimDeck.apk` (to the phone), `SimDeck-companion-win-x64.zip` and `simdeck.zip` (to the PC).
 
-0.1 On the phone open `GameCtl.apk`. Allow "Install unknown apps" for your browser or file manager when asked.
+0.1 On the phone open `SimDeck.apk`. Allow "Install unknown apps" for your browser or file manager when asked.
     Play Protect may ask to scan it or warn once: choose **Install anyway**. (Upgrading from a beta: see INSTALL section 1.)
-    Open **GameCtl**: it runs in landscape and shows the profile list with seven built-in profiles:
+    Open **SimDeck**: it runs in landscape and shows the profile list with seven built-in profiles:
     **Generic gamepad**, **Keyboard keys**, **BeamNG.drive**, **BeamNG.drive (Bluetooth pad)**, **MudRunner**,
     **Bulldozer**, **Utility vehicles**.
 
-0.2 On the PC unzip `GameCtl-companion-win-x64.zip` to a folder and run `GameCtlCompanion.exe`.
+0.2 On the PC unzip `SimDeck-companion-win-x64.zip` to a folder and run `SimDeckCompanion.exe`.
     Windows SmartScreen may say it protected your PC: choose **More info > Run anyway**.
     When the firewall asks, allow **Private networks** (your Wi-Fi must be set to Private in Windows network settings).
-    The window titled "GameCtl Companion" opens and a tray icon appears; it shows a 6-digit PIN
+    The window titled "SimDeck Companion" opens and a tray icon appears; it shows a 6-digit PIN
     and the PC's IP address.
 
-0.3 Copy `gamecontroller.zip` (still zipped) into `%LOCALAPPDATA%\BeamNG.drive\<version>\mods\`. The quickest way there:
+0.3 Copy `simdeck.zip` (still zipped) into `%LOCALAPPDATA%\BeamNG.drive\<version>\mods\`. The quickest way there:
     in BeamNG **Options > Other > Open user folder**, then the `mods` folder. Close BeamNG again before Part C.
 
 ---
@@ -48,9 +48,9 @@ A1 On the phone tap the **PAIRED / OFF** badges at the top right of the profile 
    If the Bluetooth panel is only a grey line saying the phone does not support it (the PC panel is then shown first), write that
    down and skip to Part B: everything else still works through the companion.
 
-A2 On the PC: **Settings > Bluetooth & devices > Add device > Bluetooth**, pick **GameCtl Pad**. If Windows shows a code and asks
+A2 On the PC: **Settings > Bluetooth & devices > Add device > Bluetooth**, pick **SimDeck Pad**. If Windows shows a code and asks
    you to confirm it on the phone, accept it on both. The phone's Bluetooth badge turns green and shows the PC's name.
-   If **GameCtl Pad** never appears: discoverable mode ends after about 2 minutes, so tap **MAKE DISCOVERABLE** again and search again.
+   If **SimDeck Pad** never appears: discoverable mode ends after about 2 minutes, so tap **MAKE DISCOVERABLE** again and search again.
    After pairing, check that the PC's sound still plays through your speakers. Windows may add the phone's audio (headset /
    hands-free) and switch the default output to the phone: if so, in **Control Panel > Devices and Printers** right-click the
    phone, **Properties > Services**, untick the audio, headset and hands-free services, and set your speakers back as the
@@ -61,7 +61,7 @@ A2a With the companion running on the PC and the phone **not** connected to it o
     with a green **BT** tag and the status "Bluetooth only", and an amber **WI-FI Not linked** banner explains that lamps, game state and BeamNG commands need the Wi-Fi link too.
     Turn Bluetooth off on the phone: the phone leaves the list within about 2 seconds. Turn it back on and let it reconnect.
 
-A3 On the PC press `Win+R`, run `joy.cpl`, select **GameCtl Pad > Properties**. On the phone open **Generic gamepad**.
+A3 On the PC press `Win+R`, run `joy.cpl`, select **SimDeck Pad > Properties**. On the phone open **Generic gamepad**.
    - Tap **B1** to **B12**: the matching button lights in joy.cpl and goes out when you let go.
    - Tap **T1** (gamepad button 13): it stays lit on the phone and button 13 stays lit in joy.cpl; tap again, both go out.
    - Drag **Throttle** up and down: the Slider axis follows; let go, it stays where you left it.
@@ -72,7 +72,7 @@ A3 On the PC press `Win+R`, run `joy.cpl`, select **GameCtl Pad > Properties**. 
 A4 Open Notepad on the PC and on the phone open **Keyboard keys**. Tap **Enter**, **Tab**, **Space**, the arrows, then **Copy** and
    **Paste** on some selected text: they act as the real keys. Hold **Push to talk** (F13): nothing visible, that is correct.
 
-A5 Hold **B1** on the phone, press the phone's power button to lock the screen, unlock and reopen GameCtl.
+A5 Hold **B1** on the phone, press the phone's power button to lock the screen, unlock and reopen SimDeck.
    In joy.cpl button 1 is **not** lit (the app releases everything when it leaves the screen).
 
 A6 Turn Bluetooth off on the PC. Within a few seconds the phone's badge turns red. Tap **B1**: both badges flash **NO LINK**
@@ -108,7 +108,7 @@ B6 In the companion window **Forget** the phone. The phone drops to disconnected
 Both links can stay up. Steps C1-C3 and C5-C12 use the **BeamNG.drive** profile, which has two pages, **Drive** and **4x4**
 (the tabs at the top; on a small phone they are a < > pager). C4 uses **BeamNG.drive (Bluetooth pad)**.
 
-**Where to look.** In BeamNG press the ` key (left of 1) to open the console and type `gameController` in its filter box.
+**Where to look.** In BeamNG press the ` key (left of 1) to open the console and type `simdeck` in its filter box.
 The same lines are in `beamng.log` in the BeamNG user folder (**Options > Other > Open user folder**).
 
 **Cars.** **Gavril D-Series** (4WD, low range, diff locks, ESC, cruise; its part-time transfer case means **Center diff** is
@@ -116,9 +116,9 @@ expected to be hidden), a police car for the light bar (for example the **Gavril
 without ESC (for example the **Ibishu Pigeon**).
 
 C1 **Connection.** Start BeamNG with the companion running. Within about 3 seconds a message in BeamNG says
-   "Connected to the GameCtl companion", the companion window's signal path shows the node **BeamNG mod** with
+   "Connected to the SimDeck companion", the companion window's signal path shows the node **BeamNG mod** with
    "Mod 1.0.0 connected", and the phone's BeamNG
-   profile shows the game tag. Close the companion: BeamNG says "GameCtl companion disconnected". Start it again: it reconnects within about 3 seconds.
+   profile shows the game tag. Close the companion: BeamNG says "SimDeck companion disconnected". Start it again: it reconnects within about 3 seconds.
 
 C2 **What the mod found.** Get into each of the three cars once. Each time the console shows a line that starts
    `vehicle <name>:` followed by `has.esc=…`, `has.cruise=…` and others. **Copy all three lines into your report**, whatever they say.
@@ -141,9 +141,9 @@ C4 **Bind in game.** This needs the companion connected and BeamNG running with 
      controller yet. Check that vJoy is installed or the phone is paired over Bluetooth, then tap **Bind in game** again.
    - Tap **Bind in game** twice quickly: the second attempt shows "BeamNG is still writing the last request" and the button stays usable.
 
-   In BeamNG close and reopen **Options > Controls** (it only refreshes when opened), pick the vJoy device or "GameCtl Pad", and
+   In BeamNG close and reopen **Options > Controls** (it only refreshes when opened), pick the vJoy device or "SimDeck Pad", and
    check its buttons are bound. Tap **Done**, go back to play, and press **Horn** and **Hazard** in this profile: they work.
-   In the user folder, `settings/inputmaps/` has a new file ending in `_gamecontroller.json`; your other files there are unchanged.
+   In the user folder, `settings/inputmaps/` has a new file ending in `_simdeck.json`; your other files there are unchanged.
 
 C5 **4WD, diff locks, range.** In the D-Series, on the **4x4** page of **BeamNG.drive**, press **4WD**, **Low range**,
    **Front diff** and **Rear diff**. The dash or the Drivetrain app (add it with **UI Apps**) shows each change, and the control's
@@ -189,9 +189,9 @@ C13 **OutGauge fallback (no mod).** Disable the mod in BeamNG's mod manager and 
 ## Part D: Both routes at once (5 min)
 
 D1 With Bluetooth **and** the companion connected, open **Generic gamepad** (its output is **Auto**: Bluetooth when paired).
-   In `joy.cpl` the presses arrive on **GameCtl Pad**, not on vJoy.
+   In `joy.cpl` the presses arrive on **SimDeck Pad**, not on vJoy.
 
-D2 Hold **Throttle** half way, then turn Bluetooth off on the PC. The GameCtl Pad axis goes to minimum, and the same value
+D2 Hold **Throttle** half way, then turn Bluetooth off on the PC. The SimDeck Pad axis goes to minimum, and the same value
    continues on vJoy (if installed) without any button being tapped. Turn Bluetooth back on: the slider carries on over Bluetooth.
 
 D3 Set the **1 / 2 / 3** switch to 2, turn Bluetooth off, move it to 3: joy.cpl (vJoy) shows one press of button 19 and **no** press of 17.
@@ -216,7 +216,7 @@ E3 Select the button and in the inspector set **Sends > Key or key combo**, key 
 E4 Press the phone's **Back** button: the editor asks whether to discard. Choose to stay, tap **Done**. Open the profile: the
    controls work through whichever link is up (F5 in Notepad, button 3 in joy.cpl).
 
-E5 Open the profile card's menu and choose **Export to file**: a `.gcprofile.json` file is saved. Import it back with the
+E5 Open the profile card's menu and choose **Export to file**: a `.simdeck.json` file is saved. Import it back with the
    download icon at the top right of the profile list: a copy appears.
 
 E6 Open **BeamNG.drive > Edit**, move one control and tap **Done**. Then open the profile card's menu, choose
@@ -226,7 +226,7 @@ E6 Open **BeamNG.drive > Edit**, move one control and tap **Done**. Then open th
 
 ## Part F: Machines (5 min)
 
-F1 Keep `joy.cpl` open on **GameCtl Pad** (or vJoy). Open **Bulldozer**. Move **Drive / steer**: the X and Y axes follow your thumb;
+F1 Keep `joy.cpl` open on **SimDeck Pad** (or vJoy). Open **Bulldozer**. Move **Drive / steer**: the X and Y axes follow your thumb;
    let go and both return to centre. Move **Blade lift / tilt**: RX and RY follow. Move the **Ripper** and **Blade angle** levers:
    SL1 and RZ follow and centre when released.
 

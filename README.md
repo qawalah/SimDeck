@@ -1,4 +1,4 @@
-# GameCtl: an Android control surface for Windows games
+# SimDeck: an Android control surface for Windows games
 
 **Version 1.0.0.** Turn an Android phone or tablet into an extra controller for any Windows game: buttons, toggles,
 switches, sliders, pilot joysticks, rotaries and indicator lamps beyond your gamepad, organised in per-game profiles.
@@ -9,8 +9,8 @@ there are built-in profiles for a generic gamepad, keyboard keys, MudRunner, a b
 
 ## Download
 
-Get the latest release from **https://github.com/alialyami90/GameControl/releases**: `GameCtl.apk` (phone),
-`GameCtl-companion-win-x64.zip` (PC companion), `gamecontroller.zip` (BeamNG mod). Then follow
+Get the latest release from **https://github.com/alialyami90/GameControl/releases**: `SimDeck.apk` (phone),
+`SimDeck-companion-win-x64.zip` (PC companion), `simdeck.zip` (BeamNG mod). Then follow
 [docs/INSTALL.md](docs/INSTALL.md).
 
 **Requirements:** Android 9 or newer; Windows 10 or 11, 64-bit (the companion is self-contained, no .NET install needed);
@@ -20,7 +20,7 @@ Bluetooth on the PC for the Bluetooth route; the same Wi-Fi network for the comp
 
 | Part | Folder | What it does |
 |---|---|---|
-| Android app | `android/` | Profiles, layout editor, play surface. Acts as a **Bluetooth HID controller** ("GameCtl Pad": keyboard + 64-button / 8-axis gamepad) and/or talks to the companion over Wi-Fi. |
+| Android app | `android/` | Profiles, layout editor, play surface. Acts as a **Bluetooth HID controller** ("SimDeck Pad": keyboard + 64-button / 8-axis gamepad) and/or talks to the companion over Wi-Fi. |
 | Windows companion | `windows/` | Optional tray app: scancode keyboard, vJoy, virtual Xbox pad (ViGEm), macros, BeamNG commands and game feedback to the phone. |
 | BeamNG mod | `beamng-mod/` | Reports vehicle state, runs commands, writes in-game bindings. |
 | Protocol | `protocol/PROTOCOL.md` | The shared, versioned phone / PC / mod protocol. |

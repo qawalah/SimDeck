@@ -1,7 +1,7 @@
 using System.Text.Json;
-using GameController.Companion.Protocol;
+using SimDeck.Companion.Protocol;
 
-namespace GameController.Companion.Tests;
+namespace SimDeck.Companion.Tests;
 
 public class ParserTests
 {

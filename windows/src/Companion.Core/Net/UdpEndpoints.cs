@@ -3,9 +3,9 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using GameController.Companion.Protocol;
+using SimDeck.Companion.Protocol;
 
-namespace GameController.Companion.Net;
+namespace SimDeck.Companion.Net;
 
 /// <summary>A UDP socket with a receive loop that hands every datagram to a callback.</summary>
 public sealed class UdpLoop : IDisposable

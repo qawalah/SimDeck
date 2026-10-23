@@ -1,4 +1,4 @@
-namespace GameController.Companion.Logging;
+namespace SimDeck.Companion.Logging;
 
 /// <summary>
 /// The log on disk, next to the settings file, for troubleshooting after the window is gone. Keeps the

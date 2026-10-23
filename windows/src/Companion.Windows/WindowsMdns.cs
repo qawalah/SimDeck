@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 
-namespace GameController.Companion.Windows;
+namespace SimDeck.Companion.Windows;
 
 /// <summary>
 /// Registers the service with Windows' own mDNS responder (DnsServiceRegister, Windows 10 1809+).

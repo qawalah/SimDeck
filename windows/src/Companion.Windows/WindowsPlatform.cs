@@ -1,9 +1,9 @@
 using System.Runtime.Versioning;
-using GameController.Companion.Config;
-using GameController.Companion.Input;
-using GameController.Companion.Protocol;
+using SimDeck.Companion.Config;
+using SimDeck.Companion.Input;
+using SimDeck.Companion.Protocol;
 
-namespace GameController.Companion.Windows;
+namespace SimDeck.Companion.Windows;
 
 /// <summary>Builds the real Windows outputs and host options in one place for the tray app and console host.</summary>
 [SupportedOSPlatform("windows")]

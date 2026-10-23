@@ -1,12 +1,12 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:vm="using:GameController.Companion.App.ViewModels"
-        xmlns:c="using:GameController.Companion.App.Controls"
-        xmlns:v="using:GameController.Companion.App.Views"
-        x:Class="GameController.Companion.App.Views.MainWindow"
+        xmlns:vm="using:SimDeck.Companion.App.ViewModels"
+        xmlns:c="using:SimDeck.Companion.App.Controls"
+        xmlns:v="using:SimDeck.Companion.App.Views"
+        x:Class="SimDeck.Companion.App.Views.MainWindow"
         x:DataType="vm:MainViewModel"
-        Title="GameCtl Companion"
-        Icon="avares://GameCtlCompanion/Assets/companion.ico"
+        Title="SimDeck Companion"
+        Icon="avares://SimDeckCompanion/Assets/companion.ico"
         Width="1120" Height="760" MinWidth="820" MinHeight="560"
         Background="{StaticResource Ground}"
         WindowStartupLocation="CenterScreen">
@@ -19,7 +19,7 @@
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="10" Margin="8,0,0,26">
           <c:RigIcon Kind="wheel" Size="30" Foreground="{StaticResource Ink}" VerticalAlignment="Center" />
           <StackPanel VerticalAlignment="Center">
-            <TextBlock Text="GAMECTL" FontFamily="{StaticResource CondXBold}" FontStyle="Italic" FontSize="19" />
+            <TextBlock Text="SIMDECK" FontFamily="{StaticResource CondXBold}" FontStyle="Italic" FontSize="19" />
             <TextBlock Text="Companion for Windows" Classes="small muted" />
           </StackPanel>
         </StackPanel>

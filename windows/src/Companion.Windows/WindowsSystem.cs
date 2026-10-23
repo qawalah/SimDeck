@@ -4,17 +4,17 @@ using System.Runtime.Versioning;
 using System.Security.Principal;
 using Microsoft.Win32;
 
-namespace GameController.Companion.Windows;
+namespace SimDeck.Companion.Windows;
 
 /// <summary>Windows integration: firewall rule, start with Windows, and elevation checks.</summary>
 [SupportedOSPlatform("windows")]
 public static class WindowsSystem
 {
-    public const string FirewallRuleName = "GameCtl Companion";
-    const string LegacyFirewallRuleName = "Game Controller Companion"; // beta builds
+    public const string FirewallRuleName = "SimDeck Companion";
+    const string LegacyFirewallRuleName = "SimDeck Companion"; // beta builds
     const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
-    const string RunValue = "GameCtlCompanion";
-    const string LegacyRunValue = "GameControllerCompanion"; // beta builds (GameControllerCompanion.exe)
+    const string RunValue = "SimDeckCompanion";
+    const string LegacyRunValue = "SimDeckCompanion"; // beta builds (SimDeckCompanion.exe)
 
     public static string ExePath => Environment.ProcessPath ?? Process.GetCurrentProcess().MainModule?.FileName ?? "";
 
@@ -73,7 +73,7 @@ public static class WindowsSystem
     }
 
     /// <summary>
-    /// At start-up: a beta's Run entry points at GameControllerCompanion.exe, and a moved exe leaves a
+    /// At start-up: a beta's Run entry points at SimDeckCompanion.exe, and a moved exe leaves a
     /// stale path. If the user asked to start with Windows (saved setting or a beta entry), point the
     /// entry at this exe; drop the beta entry either way.
     /// </summary>

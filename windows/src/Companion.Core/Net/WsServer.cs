@@ -4,7 +4,7 @@ using System.Net.WebSockets;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace GameController.Companion.Net;
+namespace SimDeck.Companion.Net;
 
 /// <summary>
 /// A minimal WebSocket server on a raw TcpListener. HttpListener would need a URL ACL (admin)

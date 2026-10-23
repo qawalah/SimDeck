@@ -1,6 +1,6 @@
-using GameController.Companion.Input;
+using SimDeck.Companion.Input;
 
-namespace GameController.Companion.Tests;
+namespace SimDeck.Companion.Tests;
 
 public class KeyTableTests
 {

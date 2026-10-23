@@ -6,7 +6,7 @@ package.path = "./tests/?.lua;" .. package.path
 local json = require("json")
 local socket = require("socket")
 
-local MOD = "./gamecontroller/lua/"
+local MOD = "./simdeck/lua/"
 local failures, passes = 0, 0
 
 local function check(cond, name)
@@ -111,9 +111,9 @@ ve.extensions = {
     changeSpeed = function(d) e.cruiseControlTarget = e.cruiseControlTarget + d end,
   },
   load = function(name)
-    if name == "gameControllerVehicle" then
-      ve.gameControllerVehicle = loadInto(ve, MOD .. "vehicle/extensions/gameControllerVehicle.lua")
-      ve.gameControllerVehicle.onExtensionLoaded()
+    if name == "simdeckVehicle" then
+      ve.simdeckVehicle = loadInto(ve, MOD .. "vehicle/extensions/simdeckVehicle.lua")
+      ve.simdeckVehicle.onExtensionLoaded()
     end
   end,
 }
@@ -170,7 +170,7 @@ local veh = {
   getID = function() return 7 end,
   getJBeamFilename = function() return "pickup" end,
   queueLuaCommand = function(_, code)
-    if code:find("extensions.load('gameControllerVehicle')", 1, true) then veLoads = veLoads + 1 end
+    if code:find("extensions.load('simdeckVehicle')", 1, true) then veLoads = veLoads + 1 end
     table.insert(veQueue, code)
   end,
 }
@@ -234,8 +234,8 @@ ge.FS = {
 ge.jsonReadFile = function(p) return actionFiles[p] end
 ge.writeFile = function(p, data) files[p] = data; return true end
 
-local link = loadInto(ge, MOD .. "ge/extensions/gameControllerLink.lua")
-ge.gameControllerLink = link
+local link = loadInto(ge, MOD .. "ge/extensions/simdeckLink.lua")
+ge.simdeckLink = link
 
 -- ============= COMPANION (TCP SERVER) =============
 
@@ -250,7 +250,7 @@ local function pump(frames)
   for _ = 1, frames or 1 do
     link.onUpdate(0.05)
     runQueued(veQueue, ve)
-    if ve.gameControllerVehicle then ve.gameControllerVehicle.updateGFX(vehicleDt) end
+    if ve.simdeckVehicle then ve.simdeckVehicle.updateGFX(vehicleDt) end
     runQueued(geQueue, ge)
     if not client then
       client = server:accept()
@@ -478,12 +478,12 @@ pump(4)
 check(lastOfType("bindings.result") == nil, "bindings result waits for the check")
 pump(30)
 local res = lastOfType("bindings.result")
-local written = files["/settings/inputmaps/bead1234_gamecontroller.json"]
+local written = files["/settings/inputmaps/bead1234_simdeck.json"]
 check(res and res.ok == true and res.count == 2, "bindings result ok once loaded")
 check(written ~= nil, "bindings file written")
 local map = written and json.decode(written)
 check(map and map.vidpid == "bead1234" and map.bindings[1].control == "button4" and map.bindings[1].action == "toggle_slow_motion", "bindings content")
-check(reloaded[#reloaded] == "/settings/inputmaps/bead1234_gamecontroller.json", "input bindings reloaded")
+check(reloaded[#reloaded] == "/settings/inputmaps/bead1234_simdeck.json", "input bindings reloaded")
 check(res and res.unknown and res.unknown[1] == "missing_action", "unknown actions reported")
 inbox = {}
 bindingsLoad = false
@@ -499,7 +499,7 @@ res = lastOfType("bindings.result")
 check(res and res.ok == false, "hid without vidpid fails")
 sendToMod({ type = "bindings.apply", device = "vjoy1", bindings = {} })
 pump(4)
-check(files["/settings/inputmaps/bead1234_gamecontroller.json"] == nil, "empty bindings remove the file")
+check(files["/settings/inputmaps/bead1234_simdeck.json"] == nil, "empty bindings remove the file")
 
 -- a message split across TCP packets
 client:send('{"v":1,"type":"command","comm')
@@ -529,22 +529,22 @@ check(merged()["gear"] ~= nil, "vehicle back: vehicle keys reported again")
 
 -- ESC: a car without ESC leaves has.esc out, even though the safe getter answers every key
 carHasEsc = false
-ve.gameControllerVehicle.onReset()
+ve.simdeckVehicle.onReset()
 pump(8)
 check(merged()["has.esc"] == nil and merged()["esc.active"] == nil, "no ESC controller: has.esc left out")
 carHasEsc = true
-ve.gameControllerVehicle.onReset()
+ve.simdeckVehicle.onReset()
 pump(8)
 check(merged()["has.esc"] == true, "ESC controller found again")
 
 -- an ESC controller whose functions live behind a metatable still counts (B27)
 local realEsc = escCtrl
 escCtrl = setmetatable({}, { __index = realEsc })
-ve.gameControllerVehicle.onReset()
+ve.simdeckVehicle.onReset()
 pump(8)
 check(merged()["has.esc"] == true and merged()["esc.mode"] ~= nil, "ESC controller behind a metatable is found")
 escCtrl = realEsc
-ve.gameControllerVehicle.onReset()
+ve.simdeckVehicle.onReset()
 pump(8)
 
 -- a vehicle Lua action that fails falls back to the native route
@@ -692,7 +692,7 @@ do
   tv.electrics = { values = { wheelspeed = 0 } }
   tv.v = { data = {} }
   tv.RESET_PHYSICS = 1
-  local m = loadInto(tv, MOD .. "vehicle/extensions/gameControllerVehicle.lua")
+  local m = loadInto(tv, MOD .. "vehicle/extensions/simdeckVehicle.lua")
   m.onExtensionLoaded()
   m.requestFull()
   local before = #logs
@@ -715,7 +715,7 @@ end
 
 -- Ctrl+R twice on the same car, each time the first load is lost: both get the quick retry
 for round = 1, 2 do
-  ve.gameControllerVehicle.setActive(false) -- the reloaded car's Lua is fresh and quiet
+  ve.simdeckVehicle.setActive(false) -- the reloaded car's Lua is fresh and quiet
   link.onVehicleSpawned(7)
   veQueue = {} -- the first load is lost
   local before = veLoads

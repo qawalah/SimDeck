@@ -1,16 +1,16 @@
-using GameController.Companion.Net;
+using SimDeck.Companion.Net;
 
-namespace GameController.Companion.Tests;
+namespace SimDeck.Companion.Tests;
 
 public class MdnsTests
 {
     [Fact]
     public void Query_round_trips_through_the_parser()
     {
-        var q = DnsWire.Query("_gamectl._tcp.local", DnsWire.TypePtr);
+        var q = DnsWire.Query("_simdeck._tcp.local", DnsWire.TypePtr);
         var qs = DnsWire.ParseQuestions(q, out bool isResponse)!;
         Assert.False(isResponse);
-        Assert.Equal(new DnsWire.Question("_gamectl._tcp.local", DnsWire.TypePtr), qs.Single());
+        Assert.Equal(new DnsWire.Question("_simdeck._tcp.local", DnsWire.TypePtr), qs.Single());
     }
 
     [Fact]
@@ -44,8 +44,8 @@ public class MdnsTests
     public void Response_header_counts_records()
     {
         var r = DnsWire.Response(
-            new[] { new DnsWire.Record("_gamectl._tcp.local", DnsWire.TypePtr, DnsWire.ClassIn, 120, DnsWire.NameBytes("PC._gamectl._tcp.local")) },
-            new[] { new DnsWire.Record("PC._gamectl._tcp.local", DnsWire.TypeTxt, DnsWire.ClassIn, 120, DnsWire.Txt(new[] { "v=1" })) });
+            new[] { new DnsWire.Record("_simdeck._tcp.local", DnsWire.TypePtr, DnsWire.ClassIn, 120, DnsWire.NameBytes("PC._simdeck._tcp.local")) },
+            new[] { new DnsWire.Record("PC._simdeck._tcp.local", DnsWire.TypeTxt, DnsWire.ClassIn, 120, DnsWire.Txt(new[] { "v=1" })) });
         Assert.Equal(0x84, r[2]);
         Assert.Equal(1, r[7]);
         Assert.Equal(1, r[11]);

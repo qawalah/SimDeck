@@ -4,14 +4,14 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using GameController.Companion.BeamNG;
-using GameController.Companion.Config;
-using GameController.Companion.Engine;
-using GameController.Companion.Input;
-using GameController.Companion.Net;
-using GameController.Companion.Protocol;
+using SimDeck.Companion.BeamNG;
+using SimDeck.Companion.Config;
+using SimDeck.Companion.Engine;
+using SimDeck.Companion.Input;
+using SimDeck.Companion.Net;
+using SimDeck.Companion.Protocol;
 
-namespace GameController.Companion;
+namespace SimDeck.Companion;
 
 public enum ServiceState { Off, Running, Failed }
 
@@ -79,7 +79,7 @@ public sealed class CompanionHost : IDisposable
     public CompanionConfig Config => _store.Config;
 
     public IReadOnlyCollection<PhoneSession> Sessions => _sessions.Values.ToList();
-    /// <summary>GameCtl Pad devices connected over Bluetooth right now (refreshed every 2 s).</summary>
+    /// <summary>SimDeck Pad devices connected over Bluetooth right now (refreshed every 2 s).</summary>
     public IReadOnlyList<BluetoothPad> BluetoothPads => Volatile.Read(ref _pads);
     /// <summary>Sessions and pads paired up, one entry per phone (see <see cref="PhoneLinks.Merge"/>).</summary>
     public List<LinkedPhone> Phones() => PhoneLinks.Merge(Sessions.OrderBy(s => s.DeviceName).ToList(), BluetoothPads);
@@ -637,7 +637,7 @@ public sealed class CompanionHost : IDisposable
     {
         if (BeamNg?.Connected != true)
         {
-            s.Send(JsonExt.Error("no_beamng", "BeamNG is not running with the GameCtl for BeamNG mod"));
+            s.Send(JsonExt.Error("no_beamng", "BeamNG is not running with the SimDeck for BeamNG mod"));
             return;
         }
         if (JsonNode.Parse(m.GetRawText()) is not JsonObject fwd) return;

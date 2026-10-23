@@ -1,8 +1,8 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="using:GameController.Companion.App.ViewModels"
-             xmlns:c="using:GameController.Companion.App.Controls"
-             x:Class="GameController.Companion.App.Views.SettingsView"
+             xmlns:vm="using:SimDeck.Companion.App.ViewModels"
+             xmlns:c="using:SimDeck.Companion.App.Controls"
+             x:Class="SimDeck.Companion.App.Views.SettingsView"
              x:DataType="vm:MainViewModel">
   <UserControl.Styles>
     <Style Selector="Grid.row">
@@ -132,7 +132,7 @@
         <TextBlock Text="{Binding SettingsNote}" Classes="muted" VerticalAlignment="Center" />
       </StackPanel>
       <TextBlock Classes="small faint">
-        <Run Text="GameCtl Companion" />
+        <Run Text="SimDeck Companion" />
         <Run Text="{x:Static vm:MainViewModel.Version}" />
         <Run Text="· protocol v1" />
       </TextBlock>
