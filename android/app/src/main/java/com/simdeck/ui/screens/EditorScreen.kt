@@ -104,6 +104,7 @@ import com.simdeck.ui.components.SlantStyle
 import com.simdeck.ui.components.SlantTabs
 import com.simdeck.ui.components.StateTag
 import com.simdeck.ui.components.Stepper
+import com.simdeck.ui.components.ToggleRow
 import com.simdeck.ui.icons.IconLibrary
 import com.simdeck.ui.theme.CapShape
 import com.simdeck.ui.theme.Race
@@ -120,6 +121,10 @@ fun ControlType.displayName(): String = when (this) {
     ControlType.SLIDER -> "Slider"
     ControlType.ROTARY -> "Knob"
     ControlType.JOYSTICK -> "Joystick"
+    ControlType.ROCKER -> "Rocker"
+    ControlType.GAUGE -> "Gauge"
+    ControlType.INDICATOR -> "Lamp"
+    ControlType.PAGE -> "Page key"
 }
 
 fun ControlType.blurb(): String = when (this) {
@@ -130,6 +135,10 @@ fun ControlType.blurb(): String = when (this) {
     ControlType.SLIDER -> "Axis, optional spring return"
     ControlType.ROTARY -> "Turn for steps"
     ControlType.JOYSTICK -> "Two axes on one stick, springs to centre"
+    ControlType.ROCKER -> "Hold up or down, springs to centre"
+    ControlType.GAUGE -> "A number from the game"
+    ControlType.INDICATOR -> "A tell-tale lit by the game"
+    ControlType.PAGE -> "Jumps to another page"
 }
 
 private fun ControlType.paletteIcon(): ImageVector? = IconLibrary[
@@ -141,6 +150,10 @@ private fun ControlType.paletteIcon(): ImageVector? = IconLibrary[
         ControlType.SLIDER -> "suspension"
         ControlType.ROTARY -> "cruise"
         ControlType.JOYSTICK -> "swing"
+        ControlType.ROCKER -> "boom_extend"
+        ControlType.GAUGE -> "speed"
+        ControlType.INDICATOR -> "check_engine"
+        ControlType.PAGE -> "page_next"
     }
 ]
 
@@ -180,6 +193,9 @@ fun EditorScreen(
     onDiscard: () -> Unit,
     onDone: () -> Unit,
     onPreviewGameBindings: (() -> Pair<String, List<Pair<String, Int>>>)? = null,
+    onBindHelper: (Boolean) -> Unit = {},
+    autoSwitch: Boolean = true,
+    onAutoSwitch: (Boolean) -> Unit = {},
 ) {
     val profile = state.profile
     val pageIndex = state.pageIndex.coerceIn(0, (profile.pages.size - 1).coerceAtLeast(0))
@@ -265,11 +281,19 @@ fun EditorScreen(
             Row(Modifier.fillMaxSize()) {
                 Palette(
                     rail = !wide,
-                    full = freeCell == null,
+                    full = freeCell == null || page.auto != null,
                     onAdd = { type -> freeCell?.let { (x, y) -> onAddControl(type, x, y) } },
                 )
                 Column(Modifier.weight(1f).fillMaxHeight()) {
-                    if (freeCell == null) {
+                    if (page.auto != null) {
+                        Text(
+                            if (state.vehicleFeatures.isEmpty()) "Vehicle page: fills itself in play with the functions of the vehicle you drive. Nothing reported yet."
+                            else "Vehicle page: fills itself in play. Preview from the vehicle you drive now.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Race.Cyan,
+                            modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 12.dp, top = 4.dp, bottom = 4.dp),
+                        )
+                    } else if (freeCell == null) {
                         Row(
                             Modifier.fillMaxWidth().padding(start = 4.dp, end = 12.dp, top = 4.dp, bottom = 4.dp),
                             verticalAlignment = Alignment.CenterVertically,
@@ -291,7 +315,14 @@ fun EditorScreen(
                             .fillMaxWidth()
                             .padding(start = 4.dp, end = 12.dp, bottom = 12.dp, top = 4.dp),
                     ) {
-                        EditCanvas(page, state.selectedControlId, { onSelect(it); if (it != null) showSettings = false }, onMove, onResize)
+                        if (page.auto != null) {
+                            val preview = remember(page, state.vehicleFeatures) { com.simdeck.model.VehicleFeaturePages.controls(page, state.vehicleFeatures).first }
+                            ControlGrid(preview) { c, m ->
+                                com.simdeck.ui.components.ControlView(c, 0f, null, true, {}, {}, m, interactive = false)
+                            }
+                        } else {
+                            EditCanvas(page, state.selectedControlId, { onSelect(it); if (it != null) showSettings = false }, onMove, onResize)
+                        }
                     }
                 }
                 if (wide) {
@@ -303,7 +334,7 @@ fun EditorScreen(
                             .verticalScroll(rememberScrollState())
                             .padding(horizontal = 20.dp, vertical = 8.dp),
                     ) {
-                        SidePanel(selected, page, pageIndex, state, beamngCommands, onUpdate, onResize, deleteControl, onSelect, onRenamePage, deletePage, onGridChange, onProfileChange, onApplyGameBindings, onPreviewGameBindings)
+                        SidePanel(selected, page, pageIndex, state, beamngCommands, onUpdate, onResize, deleteControl, onSelect, onRenamePage, deletePage, onGridChange, onProfileChange, onApplyGameBindings, onPreviewGameBindings, onBindHelper, autoSwitch, onAutoSwitch)
                     }
                 }
             }
@@ -341,7 +372,7 @@ fun EditorScreen(
                             }
                         }
                     }
-                    SidePanel(selected, page, pageIndex, state, beamngCommands, onUpdate, onResize, deleteControl, onSelect, onRenamePage, deletePage, onGridChange, onProfileChange, onApplyGameBindings, onPreviewGameBindings)
+                    SidePanel(selected, page, pageIndex, state, beamngCommands, onUpdate, onResize, deleteControl, onSelect, onRenamePage, deletePage, onGridChange, onProfileChange, onApplyGameBindings, onPreviewGameBindings, onBindHelper, autoSwitch, onAutoSwitch)
                 }
             }
         }
@@ -386,11 +417,14 @@ private fun SidePanel(
     onProfileChange: ((Profile) -> Profile) -> Unit,
     onApplyGameBindings: () -> Unit,
     onPreviewGameBindings: (() -> Pair<String, List<Pair<String, Int>>>)?,
+    onBindHelper: (Boolean) -> Unit,
+    autoSwitch: Boolean,
+    onAutoSwitch: (Boolean) -> Unit,
 ) {
     if (selected != null) {
-        Inspector(selected, page, state.profile.game, beamngCommands, onUpdate, onResize, onDelete, onClose = { onSelect(null) }, stateKeys = state.stateKeys)
+        Inspector(selected, page, state.profile.game, beamngCommands, onUpdate, onResize, onDelete, onClose = { onSelect(null) }, stateKeys = state.stateKeys, pages = state.profile.pages)
     } else {
-        PageAndProfile(state.profile, page, pageIndex, onRenamePage, onDeletePage, onGridChange, onProfileChange, onApplyGameBindings)
+        PageAndProfile(state.profile, page, pageIndex, onRenamePage, onDeletePage, onGridChange, onProfileChange, onApplyGameBindings, state.bindHelper, onBindHelper, autoSwitch, onAutoSwitch)
         if (state.profile.game == GameId.BEAMNG) {
             BindInGame(state.profile, state.canBindInGame, state.bindResult, onApplyGameBindings, onPreviewGameBindings)
         }
@@ -607,12 +641,24 @@ private fun PageAndProfile(
     onGridChange: (Int, Int) -> Unit,
     onProfileChange: ((Profile) -> Profile) -> Unit,
     onApplyGameBindings: () -> Unit,
+    bindHelper: Boolean = false,
+    onBindHelper: (Boolean) -> Unit = {},
+    autoSwitch: Boolean = true,
+    onAutoSwitch: (Boolean) -> Unit = {},
 ) {
     Hint("Tap a control to edit it, or add one from the left.", Modifier.padding(top = 12.dp))
     SectionHeader("This page")
     Field(page.name, { onRenamePage(pageIndex, it) }, "Page name")
     Stepper("Columns", page.columns, 4..12, { onGridChange(it, page.rows) })
     Stepper("Rows", page.rows, 2..8, { onGridChange(page.columns, it) })
+    if (profile.game == GameId.BEAMNG) {
+        ToggleRow(
+            "Vehicle page",
+            page.auto == Page.AUTO_BEAMNG_VEHICLE,
+            { on -> onProfileChange { p -> p.copy(pages = p.pages.mapIndexed { i, pg -> if (i == pageIndex) pg.copy(auto = if (on) Page.AUTO_BEAMNG_VEHICLE else null, controls = if (on) emptyList() else pg.controls) else pg }) } },
+            hint = "Fills itself with the functions of the vehicle you drive: tailgate, doors, bed, crane, outriggers. No binding needed.",
+        )
+    }
     if (profile.pages.size > 1) {
         Gap(8)
         SlantButton("Delete page", { onDeletePage(pageIndex) }, style = SlantStyle.OUTLINE, accent = Race.Red)
@@ -624,8 +670,17 @@ private fun PageAndProfile(
     Gap(4)
     Text("GAME", style = RaceType.unit, color = Race.InkFaint)
     Gap(6)
-    val games = listOf(GameId.CUSTOM, GameId.BEAMNG, GameId.MUDRUNNER)
+    val games = listOf(GameId.CUSTOM) + GameId.entries.filter { it != GameId.CUSTOM }
     ChoiceChips(games.map { it.tag() }, profile.game.tag(), { t -> onProfileChange { p -> p.copy(game = games.first { it.tag() == t }) } })
+    Gap(10)
+    var exeText by remember(profile.id) { mutableStateOf(profile.processNames.joinToString(", ")) }
+    Field(
+        exeText,
+        { t -> exeText = t; onProfileChange { p -> p.copy(processNames = t.split(',', ';').map { it.trim() }.filter { it.isNotEmpty() }) } },
+        "Game program",
+        hint = "e.g. BeamNG.drive.x64.exe. When this program comes to the front on the PC, SimDeck opens this profile.",
+        mono = true,
+    )
     Gap(14)
     Text("SEND INPUT VIA", style = RaceType.unit, color = Race.InkFaint)
     Gap(6)
@@ -638,6 +693,12 @@ private fun PageAndProfile(
             OutputRoute.COMPANION -> "Everything goes through the PC companion over Wi-Fi."
         },
     )
+    SectionHeader("Binding")
+    ToggleRow(
+        "Bind helper", bindHelper, onBindHelper,
+        hint = "While you assign controls in a game's settings: each joystick moves one axis at a time, so the game captures the axis you mean, not both.",
+    )
+    ToggleRow("Open profiles automatically", autoSwitch, onAutoSwitch, hint = "When the companion sees a game in front, switch to the profile made for it.")
 }
 
 /** "hid" / "vjoy1" from the companion, as a person would name the device. */

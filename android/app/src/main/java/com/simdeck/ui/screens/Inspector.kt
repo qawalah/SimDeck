@@ -74,6 +74,7 @@ fun Inspector(
     onDelete: (String) -> Unit,
     onClose: () -> Unit,
     stateKeys: List<String> = emptyList(),
+    pages: List<Page> = emptyList(),
 ) {
     var picking by remember { mutableStateOf(false) }
     val c = control
@@ -127,6 +128,9 @@ fun Inspector(
     }
     Stepper("Width", c.w, widthRange(c, page), { onResize(c.id, it, c.h) })
     Stepper("Height", c.h, heightRange(c, page), { onResize(c.id, c.w, it) })
+    if (c.type in setOf(ControlType.MOMENTARY, ControlType.LATCHING, ControlType.ROCKER, ControlType.SWITCH, ControlType.RADIO)) {
+        ToggleRow("Safety cover", c.guard, { onUpdate(c.copy(guard = it)) }, hint = "The first tap lifts a cover, the next one operates. For ignition, gear, ejecting a trailer.")
+    }
 
     when (c.type) {
         ControlType.MOMENTARY, ControlType.LATCHING -> {
@@ -143,6 +147,33 @@ fun Inspector(
             })
             ToggleRow("Spring back on release", c.springReturn, { onUpdate(c.copy(springReturn = it)) }, hint = "Returns to rest like a throttle pedal")
             ToggleRow("Vertical", c.vertical, { onUpdate(c.copy(vertical = it)) })
+            Stepper("Notches", c.detents, 0..11, { onUpdate(c.copy(detents = if (it == 1) 2 else it)) })
+            Hint(if (c.detents > 1) "Snaps to ${c.detents} positions, like a flap or gear lever." else "0: moves smoothly.")
+        }
+        ControlType.ROCKER -> {
+            SectionHeader("Up (or right)")
+            ActionEditor(c.cw, { onUpdate(c.copy(cw = it)) }, beamngCommands)
+            SectionHeader("Down (or left)")
+            ActionEditor(c.ccw, { onUpdate(c.copy(ccw = it)) }, beamngCommands)
+            Hint("Each half acts while held, like a window switch or a crane lever. Set a key's When to Hold for that.")
+        }
+        ControlType.GAUGE -> {
+            SectionHeader("Reading")
+            KeyField(c.feedbackKey.orEmpty(), { onUpdate(c.copy(feedbackKey = it.trim().ifBlank { null })) }, "Game value", stateKeys, "speed")
+            Field(c.scale.toString(), { t -> t.toDoubleOrNull()?.let { onUpdate(c.copy(scale = it)) } }, "Multiply by", hint = "3.6 turns m/s into km/h, 2.237 into mph, 100 a 0-1 level into %", number = true)
+            Stepper("Decimals", c.decimals, 0..3, { onUpdate(c.copy(decimals = it)) })
+            Field(c.unit.orEmpty(), { onUpdate(c.copy(unit = it.trim().ifBlank { null })) }, "Unit", hint = "Printed under the number, e.g. km/h")
+        }
+        ControlType.INDICATOR -> {
+            SectionHeader("Lamp")
+            Hint("Lights when the game value below is on (true, or a number other than 0). Set it under Game link.")
+        }
+        ControlType.PAGE -> {
+            SectionHeader("Goes to")
+            val targets = listOf("next" to "Next page", "prev" to "Previous page") + pages.map { it.id to it.name }
+            ChoiceChips(targets.map { it.second }, targets.firstOrNull { it.first == (c.pageTarget ?: "next") }?.second, { label ->
+                onUpdate(c.copy(pageTarget = targets.first { it.second == label }.first))
+            })
         }
         ControlType.JOYSTICK -> {
             SectionHeader("Left-right")
@@ -172,7 +203,8 @@ fun Inspector(
         }
     }
 
-    SectionHeader("Game link")
+    if (c.type != ControlType.PAGE && c.type != ControlType.GAUGE) SectionHeader("Game link")
+    if (c.type != ControlType.PAGE && c.type != ControlType.GAUGE) {
     Hint("Optional. Lets the game drive this control's light and availability through the BeamNG mod or telemetry.")
     Gap(4)
     if (c.type == ControlType.SWITCH || c.type == ControlType.RADIO) {
@@ -181,6 +213,7 @@ fun Inspector(
         KeyField(c.feedbackKey.orEmpty(), { onUpdate(c.copy(feedbackKey = it.trim().ifBlank { null })) }, "Light state key", stateKeys, "lights.low")
     }
     KeyField(c.visibleWhen.orEmpty(), { onUpdate(c.copy(visibleWhen = it.trim().ifBlank { null })) }, "Only available when", stateKeys.filter { it.startsWith("has.") }.ifEmpty { stateKeys }, "has.diff.front")
+    }
     if (game == GameId.BEAMNG && c.action is Action.VJoyButton) {
         Field(c.bindTo.orEmpty(), { onUpdate(c.copy(bindTo = it.trim().ifBlank { null })) }, "Bind in game to", hint = "BeamNG action name, used by Bind in game", mono = true)
     }

@@ -15,7 +15,11 @@ import com.simdeck.model.ConnectionStatus
 import com.simdeck.model.Control
 import com.simdeck.model.ControlType
 import com.simdeck.model.EditorState
+import com.simdeck.model.GameAction
 import com.simdeck.model.GameId
+import com.simdeck.model.Joystick
+import com.simdeck.model.VehicleFeaturePages
+import com.simdeck.model.VehicleFeatures
 import com.simdeck.model.PlayState
 import com.simdeck.model.Profile
 import com.simdeck.net.CompanionClient
@@ -89,6 +93,16 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     private val clock = MutableStateFlow(0L) // ticks so pending indicators time out on screen
     private val linkDrops = MutableStateFlow(0)
     private val knownStateKeys = MutableStateFlow<Set<String>>(emptySet())
+    /** The profile as stored; [activeProfile] is this with its auto pages filled for the current vehicle. */
+    private var baseProfile: Profile? = null
+    private val vehicle = MutableStateFlow(VehicleFeatures())
+    private val gameActions = MutableStateFlow<List<GameAction>>(emptyList())
+    /** Problems the companion reported for the active profile, by notice code (vJoy set up too small...). */
+    private val warnings = MutableStateFlow<Map<String, String>>(emptyMap())
+    private val bindHelper = MutableStateFlow(settings.bindHelper)
+    /** Bind helper: the axis each joystick is locked to until it springs back to the centre. */
+    private val stickLock = HashMap<String, String>()
+    private var lastForeground: String? = null
     private var lastBindRequest: Pair<String, Int>? = null // device, requested count
     private var bindTimeout: Job? = null
     /** The user tapped Disconnect on the companion: a Bluetooth connect must not bring it back. */
@@ -98,14 +112,15 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         combine(activeProfile, pageIndex, values) { p, i, v -> Triple(p, i, v) },
         combine(game, pending, clock) { g, pe, t -> Triple(g, pe, t) },
         combine(companion.state, hid.state, linkDrops) { c, h, d -> Triple(c, h, d) },
-    ) { (p, i, v), (g, pe, _), (c, h, d) ->
+        combine(warnings, vehicle, bindHelper) { w, veh, b -> Triple(w, veh, b) },
+    ) { (p, i, v), (g, pe, _), (c, h, d), (w, veh, b) ->
         p ?: return@combine null
         val now = System.currentTimeMillis()
         val r = Feedback.resolve(p, v, g, pe, now)
         PlayState(
             profile = p, pageIndex = i.coerceIn(0, p.pages.lastIndex), values = v,
             indicators = r.indicators, unavailable = r.unavailable, game = g, connection = c, hid = h,
-            linkDrops = d,
+            linkDrops = d, warnings = w.values.toList(), vehicle = veh, bindHelper = b,
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
@@ -147,10 +162,22 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 // In the editor the result row says it all; a snackbar would only repeat it (A-S2).
                 if (_editor.value == null) notify(r.message.ifEmpty { if (r.ok) "Bound ${r.count} of $requested in BeamNG" else "Binding failed" })
             }
+            override fun onVehicleFeatures(features: VehicleFeatures) = applyVehicleFeatures(features)
+            override fun onGameActions(list: List<GameAction>) {
+                gameActions.value = list
+                _editor.update { it?.copy(beamngActions = list) }
+            }
+            override fun onNotice(notice: Incoming.Notice) {
+                if (notice.message.isBlank()) { warnings.update { it - notice.code }; return }
+                if (notice.level == "warn" || notice.level == "error") warnings.update { it + (notice.code to notice.message) }
+                notify(notice.message)
+            }
+            override fun onForeground(exe: String) = autoSwitchFor(exe)
             override fun onDisconnected() {
                 engine.onCompanionLost()
                 game.value = emptyMap()
                 pending.value = emptyMap()
+                warnings.value = emptyMap()
             }
         }
         hid.currentReport = { id -> engine.hidReport(id) }
@@ -216,11 +243,15 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         val p = repo.get(id) ?: return
         settings.lastProfileId = id
         stopPlaying()
-        activeProfile.value = p
+        baseProfile = p
+        val filled = VehicleFeaturePages.fill(p, vehicle.value)
+        activeProfile.value = filled
         pageIndex.value = 0
         values.value = emptyMap()
         pending.value = emptyMap()
-        engine.profile = p
+        warnings.value = emptyMap()
+        stickLock.clear()
+        engine.profile = filled
         syncProfile()
         _screen.value = Screen.Play(id)
     }
@@ -229,6 +260,71 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         engine.releaseAll()
         engine.profile = null
         activeProfile.value = null
+        baseProfile = null
+    }
+
+    /**
+     * The BeamNG mod reported what the current vehicle can do: refill the profile's auto pages and tell the
+     * companion about the new controls. Held auto controls are let go first, since the vehicle changed.
+     */
+    private fun applyVehicleFeatures(features: VehicleFeatures) {
+        if (features == vehicle.value) return
+        vehicle.value = features
+        _editor.update { it?.copy(vehicleFeatures = features.list) }
+        val base = baseProfile ?: return
+        if (base.pages.none { it.auto == com.simdeck.model.Page.AUTO_BEAMNG_VEHICLE }) return
+        val filled = VehicleFeaturePages.fill(base, features)
+        if (filled == activeProfile.value) return
+        val autoIds = { pr: Profile? -> pr?.pages?.filter { it.auto != null }?.flatMap { pg -> pg.controls.map { it.id } }?.toSet() ?: emptySet() }
+        val old = autoIds(activeProfile.value)
+        values.update { v -> v.filterKeys { it !in old } }
+        pending.update { pe -> pe.filterKeys { it !in old } }
+        activeProfile.value = filled
+        // Setting the profile releases everything held; replay what the hands still hold on the other pages.
+        engine.profile = filled
+        replayHeld()
+        syncProfile()
+        if (features.vehicle.isNotEmpty() && features.list.isNotEmpty()) notify("${features.list.size} vehicle functions found on ${features.vehicle}")
+    }
+
+    /** The companion says [exe] is in front: open the profile made for it, unless one already is (or the user said no). */
+    private fun autoSwitchFor(exe: String) {
+        if (exe.isBlank() || exe.equals(lastForeground, ignoreCase = true)) return
+        lastForeground = exe
+        if (!settings.autoSwitch) return
+        val current = _screen.value
+        if (current !is Screen.Play && current !is Screen.Profiles) return // never yank the user out of the editor
+        val matches = repo.profiles.value.filter { p -> p.processNames.any { it.equals(exe, ignoreCase = true) } }
+        if (matches.isEmpty()) return
+        val playing = (current as? Screen.Play)?.profileId
+        if (playing != null && matches.any { it.id == playing }) return
+        val pick = matches.firstOrNull { it.id == settings.lastProfileId } ?: matches.firstOrNull { !it.builtIn } ?: matches.first()
+        play(pick.id)
+        notify("${pick.name}: switched for ${exe.removeSuffix(".exe")}")
+    }
+
+    fun setAutoSwitch(on: Boolean) { settings.autoSwitch = on }
+    val autoSwitchEnabled: Boolean get() = settings.autoSwitch
+
+    fun setBindHelper(on: Boolean) {
+        settings.bindHelper = on
+        bindHelper.value = on
+        stickLock.clear()
+        _editor.update { it?.copy(bindHelper = on) }
+    }
+
+    fun dismissWarnings() { warnings.value = emptyMap() }
+
+    /** A PAGE control was tapped. */
+    fun onPageControl(id: String) {
+        val p = activeProfile.value ?: return
+        val c = control(id) ?: return
+        val i = pageIndex.value
+        pageIndex.value = when (val t = c.pageTarget ?: "next") {
+            "next" -> (i + 1) % p.pages.size
+            "prev" -> (i - 1 + p.pages.size) % p.pages.size
+            else -> p.pages.indexOfFirst { it.id == t }.takeIf { it >= 0 } ?: t.toIntOrNull()?.minus(1)?.coerceIn(0, p.pages.lastIndex) ?: i
+        }
     }
 
     fun back() {
@@ -285,8 +381,9 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun onControlValue(id: String, value: Float) {
+    fun onControlValue(id: String, rawValue: Float) {
         val c = control(id) ?: return
+        val value = if (bindHelper.value) lockedStickValue(id, rawValue) else rawValue
         // An unavailable control ignores presses but a release must always get through (A2).
         if (id in (playState.value?.unavailable ?: emptySet()) && !InputEngine.isRelease(c, value)) return
         values.update { it + (id to value) }
@@ -296,6 +393,29 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         engine.onValue(c, value)
         // Only a press or a slider move counts as a dropped input; a release has nothing to drop (A31).
         if (!links.hidConnected && !links.companionConnected && !InputEngine.isRelease(c, value)) notifyOnceNoLink()
+    }
+
+    /**
+     * Bind helper: the first axis pushed past a quarter of its travel owns the stick until it springs back, and
+     * the other axis stays at 0, so the game's binding capture sees one clean axis.
+     */
+    private fun lockedStickValue(id: String, value: Float): Float {
+        val axis = when {
+            id.endsWith(Joystick.X) -> Joystick.X
+            id.endsWith(Joystick.Y) -> Joystick.Y
+            else -> return value
+        }
+        val parent = id.removeSuffix(axis)
+        if (activeProfile.value?.let { LayoutOps.findControl(it, parent)?.second?.type } != ControlType.JOYSTICK) return value
+        val other = parent + if (axis == Joystick.X) Joystick.Y else Joystick.X
+        val lock = stickLock[parent]
+        if (kotlin.math.abs(value) < 0.05f && kotlin.math.abs(values.value[other] ?: 0f) < 0.05f) stickLock.remove(parent)
+        return when {
+            lock == null && kotlin.math.abs(value) > 0.25f -> { stickLock[parent] = axis; value }
+            lock == null -> 0f
+            lock == axis -> value
+            else -> 0f
+        }
     }
 
     fun onRotaryStep(id: String, delta: Int) {
@@ -445,6 +565,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         _editor.value = EditorState(
             profile = p, pageIndex = page.coerceIn(0, p.pages.lastIndex),
             stateKeys = knownStateKeys.value.sorted(), beamngCommands = _beamngCommands.value,
+            beamngActions = gameActions.value, vehicleFeatures = vehicle.value.list, bindHelper = bindHelper.value,
             canBindInGame = companion.isConnected && companion.state.value.capabilities.beamng,
         )
         _screen.value = Screen.Editor(id)

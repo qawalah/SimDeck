@@ -16,7 +16,7 @@ fun Control.minSpan(page: Page): Pair<Int, Int> {
         ControlType.SWITCH, ControlType.RADIO -> n to 1
         ControlType.SLIDER -> if (vertical) 1 to 2 else 2 to 1
         ControlType.ROTARY, ControlType.JOYSTICK -> 2 to 2
-        ControlType.MOMENTARY, ControlType.LATCHING -> 1 to 1
+        ControlType.MOMENTARY, ControlType.LATCHING, ControlType.ROCKER, ControlType.GAUGE, ControlType.INDICATOR, ControlType.PAGE -> 1 to 1
     }
     return w.coerceAtMost(page.columns) to h.coerceAtMost(page.rows)
 }

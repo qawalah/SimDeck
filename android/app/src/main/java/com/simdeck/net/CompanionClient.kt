@@ -44,6 +44,10 @@ class CompanionClient(
         fun onState(values: Map<String, Any>, full: Boolean)
         fun onBeamNGCommands(list: List<String>) {}
         fun onBindingsResult(result: Incoming.BindingsResult) {}
+        fun onVehicleFeatures(features: com.simdeck.model.VehicleFeatures) {}
+        fun onGameActions(list: List<com.simdeck.model.GameAction>) {}
+        fun onNotice(notice: Incoming.Notice) {}
+        fun onForeground(exe: String) {}
         fun onDisconnected() {}
     }
 
@@ -189,6 +193,10 @@ class CompanionClient(
             is Incoming.State -> listener?.onState(msg.values, msg.full)
             is Incoming.BeamNGCommands -> listener?.onBeamNGCommands(msg.list)
             is Incoming.BindingsResult -> listener?.onBindingsResult(msg)
+            is Incoming.BeamNGFeatures -> listener?.onVehicleFeatures(msg.features)
+            is Incoming.BeamNGActions -> listener?.onGameActions(msg.list)
+            is Incoming.Notice -> listener?.onNotice(msg)
+            is Incoming.Foreground -> listener?.onForeground(msg.exe)
             is Incoming.VersionMismatch -> {
                 ws?.send("""{"v":1,"type":"error","code":"version_mismatch","message":"phone supports v${Protocol.VERSION}"}""")
                 userDisconnected = true // do not reconnect into the same mismatch
@@ -459,6 +467,16 @@ class Settings(context: Context) {
     var haptics: Boolean
         get() = prefs.getBoolean("haptics", true)
         set(v) = prefs.edit().putBoolean("haptics", v).apply()
+
+    /** Switch to the matching profile when the companion reports a game in the foreground. */
+    var autoSwitch: Boolean
+        get() = prefs.getBoolean("autoSwitch", true)
+        set(v) = prefs.edit().putBoolean("autoSwitch", v).apply()
+
+    /** Joysticks move one axis at a time, so a game's "move the axis" capture picks the right one. */
+    var bindHelper: Boolean
+        get() = prefs.getBoolean("bindHelper", false)
+        set(v) = prefs.edit().putBoolean("bindHelper", v).apply()
 
     fun token(host: String): String? = prefs.getString("token:$host", null)
     fun saveToken(host: String, token: String) = prefs.edit().putString("token:$host", token).apply()

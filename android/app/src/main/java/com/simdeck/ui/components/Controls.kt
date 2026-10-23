@@ -101,10 +101,23 @@ fun ControlView(
     interactive: Boolean = true,
     valueY: Float = 0f,
     onValueY: (Float) -> Unit = {},
+    onTap: () -> Unit = {},
 ) {
+    // A covered control: the cover takes the first tap, the control the ones after (only on the play surface).
+    if (control.guard && interactive && enabled && control.type in setOf(ControlType.MOMENTARY, ControlType.LATCHING, ControlType.ROCKER, ControlType.SWITCH, ControlType.RADIO)) {
+        GuardCover(control.label, active = true, modifier = modifier) { m ->
+            ControlView(control.copy(guard = false), value, indicator, enabled, onValue, onStep, m, interactive, valueY, onValueY, onTap)
+        }
+        return
+    }
     when (control.type) {
         ControlType.MOMENTARY -> MomentaryButton(control, indicator, enabled && interactive, enabled, onValue, modifier)
         ControlType.LATCHING -> LatchingButton(control, value, indicator, enabled && interactive, enabled, onValue, modifier)
+        // A rocker's [value] / [onValue] are its up half (cw), [valueY] / [onValueY] its down half (ccw).
+        ControlType.ROCKER -> RockerSwitch(control, value, valueY, indicator, enabled && interactive, enabled, onValue, onValueY, modifier)
+        ControlType.GAUGE -> GaugeReadout(control, indicator, modifier)
+        ControlType.INDICATOR -> TellTale(control, indicator, modifier)
+        ControlType.PAGE -> PageKey(control, interactive, enabled, onTap, modifier)
         ControlType.SWITCH -> SelectorSwitch(control, value, indicator, enabled && interactive, enabled, onValue, modifier)
         ControlType.RADIO -> RadioKeys(control, value, indicator, enabled && interactive, enabled, onValue, modifier)
         ControlType.SLIDER -> AxisSlider(control, value, enabled && interactive, enabled, onValue, modifier)
@@ -437,10 +450,13 @@ private fun AxisSlider(
     val thumbPx = with(LocalDensity.current) { 34.dp.toPx() }
     val currentOnValue by rememberUpdatedState(onValue)
 
+    val detents = control.detents
     fun valueAt(o: Offset): Float {
         val len = (if (vertical) box.height else box.width) - thumbPx
-        val pos = ((if (vertical) box.height - o.y else o.x) - thumbPx / 2) / len.coerceAtLeast(1f)
-        return (min + pos.coerceIn(0f, 1f) * (1f - min))
+        var pos = (((if (vertical) box.height - o.y else o.x) - thumbPx / 2) / len.coerceAtLeast(1f)).coerceIn(0f, 1f)
+        // Detents: the thumb clicks into evenly spaced notches (flaps, a gear lever, a fan speed).
+        if (detents > 1) pos = (pos * (detents - 1)).roundToInt().toFloat() / (detents - 1)
+        return (min + pos * (1f - min))
     }
 
     val pct = ((shown.value) * 100).roundToInt()
@@ -509,8 +525,9 @@ private fun AxisSlider(
                                 val c = event.changes.firstOrNull { it.id == down.id } ?: break
                                 if (!c.pressed) break
                                 val v = valueAt(c.position)
-                                // Detent tick when crossing the rest point on a bipolar axis.
-                                if (bipolar && (last < 0f) != (v < 0f)) haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                // Detent tick when crossing the rest point on a bipolar axis, or entering a notch.
+                                if ((bipolar && (last < 0f) != (v < 0f)) || (detents > 1 && v != last)) haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                if (detents > 1 && v == last) { c.consume(); continue }
                                 last = v
                                 scope.launch { shown.snapTo(v) }
                                 currentOnValue(v)
@@ -533,11 +550,11 @@ private fun AxisSlider(
                 // Spring-centred bipolar axes draw as a hydraulic lever: a ball knob in a wide gate
                 // with a centre detent notch, the way a machine's valve lever sits.
                 val lever = bipolar && control.springReturn
-                // Tick ladder.
-                val ticks = if (bipolar) 20 else 10
+                // Tick ladder: one major tick per notch on a detented slider.
+                val ticks = if (detents > 1) detents - 1 else if (bipolar) 20 else 10
                 for (i in 0..ticks) {
                     val v = min + i.toFloat() / ticks * (1f - min)
-                    val major = i % 5 == 0
+                    val major = detents > 1 || i % 5 == 0
                     val p = at(v)
                     val tl = if (major) cross * 0.22f else cross * 0.12f
                     val c = Race.LineStrong.copy(alpha = if (major) 1f else 0.6f)

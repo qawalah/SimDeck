@@ -34,12 +34,28 @@ private fun rig(name: String, vararg parts: Pair<String, Boolean>): ImageVector 
         }
         .build()
 
+/** A path with its own stroke width, for the icons ported from SimDeck. */
+private class P(val d: String, val filled: Boolean, val width: Float = 2f)
+
+private fun rigW(name: String, vararg parts: P): ImageVector =
+    ImageVector.Builder(name = name, defaultWidth = 24.dp, defaultHeight = 24.dp, viewportWidth = 24f, viewportHeight = 24f)
+        .apply {
+            for (p in parts) {
+                if (p.filled) addPath(pathData = addPathNodes(p.d), fill = SolidColor(Color.Black))
+                else addPath(
+                    pathData = addPathNodes(p.d), stroke = SolidColor(Color.Black), strokeLineWidth = p.width,
+                    strokeLineCap = StrokeCap.Round, strokeLineJoin = StrokeJoin.Round,
+                )
+            }
+        }
+        .build()
+
 private const val S = false
 private const val F = true
 
 /** Every icon a control can show, keyed by the string id stored in profiles. */
 object IconLibrary {
-    val categories: List<String> = listOf("Lights", "Driving", "Drivetrain", "Camera & tools", "Machines", "General")
+    val categories: List<String> = listOf("Lights", "Driving", "Drivetrain", "Camera & tools", "Machines", "Game", "Aviation", "General")
 
     val entries: List<IconEntry> = listOf(
         // Lights
@@ -109,6 +125,72 @@ object IconLibrary {
         IconEntry("spreader", "Salt spreader", "Machines", rig("spreader", "M5 4h14l-4.5 7h-5z" to S, "M12 11v3M8.5 14h7" to S, "M5.5 18h.01M8.5 20.5h.01M12 18.5h.01M15.5 20.5h.01M18.5 18h.01" to S)),
         IconEntry("tow", "Tow / wheel lift", "Machines", rig("tow", "M2.5 19.5h9M4.5 19.5V9l10.5-5" to S, "M15 4v6" to S, "M15 10v2a2 2 0 1 1-2 2" to S, "M6.5 19.5V15h3" to S)),
         IconEntry("direction", "Direction F/N/R", "Machines", rig("direction", "M3 17V7h4M3 12h3" to S, "M9.5 17V7l5 10V7" to S, "M17 17V7h2.2a2.5 2.5 0 0 1 0 5H17M19.2 12l2.3 5" to S)),
+        // Ported from SimDeck's icon set (tools/icons.py in the 1.0 SimDeck repo)
+        IconEntry("parking_lights", "Parking lights", "Lights", rigW("parking_lights", P("M10 7 C6.5 7 6.5 17 10 17 Z", S, 1.8f), P("M14 7 C17.5 7 17.5 17 14 17 Z", S, 1.8f), P("M5 8 H2.5 M5 12 H2.5 M5 16 H2.5 M19 8 H21.5 M19 12 H21.5 M19 16 H21.5", S, 1.6f))),
+        IconEntry("fog_rear", "Rear fog", "Lights", rigW("fog_rear", P("M10 5 C4.5 5 2.5 8.5 2.5 12 C2.5 15.5 4.5 19 10 19 Z", S, 2f), P("M13 7.5 H21 M13 12 H21 M13 16.5 H21", S, 1.8f), P("M16.5 3.5 C14.5 6 18.5 8.5 16.5 11 C14.5 13.5 18.5 16 16.5 18.5 C15.8 19.4 16.2 20.2 16.5 20.5", S, 1.6f))),
+        IconEntry("siren", "Siren", "Lights", rigW("siren", P("M3.5 9 H7.5 L14 5 V19 L7.5 15 H3.5 Z", S, 2f), P("M17.5 8 L21 6 M17.5 12 H21.5 M17.5 16 L21 18", S, 1.8f))),
+        IconEntry("underglow", "Underglow", "Lights", rigW("underglow", P("M2.5 13 L4.5 9.5 L9 7.5 H15 L18.5 10 L21.5 11 V14 H2.5 Z", S, 1.8f), P("M4.5 17.5 H19.5 M7 21 H17", S, 1.6f))),
+        IconEntry("brake_warn", "Brake warning", "Driving", rigW("brake_warn", P("M5.7,12 a6.3,6.3 0 1,0 12.6,0 a6.3,6.3 0 1,0 -12.6,0 Z", S, 2f), P("M12 8.3 V12.8 M12 15.2 V15.6", S, 2.2f), P("M4.6 6.5 A8.7 8.7 0 0 0 4.6 17.5 M19.4 6.5 A8.7 8.7 0 0 1 19.4 17.5", S, 2f))),
+        IconEntry("battery", "Battery", "Driving", rigW("battery", P("M3,7 h18 v12 h-18 Z", S, 2f), P("M6.5 7 V4.8 H9 V7 M15 7 V4.8 H17.5 V7", S, 2f), P("M6 13 H10 M14 13 H18 M16 11 V15", S, 1.8f))),
+        IconEntry("temp", "Temp", "Driving", rigW("temp", P("M10 14 V5 A2 2 0 0 1 14 5 V14 A4 4 0 1 1 10 14 Z", S, 1.8f), P("M10,17 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0 Z", F), P("M14 7.5 H17 M14 10.5 H16", S, 1.5f), P("M3 21.5 C5 20 7 23 9 21.5 C11 20 13 23 15 21.5 C17 20 19 23 21 21.5", S, 1.4f))),
+        IconEntry("check_engine", "Check engine", "Driving", rigW("check_engine", P("M5 9 H8 V7 H14 L16 9 H18 V11 H20 V9.5 H21.5 V16.5 H20 V15 H18 V17.5 H9.5 L7.5 15.5 H5 Z M11 7 V5 M9 5 H13 M2.5 10.5 V14.5 M2.5 12.5 H5", S, 1.7f), P("M11.6,9.5 h1.8 v3.8 h-1.8 Z", F), P("M11.6,14.2 h1.8 v1.8 h-1.8 Z", F))),
+        IconEntry("throttle", "Throttle", "Driving", rigW("throttle", P("M9 3 H15 L16.5 21 H7.5 Z", S, 2f), P("M9.5 7 H14.5 M9.7 11 H14.3 M9.9 15 H14.1", S, 1.4f))),
+        IconEntry("brake", "Brake", "Driving", rigW("brake", P("M4 7.5 H20 V17.5 H4 Z", S, 2f), P("M6.5 10.5 H17.5 M6.5 14.5 H17.5", S, 1.4f), P("M12 17.5 V21", S, 2f))),
+        IconEntry("clutch", "Clutch", "Driving", rigW("clutch", P("M5.5 6.5 H18.5 V16.5 H5.5 Z", S, 2f), P("M9 9 V14 M12 9 V14 M15 9 V14", S, 1.4f), P("M12 16.5 V21", S, 2f))),
+        IconEntry("seat", "Seat", "Driving", rigW("seat", P("M7.5 3.5 H10.5 L11.8 13 H16.5 A2.2 2.2 0 0 1 18.7 15.2 V17 H7.8 Z", S, 1.8f), P("M8.5 21 H18 M13 17 V21", S, 1.8f))),
+        IconEntry("door", "Door", "Driving", rigW("door", P("M5 4 H18.5 V21 H5 V11 Z", S, 2f), P("M7.5 6.5 H16 V11 H7.5 Z", S, 1.6f), P("M13.5 14 H16", S, 2f))),
+        IconEntry("mirror", "Mirror", "Driving", rigW("mirror", P("M3 7.5 C3 6 4 5.5 5.5 5.5 H18.5 C20 5.5 21 6 21 7.5 V13 C21 14.5 20 15 18.5 15 H5.5 C4 15 3 14.5 3 13 Z", S, 2f), P("M12 15 V19.5 M9 19.5 H15", S, 2f))),
+        IconEntry("vehicle", "Vehicle", "Driving", rigW("vehicle", P("M4 11 L6.5 5.5 H17.5 L20 11 V17.5 H4 Z", S, 2f), P("M4 11 H20", S, 2f), P("M5.8 17.5 V20.5 M18.2 17.5 V20.5", S, 2.6f), P("M6.3,14.2 a1.3,1.3 0 1,0 2.6,0 a1.3,1.3 0 1,0 -2.6,0 Z", F), P("M15.099999999999998,14.2 a1.3,1.3 0 1,0 2.6,0 a1.3,1.3 0 1,0 -2.6,0 Z", F))),
+        IconEntry("tire_pressure", "Tyre pressure", "Driving", rigW("tire_pressure", P("M5.5 7 C4 11.5 5 16.5 7.3 19 H16.7 C19 16.5 20 11.5 18.5 7", S, 2f), P("M5.5 7 L6.8 4.8 M18.5 7 L17.2 4.8 M4.5 21.5 H19.5", S, 1.7f), P("M12 8.5 V13.6 M12 16 V16.4", S, 2.2f))),
+        IconEntry("hill_assist", "Hill assist", "Driving", rigW("hill_assist", P("M2.5 19.5 L21.5 8 V19.5 Z", S, 1.8f), P("M8 12.5 L10.5 8.5 H15 L16.3 10.2", S, 1.6f), P("M8.2,13.2 a1.3,1.3 0 1,0 2.6,0 a1.3,1.3 0 1,0 -2.6,0 Z", F), P("M13.7,10 a1.3,1.3 0 1,0 2.6,0 a1.3,1.3 0 1,0 -2.6,0 Z", F))),
+        IconEntry("gear_n", "Neutral", "Drivetrain", rigW("gear_n", P("M7 18.5 V5.5 L17 18.5 V5.5", S, 2.4f))),
+        IconEntry("gear_r", "Reverse", "Drivetrain", rigW("gear_r", P("M7.5 18.5 V5.5 H12.5 A3.7 3.7 0 0 1 12.5 12.9 H7.5 M11.8 12.9 L17 18.5", S, 2.4f))),
+        IconEntry("gear_auto", "Auto gearbox", "Drivetrain", rigW("gear_auto", P("M6 18.5 L12 5.5 L18 18.5 M8.3 13.8 H15.7", S, 2.4f))),
+        IconEntry("2wd", "2WD", "Drivetrain", rigW("2wd", P("M12 6 V18 M7.5 6 H16.5 M7.5 18 H16.5", S, 1.8f), P("M4.6,3.6 h2.4 v4.8 h-2.4 Z", S, 1.3f), P("M17,3.6 h2.4 v4.8 h-2.4 Z", S, 1.3f), P("M4,15 h3.5 v6 h-3.5 Z", F), P("M16.5,15 h3.5 v6 h-3.5 Z", F))),
+        IconEntry("diff_mode", "Diff mode", "Drivetrain", rigW("diff_mode", P("M2,6 h3.2 v12 h-3.2 Z", F), P("M18.8,6 h3.2 v12 h-3.2 Z", F), P("M5.2 12 H8.6 M15.4 12 H18.8", S, 2f), P("M8.6,12 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 Z", S, 2f), P("M10.7,12 a1.3,1.3 0 1,0 2.6,0 a1.3,1.3 0 1,0 -2.6,0 Z", F))),
+        IconEntry("high_range", "High range", "Drivetrain", rigW("high_range", P("M10 5.5 L5 14.5 H12 M10.3 9.5 V18.5", S, 2.2f), P("M14.8 5.5 V18.5 M20 5.5 V18.5 M14.8 12 H20", S, 2.2f))),
+        IconEntry("line_lock", "Line lock", "Drivetrain", rigW("line_lock", P("M3.0,11 a6.5,6.5 0 1,0 13.0,0 a6.5,6.5 0 1,0 -13.0,0 Z", S, 2f), P("M7.5,11 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0 Z", S, 2f), P("M14.5,15 h7 v6 h-7 Z", F), P("M16 15 V13.3 A2 2 0 0 1 20 13.3 V15", S, 1.6f))),
+        IconEntry("transbrake", "Transbrake", "Drivetrain", rigW("transbrake", P("M4 5 V15 M9 5 V15 M14 5 V9 M4 10 H14", S, 1.8f), P("M14.5,15 h7 v6 h-7 Z", F), P("M16 15 V13.3 A2 2 0 0 1 20 13.3 V15", S, 1.6f))),
+        IconEntry("nitrous", "Nitrous", "Drivetrain", rigW("nitrous", P("M9 8.5 H15 V19.8 A1.7 1.7 0 0 1 13.3 21.5 H10.7 A1.7 1.7 0 0 1 9 19.8 Z", S, 2f), P("M10.6 8.5 V5.5 H13.4 V8.5 M12 5.5 V3 M9.8 3 H14.2", S, 1.6f), P("M9,12.5 h6 v3 h-6 Z", F))),
+        IconEntry("speed_limiter", "Speed limiter", "Drivetrain", rigW("speed_limiter", P("M3,12 a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0 Z", S, 2.4f), P("M8.5 15.5 V8.5 M12 8.5 V15.5 M15.5 8.5 V15.5", S, 1.6f))),
+        IconEntry("retarder", "Retarder", "Drivetrain", rigW("retarder", P("M5.7,12 a6.3,6.3 0 1,0 12.6,0 a6.3,6.3 0 1,0 -12.6,0 Z", S, 2f), P("M10 15.6 V8.4 H12.8 A2 2 0 0 1 12.8 12.4 H10 M12.4 12.4 L14.6 15.6", S, 1.7f), P("M4.6 6.5 A8.7 8.7 0 0 0 4.6 17.5 M19.4 6.5 A8.7 8.7 0 0 1 19.4 17.5", S, 2f))),
+        IconEntry("engine_brake", "Engine brake", "Drivetrain", rigW("engine_brake", P("M4.5 6 H9.5 M4.5 6 V18 H9.5 M4.5 12 H8.5", S, 2f), P("M13 6 V18 H16.3 A3 3 0 0 0 16.3 12 H13 M13 12 H16 A3 3 0 0 0 16 6 H13", S, 2f))),
+        IconEntry("coupler", "Coupler", "Machines", rigW("coupler", P("M3 17 H12.5 V13.4", S, 2.2f), P("M9.3,9.4 a3.2,3.2 0 1,0 6.4,0 a3.2,3.2 0 1,0 -6.4,0 Z", S, 2f), P("M9 21 H16", S, 2f))),
+        IconEntry("lift_axle", "Lift axle", "Machines", rigW("lift_axle", P("M4.5,17.5 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 Z", S, 2f), P("M13.5,17.5 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 Z", S, 2f), P("M16.5 11 V3 M13.3 6.2 L16.5 3 L19.7 6.2", S, 2f))),
+        IconEntry("tailgate", "Tailgate", "Machines", rigW("tailgate", P("M2.5 15 H16 V8.5 H7.5 L5.5 11.5 H2.5 Z", S, 1.8f), P("M16 15 L21.5 17.5", S, 2.2f), P("M4.2,17.3 a1.8,1.8 0 1,0 3.6,0 a1.8,1.8 0 1,0 -3.6,0 Z", S, 1.6f), P("M10.7,17.3 a1.8,1.8 0 1,0 3.6,0 a1.8,1.8 0 1,0 -3.6,0 Z", S, 1.6f))),
+        IconEntry("ramp", "Ramp", "Machines", rigW("ramp", P("M2.5 19.5 L21.5 9 V19.5 Z", S, 2f), P("M6 9 L11 6.5 M8.4 5.2 L11 6.5 L9.7 9", S, 1.8f))),
+        IconEntry("crane", "Crane", "Machines", rigW("crane", P("M3.5 21 H10.5 M7 21 V4.5 L20 8.5 M7 4.5 L13 10.5 M20 8.5 V12.5", S, 1.8f), P("M20 12.5 A1.8 1.8 0 1 1 18.2 14.3", S, 1.6f))),
+        IconEntry("winch_release", "Winch release", "Machines", rigW("winch_release", P("M2.5,7.5 h8 v9 h-8 Z", S, 2f), P("M4.5 7.5 V16.5 M6.5 7.5 V16.5 M8.5 7.5 V16.5", S, 1.2f), P("M12.5 12 H21 M17.5 8.5 L21 12 L17.5 15.5", S, 2f))),
+        IconEntry("grapple", "Grapple", "Machines", rigW("grapple", P("M12 3 V8", S, 2f), P("M12 8 C6 8 5 14 7.5 19 M12 8 C18 8 19 14 16.5 19", S, 2f), P("M10.4,8 a1.6,1.6 0 1,0 3.2,0 a1.6,1.6 0 1,0 -3.2,0 Z", F))),
+        IconEntry("implement_up", "Implement up", "Machines", rigW("implement_up", P("M4 20 H20", S, 2.4f), P("M12 16 V4 M7.5 8.5 L12 4 L16.5 8.5", S, 2.2f))),
+        IconEntry("implement_down", "Implement down", "Machines", rigW("implement_down", P("M4 20 H20", S, 2.4f), P("M12 4 V16 M7.5 11.5 L12 16 L16.5 11.5", S, 2.2f))),
+        IconEntry("pto", "PTO / add-on", "Machines", rigW("pto", P("M8,12 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0 Z", S, 2f), P("M12 3 V6 M12 18 V21 M3 12 H6 M18 12 H21 M5.6 5.6 L7.8 7.8 M16.2 16.2 L18.4 18.4 M5.6 18.4 L7.8 16.2 M16.2 7.8 L18.4 5.6", S, 2f), P("M10.6,12 a1.4,1.4 0 1,0 2.8,0 a1.4,1.4 0 1,0 -2.8,0 Z", F))),
+        IconEntry("camera_free", "Free camera", "Camera & tools", rigW("camera_free", P("M12 3 V21 M3 12 H21", S, 1.8f), P("M9.5 5.5 L12 3 L14.5 5.5 M9.5 18.5 L12 21 L14.5 18.5 M5.5 9.5 L3 12 L5.5 14.5 M18.5 9.5 L21 12 L18.5 14.5", S, 1.8f))),
+        IconEntry("camera_next", "Next camera", "Camera & tools", rigW("camera_next", P("M2.5 7 H12.5 V17 H2.5 Z", S, 1.8f), P("M12.5 10.2 L17 8 V16 L12.5 13.8 Z", S, 1.8f), P("M19.5 9 L22 12 L19.5 15", S, 1.8f))),
+        IconEntry("center_view", "Centre view", "Camera & tools", rigW("center_view", P("M8.8,12 a3.2,3.2 0 1,0 6.4,0 a3.2,3.2 0 1,0 -6.4,0 Z", S, 2f), P("M3 8 V3 H8 M16 3 H21 V8 M21 16 V21 H16 M8 21 H3 V16", S, 2f))),
+        IconEntry("minimap", "Minimap", "Camera & tools", rigW("minimap", P("M3,12 a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0 Z", S, 2f), P("M12 6 L15.5 16 L12 13.8 L8.5 16 Z", F))),
+        IconEntry("radial_menu", "Radial menu", "Camera & tools", rigW("radial_menu", P("M3,12 a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0 Z", S, 2f), P("M9,12 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 Z", S, 2f), P("M9.9 9.9 L5.6 5.6 M14.1 9.9 L18.4 5.6 M9.9 14.1 L5.6 18.4 M14.1 14.1 L18.4 18.4", S, 1.6f))),
+        IconEntry("hide_ui", "Hide UI", "Camera & tools", rigW("hide_ui", P("M2 12 C5 6.5 19 6.5 22 12 C19 17.5 5 17.5 2 12 Z", S, 1.8f), P("M9,12 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 Z", S, 1.8f), P("M3.5 3.5 L20.5 20.5", S, 2.2f))),
+        IconEntry("photo_mode", "Photo mode", "Camera & tools", rigW("photo_mode", P("M3 8 V3 H8 M16 3 H21 V8 M21 16 V21 H16 M8 21 H3 V16", S, 2f), P("M7 16.5 L10.5 11.5 L13 14.5 L14.8 12.5 L17.5 16.5 Z", S, 1.6f), P("M14.0,8 a1.5,1.5 0 1,0 3.0,0 a1.5,1.5 0 1,0 -3.0,0 Z", F))),
+        IconEntry("home_save", "Save spot", "Game", rigW("home_save", P("M3.5 11 L12 3.8 L20.5 11 M5.5 9.5 V20.5 H18.5 V9.5", S, 2f), P("M12 10.5 V17 M8.8 13.8 H15.2", S, 2f))),
+        IconEntry("home_load", "Load spot", "Game", rigW("home_load", P("M3.5 11 L12 3.8 L20.5 11 M5.5 9.5 V20.5 H18.5 V9.5", S, 2f), P("M12 9.5 V17 M9 14 L12 17 L15 14", S, 1.8f))),
+        IconEntry("faster", "Faster", "Game", rigW("faster", P("M3 6 L11.5 12 L3 18 Z M12.5 6 L21 12 L12.5 18 Z", F))),
+        IconEntry("slower", "Slower", "Game", rigW("slower", P("M21 6 L12.5 12 L21 18 Z M11.5 6 L3 12 L11.5 18 Z", F))),
+        IconEntry("traffic", "Traffic", "Game", rigW("traffic", P("M8 2.5 H16 V21.5 H8 Z", S, 1.8f), P("M10.1,7 a1.9,1.9 0 1,0 3.8,0 a1.9,1.9 0 1,0 -3.8,0 Z", F), P("M10.1,12 a1.9,1.9 0 1,0 3.8,0 a1.9,1.9 0 1,0 -3.8,0 Z", F), P("M10.1,17 a1.9,1.9 0 1,0 3.8,0 a1.9,1.9 0 1,0 -3.8,0 Z", F))),
+        IconEntry("ai_drive", "AI drive", "Game", rigW("ai_drive", P("M5.5 8.5 H18.5 V19 H5.5 Z", S, 2f), P("M12 8.5 V5", S, 2f), P("M10.6,4 a1.4,1.4 0 1,0 2.8,0 a1.4,1.4 0 1,0 -2.8,0 Z", F), P("M7.800000000000001,12.8 a1.5,1.5 0 1,0 3.0,0 a1.5,1.5 0 1,0 -3.0,0 Z", F), P("M13.2,12.8 a1.5,1.5 0 1,0 3.0,0 a1.5,1.5 0 1,0 -3.0,0 Z", F), P("M9.5 16 H14.5", S, 1.6f), P("M3 12 V15.5 M21 12 V15.5", S, 1.8f))),
+        IconEntry("time_of_day", "Time of day", "Game", rigW("time_of_day", P("M8,12 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0 Z", S, 2f), P("M12 2.5 V5 M12 19 V21.5 M2.5 12 H5 M19 12 H21.5 M5.3 5.3 L7.1 7.1 M16.9 16.9 L18.7 18.7 M5.3 18.7 L7.1 16.9 M16.9 7.1 L18.7 5.3", S, 1.8f))),
+        IconEntry("walk", "Walk", "Game", rigW("walk", P("M11.4,4 a2.1,2.1 0 1,0 4.2,0 a2.1,2.1 0 1,0 -4.2,0 Z", F), P("M12.4 7.5 L10.4 13.3 L13.4 16.3 L12.4 21 M10.4 13.3 L7.6 21 M11.8 9.2 L15.2 11.8 L17.4 10.6 M11.8 9.2 L8.4 11.4 L6.8 13.6", S, 2f))),
+        IconEntry("explode", "Explode", "Game", rigW("explode", P("M12 2 L13.8 8 L19.5 5 L16 10.5 L22 12 L16 13.8 L19 19.5 L13.6 16.2 L12 22 L10.4 16.2 L5 19.5 L8 13.8 L2 12 L8 10.5 L4.5 5 L10.2 8 Z", F))),
+        IconEntry("fire", "Fire", "Game", rigW("fire", P("M12 21.5 C7.5 21.5 5 18.5 5 15 C5 10.5 9 8.5 9 4 C12 5.5 13.5 8 13.3 10.8 C14.6 9.8 15.3 8.4 15.3 7 C17.8 9 19 12 19 15 C19 18.5 16.5 21.5 12 21.5 Z", S, 1.8f))),
+        IconEntry("extinguish", "Extinguish", "Game", rigW("extinguish", P("M8.5 9 H15.5 V21 H8.5 Z", S, 2f), P("M10.5 9 V6 H13.5 V9 M13.5 7 H17.5 L20 9.5", S, 1.8f), P("M11 3 H14", S, 2f))),
+        IconEntry("lua", "Script", "Game", rigW("lua", P("M8.5 4 C6 4 6 6 6 8 C6 10 5.5 11.5 3.5 12 C5.5 12.5 6 14 6 16 C6 18 6 20 8.5 20", S, 2f), P("M15.5 4 C18 4 18 6 18 8 C18 10 18.5 11.5 20.5 12 C18.5 12.5 18 14 18 16 C18 18 18 20 15.5 20", S, 2f))),
+        IconEntry("page_next", "Next page", "Game", rigW("page_next", P("M3,4 h13 v16 h-13 Z", S, 1.8f), P("M18 8 L22 12 L18 16", S, 2.2f))),
+        IconEntry("page_prev", "Previous page", "Game", rigW("page_prev", P("M8,4 h13 v16 h-13 Z", S, 1.8f), P("M6 8 L2 12 L6 16", S, 2.2f))),
+        IconEntry("landing_gear", "Landing gear", "Aviation", rigW("landing_gear", P("M12 2.5 V12.5 M7.5 5.5 H16.5", S, 2f), P("M7.8,17 a4.2,4.2 0 1,0 8.4,0 a4.2,4.2 0 1,0 -8.4,0 Z", S, 2f), P("M10.6,17 a1.4,1.4 0 1,0 2.8,0 a1.4,1.4 0 1,0 -2.8,0 Z", F))),
+        IconEntry("flaps", "Flaps", "Aviation", rigW("flaps", P("M2.5 10 C6 7.5 12 7.5 15 9.5 L2.5 11.5 Z", S, 1.6f), P("M15.5 11 L21 17 L19.5 18 L14 12.5 Z", S, 1.6f))),
+        IconEntry("autopilot", "Autopilot", "Aviation", rigW("autopilot", P("M3.5 18.5 L8 5.5 L12.5 18.5 M5.2 13.8 H10.8", S, 2f), P("M15 18.5 V5.5 H18 A3.3 3.3 0 0 1 18 12.1 H15", S, 2f))),
+        IconEntry("beacon_air", "Nav / strobe lights", "Aviation", rigW("beacon_air", P("M8.5,12 a3.5,3.5 0 1,0 7.0,0 a3.5,3.5 0 1,0 -7.0,0 Z", F), P("M12 2.5 V6 M12 18 V21.5 M2.5 12 H6 M18 12 H21.5", S, 2f), P("M5.5,12 a6.5,6.5 0 1,0 13.0,0 a6.5,6.5 0 1,0 -13.0,0 Z", S, 1.4f))),
+        IconEntry("plane", "Plane", "Aviation", rigW("plane", P("M21 15.5 V13.5 L13.5 9 V4 A1.5 1.5 0 0 0 10.5 4 V9 L3 13.5 V15.5 L10.5 13.2 V18.5 L8.5 20 V21.5 L12 20.5 L15.5 21.5 V20 L13.5 18.5 V13.2 Z", F))),
         // General
         IconEntry("gamepad", "Gamepad", "General", Icons.Rounded.SportsEsports),
         IconEntry("keyboard", "Keyboard", "General", Icons.Rounded.Keyboard),

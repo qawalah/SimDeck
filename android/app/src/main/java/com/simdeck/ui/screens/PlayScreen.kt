@@ -108,6 +108,8 @@ fun PlayScreen(
     onBack: () -> Unit,
     imperialUnits: Boolean = false,
     onOpenConnection: (() -> Unit)? = null,
+    onPageControl: (controlId: String) -> Unit = {},
+    onDismissWarnings: () -> Unit = {},
 ) {
     val pages = state.profile.pages
     val pageIndex = state.pageIndex.coerceIn(0, (pages.size - 1).coerceAtLeast(0))
@@ -119,24 +121,28 @@ fun PlayScreen(
             .windowInsetsPadding(WindowInsets.safeDrawing),
     ) {
         PlayHud(state, pageIndex, imperialUnits, onPageChange, onEdit, onBack, onOpenConnection)
+        if (state.warnings.isNotEmpty()) WarningStrip(state.warnings, onDismissWarnings)
+        if (state.bindHelper) BindHelperStrip()
         Box(Modifier.weight(1f).fillMaxWidth().padding(start = 12.dp, end = 12.dp, bottom = 12.dp, top = 4.dp)) {
-            if (page == null || page.controls.isEmpty()) {
+            if (page != null && page.auto != null && page.controls.isEmpty()) {
+                AutoPageEmpty(state, onEdit)
+            } else if (page == null || page.controls.isEmpty()) {
                 EmptyPage(onEdit)
             } else {
                 ControlGrid(page) { control, mod ->
-                    // A joystick is two axes to everything past the UI: "<id>.x" and "<id>.y".
-                    val stick = control.type == ControlType.JOYSTICK
-                    val xId = if (stick) control.id + Joystick.X else control.id
+                    // A joystick is two axes past the UI ("<id>.x", "<id>.y"); a rocker two buttons ("<id>.up", "<id>.down").
+                    val (firstId, secondId) = Joystick.ids(control)
                     ControlView(
                         control = control,
-                        value = state.values[xId] ?: 0f,
+                        value = state.values[firstId] ?: 0f,
                         indicator = state.indicators[control.id],
                         enabled = control.id !in state.unavailable,
-                        onValue = { onControlValue(xId, it) },
+                        onValue = { onControlValue(firstId, it) },
                         onStep = { onRotaryStep(control.id, it) },
                         modifier = mod,
-                        valueY = if (stick) state.values[control.id + Joystick.Y] ?: 0f else 0f,
-                        onValueY = { if (stick) onControlValue(control.id + Joystick.Y, it) },
+                        valueY = secondId?.let { state.values[it] } ?: 0f,
+                        onValueY = { v -> secondId?.let { onControlValue(it, v) } },
+                        onTap = { onPageControl(control.id) },
                     )
                 }
             }
@@ -290,6 +296,75 @@ private fun PagePager(names: List<String>, selected: Int, onSelect: (Int) -> Uni
         }
         IconButton(onClick = { onSelect(selected + 1) }, enabled = selected < names.lastIndex) {
             Icon(Icons.Rounded.ChevronRight, contentDescription = "Next page", tint = if (selected < names.lastIndex) Race.Ink else Race.InkFaint)
+        }
+    }
+}
+
+/** Problems the companion found with this profile (vJoy set up too small...), until dismissed. */
+@Composable
+private fun WarningStrip(warnings: List<String>, onDismiss: () -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 2.dp)
+            .clip(SlantShape())
+            .background(Race.Amber.copy(alpha = 0.14f))
+            .border(1.dp, Race.Amber.copy(alpha = 0.5f), SlantShape())
+            .semantics { liveRegion = LiveRegionMode.Polite }
+            .padding(horizontal = 14.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            warnings.joinToString("  ·  "),
+            style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+            color = Race.Ink,
+            maxLines = 3,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        androidx.compose.material3.TextButton(onClick = onDismiss) { Text("Dismiss", color = Race.Amber) }
+    }
+}
+
+@Composable
+private fun BindHelperStrip() {
+    Text(
+        "BIND HELPER ON · sticks move one axis at a time, so the game captures the right one",
+        style = RaceType.unit,
+        color = Race.Cyan,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp),
+    )
+}
+
+/** An auto page with nothing on it yet: say why, and show what the mod reported so problems can be traced. */
+@Composable
+private fun AutoPageEmpty(state: PlayState, onEdit: () -> Unit) {
+    val connected = state.connection.status == ConnectionStatus.CONNECTED
+    val beamng = state.connection.capabilities.beamng
+    val (title, body) = when {
+        !connected -> "Connect to the PC" to "This page fills itself with the vehicle's own functions (tailgate, doors, bed, crane, outriggers...). It needs the PC companion."
+        !beamng -> "Waiting for BeamNG" to "Start BeamNG.drive with the SimDeck mod enabled. The companion shows \"BeamNG: connected\" when the mod is talking to it."
+        state.vehicle.vehicle.isEmpty() -> "Get in a vehicle" to "Spawn or enter a vehicle. Its functions appear here a second later."
+        else -> "${state.vehicle.vehicle}: nothing extra found" to "The mod found no vehicle-specific functions on this vehicle. The details below say where it looked."
+    }
+    Column(
+        Modifier.fillMaxSize().padding(horizontal = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text(title, style = androidx.compose.material3.MaterialTheme.typography.headlineSmall, color = Race.Ink)
+        Spacer(Modifier.height(6.dp))
+        Text(body, style = androidx.compose.material3.MaterialTheme.typography.bodyMedium, color = Race.InkMuted, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+        if (state.vehicle.diagnostics.isNotEmpty()) {
+            Spacer(Modifier.height(12.dp))
+            Text(
+                state.vehicle.diagnostics.take(8).joinToString("\n"),
+                style = RaceType.unit,
+                color = Race.InkFaint,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            )
         }
     }
 }

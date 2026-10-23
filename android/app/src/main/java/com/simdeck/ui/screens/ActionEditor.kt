@@ -45,6 +45,11 @@ import com.simdeck.ui.theme.CapShape
 import com.simdeck.ui.theme.Race
 import com.simdeck.ui.theme.RaceType
 
+/** What the BeamNG mod reported, for the command pickers: the current vehicle's functions and every game action. */
+data class BeamNGCatalog(val vehicle: List<com.simdeck.model.VehicleFeature> = emptyList(), val actions: List<com.simdeck.model.GameAction> = emptyList())
+
+val LocalBeamNGCatalog = androidx.compose.runtime.staticCompositionLocalOf { BeamNGCatalog() }
+
 private enum class ActionKind(val label: String) {
     NONE("Nothing"),
     KEY("Key or key combo"),
@@ -115,7 +120,8 @@ fun ActionEditor(
     modifier: Modifier = Modifier,
     axisOnly: Boolean = false,
 ) {
-    val kinds = if (axisOnly) listOf(ActionKind.NONE, ActionKind.GAMEPAD_AXIS, ActionKind.XBOX_AXIS)
+    // An axis can drive a BeamNG analog action or hydraulic directly (action.accelerate, hydro.<name>).
+    val kinds = if (axisOnly) listOf(ActionKind.NONE, ActionKind.GAMEPAD_AXIS, ActionKind.XBOX_AXIS, ActionKind.BEAMNG)
     else ActionKind.entries.filter { it != ActionKind.GAMEPAD_AXIS && it != ActionKind.XBOX_AXIS }
     var menu by remember { mutableStateOf(false) }
     Column(modifier.fillMaxWidth()) {
@@ -177,13 +183,39 @@ fun ActionEditor(
             }
             is Action.Macro -> MacroEditor(action, onChange)
             is Action.BeamNG -> {
-                Field(action.command, { onChange(action.copy(command = it.trim())) }, "Command", hint = "e.g. lights.low.toggle", mono = true)
+                val catalog = LocalBeamNGCatalog.current
+                Field(
+                    action.command, { onChange(action.copy(command = it.trim())) }, "Command",
+                    hint = if (axisOnly) "e.g. action.accelerate, hydro.<name>" else "e.g. lights.low.toggle, action.toggle_tailgate", mono = true,
+                )
+                val q = action.command.lowercase()
+                fun hit(vararg t: String) = q.isBlank() || t.any { q in it.lowercase() }
+                // The vehicle being driven first: its own functions, by name.
+                val vehicle = catalog.vehicle.filter { (!axisOnly || it.kind == "axis") && hit(it.id, it.title) }.take(8)
+                if (vehicle.isNotEmpty()) {
+                    Gap(6)
+                    Text("THIS VEHICLE", style = RaceType.unit, color = Race.InkFaint)
+                    Gap(4)
+                    ChoiceChips(vehicle.map { it.title }, vehicle.firstOrNull { it.id == action.command }?.title, { t -> vehicle.firstOrNull { it.title == t }?.let { onChange(action.copy(command = it.id)) } })
+                }
+                val actions = catalog.actions.filter { (!axisOnly || it.axis) && hit("action." + it.name, it.title) }.take(if (q.isBlank()) 6 else 10)
+                if (actions.isNotEmpty()) {
+                    Gap(6)
+                    Text("GAME ACTIONS", style = RaceType.unit, color = Race.InkFaint)
+                    Gap(4)
+                    ChoiceChips(actions.map { it.title }, actions.firstOrNull { "action." + it.name == action.command }?.title, { t -> actions.firstOrNull { it.title == t }?.let { onChange(action.copy(command = "action." + it.name)) } })
+                }
                 val matches = beamngCommands.filter { action.command.isBlank() || action.command in it }.take(8)
-                if (matches.isNotEmpty()) {
+                if (matches.isNotEmpty() && !axisOnly) {
+                    Gap(6)
+                    Text("COMMANDS", style = RaceType.unit, color = Race.InkFaint)
                     Gap(4)
                     ChoiceChips(matches, action.command, { onChange(action.copy(command = it)) })
-                } else if (beamngCommands.isEmpty()) {
-                    Hint("Connect to the PC with the BeamNG mod running to see the full command list.")
+                }
+                if (beamngCommands.isEmpty() && catalog.actions.isEmpty()) {
+                    Hint("Connect to the PC with BeamNG and the SimDeck mod running to pick from the game's actions and this vehicle's functions.")
+                } else if (axisOnly) {
+                    Hint("The slider's value goes straight to the game: no binding needed.")
                 }
             }
             is Action.XInputButton -> {

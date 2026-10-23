@@ -13,6 +13,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -425,7 +427,7 @@ fun LayoutMiniature(page: Page?, modifier: Modifier = Modifier) {
 @Composable
 private fun NewProfileDialog(onDismiss: () -> Unit, onCreate: (String, GameId) -> Unit) {
     var name by remember { mutableStateOf("") }
-    val games = listOf(GameId.CUSTOM, GameId.BEAMNG, GameId.MUDRUNNER)
+    val games = listOf(GameId.CUSTOM) + GameId.entries.filter { it != GameId.CUSTOM }
     var game by remember { mutableStateOf(GameId.CUSTOM) }
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -437,13 +439,15 @@ private fun NewProfileDialog(onDismiss: () -> Unit, onCreate: (String, GameId) -
                 Gap(8)
                 Text("GAME", style = RaceType.capLabel, color = Race.InkMuted)
                 Gap(6)
-                SlantTabs(games.map { it.tag() }, games.indexOf(game), { game = games[it] }, height = 40)
+                Box(Modifier.horizontalScroll(rememberScrollState())) {
+                    SlantTabs(games.map { it.tag() }, games.indexOf(game), { game = games[it] }, height = 40)
+                }
                 Gap(8)
                 Text(
                     when (game) {
                         GameId.CUSTOM -> "Starts empty. Works with any Windows game as a keyboard and gamepad."
                         GameId.BEAMNG -> "Starts empty, with live vehicle state and Bind in game when the BeamNG mod is installed. To start from the full layout, duplicate the built-in BeamNG profile."
-                        GameId.MUDRUNNER -> "Starts empty. To start from the full layout, duplicate the built-in MudRunner profile."
+                        else -> "Starts empty. To start from the full layout, duplicate the built-in ${game.tag()} profile."
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = Race.InkMuted,

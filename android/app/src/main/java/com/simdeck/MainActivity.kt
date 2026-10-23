@@ -169,9 +169,14 @@ private fun AppRoot(vm: AppViewModel) {
                     onBack = vm::back,
                     imperialUnits = vm.settings.imperialUnits,
                     onOpenConnection = vm::openConnect,
+                    onPageControl = vm::onPageControl,
+                    onDismissWarnings = vm::dismissWarnings,
                 )
             }
             is Screen.Editor -> editor?.let { state ->
+                androidx.compose.runtime.CompositionLocalProvider(
+                    com.simdeck.ui.screens.LocalBeamNGCatalog provides com.simdeck.ui.screens.BeamNGCatalog(state.vehicleFeatures, state.beamngActions),
+                ) {
                 EditorScreen(
                     state = state,
                     beamngCommands = vm.beamngCommands.collectAsStateWithLifecycle().value,
@@ -191,7 +196,11 @@ private fun AppRoot(vm: AppViewModel) {
                     onPreviewGameBindings = { vm.previewGameBindings(state.profile.id) },
                     onDiscard = vm::discardEditing,
                     onDone = vm::doneEditing,
+                    onBindHelper = vm::setBindHelper,
+                    autoSwitch = vm.autoSwitchEnabled,
+                    onAutoSwitch = vm::setAutoSwitch,
                 )
+                }
             }
         }
         SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(16.dp))
