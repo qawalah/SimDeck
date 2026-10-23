@@ -315,13 +315,18 @@ fun EditorScreen(
                             .fillMaxWidth()
                             .padding(start = 4.dp, end = 12.dp, bottom = 12.dp, top = 4.dp),
                     ) {
-                        if (page.auto != null) {
-                            val preview = remember(page, state.vehicleFeatures) { com.simdeck.model.VehicleFeaturePages.controls(page, state.vehicleFeatures).first }
-                            ControlGrid(preview) { c, m ->
-                                com.simdeck.ui.components.ControlView(c, 0f, null, true, {}, {}, m, interactive = false)
+                        // Controls are drawn in the page's theme (day lighting), so what is placed is what is played.
+                        val sim = remember(profile.theme, page.theme) { com.simdeck.ui.sim.simTheme(com.simdeck.model.Themes.resolve(profile, page), false) }
+                        androidx.compose.runtime.CompositionLocalProvider(com.simdeck.ui.sim.LocalSimTheme provides sim) {
+                            if (page.auto != null) {
+                                val preview = remember(page, state.vehicleFeatures) { com.simdeck.model.VehicleFeaturePages.controls(page, state.vehicleFeatures).first }
+                                ControlGrid(preview) { c, m ->
+                                    com.simdeck.ui.components.ControlView(c, 0f, null, true, {}, {}, m, interactive = false)
+                                }
+                            } else {
+                                if (page.panels.isNotEmpty()) ControlGrid(page.copy(controls = emptyList()), panels = page.panels) { _, _ -> }
+                                EditCanvas(page, state.selectedControlId, { onSelect(it); if (it != null) showSettings = false }, onMove, onResize)
                             }
-                        } else {
-                            EditCanvas(page, state.selectedControlId, { onSelect(it); if (it != null) showSettings = false }, onMove, onResize)
                         }
                     }
                 }
@@ -422,9 +427,11 @@ private fun SidePanel(
     onAutoSwitch: (Boolean) -> Unit,
 ) {
     if (selected != null) {
-        Inspector(selected, page, state.profile.game, beamngCommands, onUpdate, onResize, onDelete, onClose = { onSelect(null) }, stateKeys = state.stateKeys, pages = state.profile.pages)
+        Inspector(selected, page, state.profile.game, beamngCommands, onUpdate, onResize, onDelete, onClose = { onSelect(null) }, stateKeys = state.stateKeys,
+            pages = state.profile.pages, theme = com.simdeck.model.Themes.resolve(state.profile, page))
     } else {
         PageAndProfile(state.profile, page, pageIndex, onRenamePage, onDeletePage, onGridChange, onProfileChange, onApplyGameBindings, state.bindHelper, onBindHelper, autoSwitch, onAutoSwitch)
+        ThemeSettingsSection(state.profile, page, pageIndex, onProfileChange)
         if (state.profile.game == GameId.BEAMNG) {
             BindInGame(state.profile, state.canBindInGame, state.bindResult, onApplyGameBindings, onPreviewGameBindings)
         }

@@ -72,6 +72,16 @@ import com.simdeck.model.ControlType
 import com.simdeck.model.FeedbackSource
 import com.simdeck.model.IndicatorState
 import com.simdeck.ui.icons.IconLibrary
+import com.simdeck.model.Skins
+import com.simdeck.ui.sim.LocalSimTheme
+import com.simdeck.ui.sim.SkinFace
+import com.simdeck.ui.sim.faceState
+import com.simdeck.ui.sim.rememberThemeHaptic
+import com.simdeck.ui.sim.drawSliderSkin
+import com.simdeck.ui.sim.drawRotarySkin
+import com.simdeck.ui.sim.drawStations
+import com.simdeck.ui.sim.drawEnds
+import com.simdeck.ui.sim.Travel
 import com.simdeck.ui.theme.Race
 import com.simdeck.ui.theme.CapShape
 import com.simdeck.ui.theme.RaceMotion
@@ -161,7 +171,9 @@ private fun MomentaryButton(
     modifier: Modifier,
 ) {
     var pressed by remember { mutableStateOf(false) }
-    val haptic = rememberPressHaptic()
+    val theme = LocalSimTheme.current
+    val skin = Skins.resolve(control, theme.id)
+    val haptic = if (theme.isHouse) rememberPressHaptic() else rememberThemeHaptic(theme.feel)
     val currentOnValue by rememberUpdatedState(onValue)
     val accent = control.accent.lit()
     val lit = pressed || indicator?.lit == true
@@ -170,18 +182,23 @@ private fun MomentaryButton(
     }
     // Leaving composition mid-press (page switch, visibleWhen, profile reload) must not leave the key down.
     DisposableEffect(Unit) { onDispose { release() } }
+    val input = modifier
+        .semantics {
+            role = Role.Button
+            contentDescription = control.label
+            if (!enabled) stateDescription = "Not available on this vehicle"
+        }
+        .pressAndRelease(
+            active,
+            onDown = { pressed = true; haptic(); currentOnValue(1f) },
+            onUp = { release() },
+        )
+    if (skin != "cap") {
+        SkinFace(skin, control, faceState(lit, pressed, enabled, indicator?.source, indicator?.text), input)
+        return
+    }
     ControlCap(
-        modifier = modifier
-            .semantics {
-                role = Role.Button
-                contentDescription = control.label
-                if (!enabled) stateDescription = "Not available on this vehicle"
-            }
-            .pressAndRelease(
-                active,
-                onDown = { pressed = true; haptic(); currentOnValue(1f) },
-                onUp = { release() },
-            ),
+        modifier = input,
         lit = lit,
         accent = accent,
         source = indicator?.source ?: FeedbackSource.LOCAL,
@@ -205,14 +222,15 @@ private fun LatchingButton(
     modifier: Modifier,
 ) {
     var pressed by remember { mutableStateOf(false) }
-    val haptic = rememberPressHaptic()
+    val theme = LocalSimTheme.current
+    val skin = Skins.resolve(control, theme.id)
+    val haptic = if (theme.isHouse) rememberPressHaptic() else rememberThemeHaptic(theme.feel)
     val on = value >= 0.5f
     val lit = indicator?.lit ?: on
     val accent = control.accent.lit()
     val currentOn by rememberUpdatedState(on)
     val currentOnValue by rememberUpdatedState(onValue)
-    ControlCap(
-        modifier = modifier
+    val input = modifier
             .semantics {
                 role = Role.Switch
                 contentDescription = control.label
@@ -233,7 +251,13 @@ private fun LatchingButton(
                 },
                 // A cancelled tap does not toggle.
                 onCancel = { pressed = false },
-            ),
+            )
+    if (skin != "cap") {
+        SkinFace(skin, control, faceState(lit, pressed, enabled, indicator?.source, indicator?.text), input)
+        return
+    }
+    ControlCap(
+        modifier = input,
         lit = lit,
         accent = accent,
         source = indicator?.source ?: FeedbackSource.LOCAL,
@@ -267,6 +291,17 @@ private fun SelectorSwitch(
     val positions = control.positions.ifEmpty { listOf(com.simdeck.model.Position("—")) }
     val n = positions.size
     val index = activeIndex(control, value, indicator)
+    val theme = LocalSimTheme.current
+    val skin = Skins.resolve(control, theme.id)
+    if (skin == "rotary-pointer" || skin == "gated-lever") {
+        val haptic = rememberThemeHaptic(theme.feel)
+        val cb by rememberUpdatedState(onValue)
+        val pick: (Int) -> Unit = { i -> if (i != index) { haptic(); cb(i.toFloat()) } }
+        val pending = indicator?.source == FeedbackSource.PENDING
+        if (skin == "rotary-pointer") com.simdeck.ui.sim.RotarySelector(control, index, pending, enabled, active, pick, modifier)
+        else com.simdeck.ui.sim.GatedLever(control, index, pending, enabled, active, pick, modifier)
+        return
+    }
     val accent = control.accent.lit()
     val haptics = LocalHapticFeedback.current
     val thumb by animateFloatAsState(index.toFloat(), RaceMotion.release(), label = "thumb")
@@ -374,7 +409,9 @@ private fun RadioKeys(
     val positions = control.positions
     val index = activeIndex(control, value, indicator)
     val accent = control.accent.lit()
-    val haptic = rememberPressHaptic()
+    val theme = LocalSimTheme.current
+    val skin = Skins.resolve(control, theme.id)
+    val haptic = if (theme.isHouse) rememberPressHaptic() else rememberThemeHaptic(theme.feel)
     val currentOnValue by rememberUpdatedState(onValue)
     BoxWithConstraints(modifier) {
         val horizontal = maxWidth >= maxHeight
@@ -386,8 +423,7 @@ private fun RadioKeys(
             positions.forEachIndexed { i, p ->
                 var pressed by remember { mutableStateOf(false) }
                 val selected = i == index
-                ControlCap(
-                    modifier = Modifier
+                val keyInput = Modifier
                         .size(keyW, keyH)
                         .semantics {
                             role = Role.RadioButton
@@ -403,7 +439,12 @@ private fun RadioKeys(
                                 currentOnValue(i.toFloat())
                             },
                             onCancel = { pressed = false },
-                        ),
+                        )
+                if (skin != "cap") {
+                    val keySkin = when (skin) { "lit-row" -> "lit-push"; "annunciator-row" -> "rubber-key"; else -> skin }
+                    SkinFace(keySkin, control, faceState(selected, pressed, enabled, if (selected) indicator?.source else null, null), keyInput, label = p.label, icon = p.icon)
+                } else ControlCap(
+                    modifier = keyInput,
                     lit = selected,
                     accent = accent,
                     source = if (selected) indicator?.source ?: FeedbackSource.LOCAL else FeedbackSource.LOCAL,
@@ -435,7 +476,12 @@ private fun AxisSlider(
     val bipolar = control.range == AxisRange.BIPOLAR
     val min = if (bipolar) -1f else 0f
     val rest = 0f
-    val accent = control.accent.lit()
+    val theme = LocalSimTheme.current
+    val skin = Skins.resolve(control, theme.id)
+    // The house theme keeps its own fader and valve lever; every other look comes from the theme's skin.
+    val themed = !(theme.isHouse && skin in setOf("fader", "hydraulic-lever"))
+    val accent = theme.lamp(control.accent)
+    val tm = androidx.compose.ui.text.rememberTextMeasurer()
     val haptics = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
     var dragging by remember { mutableStateOf(false) }
@@ -468,20 +514,23 @@ private fun AxisSlider(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         val readoutText = (if (bipolar && pct > 0) "+" else "") + pct
-        val readoutInk = if (abs(shown.value - rest) > 0.01f) accent else Race.InkFaint
+        val readoutInk = if (abs(shown.value - rest) > 0.01f) accent else if (theme.isHouse) Race.InkFaint else theme.legendMuted
+        val labelStyle = if (theme.isHouse) RaceType.capLabel else theme.legendStyle(13.sp)
+        val labelInk = if (theme.isHouse) Race.InkMuted else theme.legendMuted
+        val readStyle = if (theme.isHouse) RaceType.readout else theme.readoutStyle(20.sp)
         BoxWithConstraints(Modifier.fillMaxWidth()) {
             if (maxWidth < 104.dp) {
                 // One-column sliders: label on up to two compact lines above the readout, never "THROT...".
                 Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         control.label.uppercase(),
-                        style = RaceType.unit.copy(lineHeight = 12.sp, letterSpacing = 0.04.em),
-                        color = Race.InkMuted,
+                        style = if (theme.isHouse) RaceType.unit.copy(lineHeight = 12.sp, letterSpacing = 0.04.em) else theme.legendStyle(11.sp),
+                        color = labelInk,
                         textAlign = TextAlign.Center,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    Text(readoutText, style = RaceType.readout, color = readoutInk)
+                    Text(readoutText, style = readStyle, color = readoutInk)
                 }
             } else {
                 Row(
@@ -491,14 +540,14 @@ private fun AxisSlider(
                 ) {
                     Text(
                         control.label.uppercase(),
-                        style = RaceType.capLabel,
-                        color = Race.InkMuted,
+                        style = labelStyle,
+                        color = labelInk,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f, fill = false),
                     )
                     Spacer(Modifier.width(6.dp))
-                    Text(readoutText, style = RaceType.readout, color = readoutInk)
+                    Text(readoutText, style = readStyle, color = readoutInk)
                 }
             }
         }
@@ -508,9 +557,7 @@ private fun AxisSlider(
                 .weight(1f)
                 .fillMaxWidth()
                 .onSizeChanged { box = it }
-                .clip(CapShape())
-                .background(Race.Panel)
-                .border(1.dp, if (enabled) Race.Line else Race.LineStrong, CapShape())
+                .then(if (themed) Modifier else Modifier.clip(CapShape()).background(Race.Panel).border(1.dp, if (enabled) Race.Line else Race.LineStrong, CapShape()))
                 .then(
                     if (!active) Modifier else Modifier.pointerInput(vertical, bipolar, control.springReturn) {
                         awaitEachGesture {
@@ -525,8 +572,11 @@ private fun AxisSlider(
                                 val c = event.changes.firstOrNull { it.id == down.id } ?: break
                                 if (!c.pressed) break
                                 val v = valueAt(c.position)
-                                // Detent tick when crossing the rest point on a bipolar axis, or entering a notch.
-                                if ((bipolar && (last < 0f) != (v < 0f)) || (detents > 1 && v != last)) haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                // Detent tick when crossing the rest point on a bipolar axis, entering a notch, or passing a
+                                // named station (IDLE, CL, TOGA).
+                                val f0 = (last - min) / (1f - min); val f1 = (v - min) / (1f - min)
+                                val station = control.stations.any { (f0 < it.at) != (f1 < it.at) }
+                                if ((bipolar && (last < 0f) != (v < 0f)) || (detents > 1 && v != last) || station) haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                 if (detents > 1 && v == last) { c.consume(); continue }
                                 last = v
                                 scope.launch { shown.snapTo(v) }
@@ -544,6 +594,12 @@ private fun AxisSlider(
                 ),
         ) {
             Canvas(Modifier.fillMaxSize()) {
+                if (themed) {
+                    drawSliderSkin(skin, theme, control, vertical, thumbPx, (shown.value - min) / (1f - min), (rest - min) / (1f - min), enabled, dragging, accent, tm)
+                    if (!enabled) drawRoundRect(theme.legendMuted, androidx.compose.ui.geometry.Offset.Zero, size, CornerRadius(theme.corner.toPx()),
+                        style = Stroke(1.dp.toPx(), pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 5.dp.toPx()))))
+                    return@Canvas
+                }
                 val len = (if (vertical) size.height else size.width) - thumbPx
                 fun at(v: Float) = thumbPx / 2 + (v - min) / (1f - min) * len
                 val cross = if (vertical) size.width else size.height
@@ -566,6 +622,13 @@ private fun AxisSlider(
                         drawLine(c, Offset(p, 6.dp.toPx()), Offset(p, 6.dp.toPx() + tl), 1.dp.toPx())
                         drawLine(c, Offset(p, size.height - 6.dp.toPx() - tl), Offset(p, size.height - 6.dp.toPx()), 1.dp.toPx())
                     }
+                }
+                // Named stations and end labels (house look).
+                if (control.stations.isNotEmpty() || control.ends.isNotEmpty()) {
+                    val tr = Travel(vertical, thumbPx, size.width, size.height)
+                    val fNow = (shown.value - min) / (1f - min)
+                    drawStations(theme, control, tr, tr.cross / 2, 8.dp.toPx(), tm, fNow)
+                    drawEnds(theme, control, tr, tr.cross / 2, tm, fNow)
                 }
                 // Fill from rest to value.
                 val a = at(rest); val b = at(shown.value)
@@ -645,6 +708,12 @@ private fun RotaryKnob(
     labelMinHeight: androidx.compose.ui.unit.Dp,
 ) {
     val accent = control.accent.lit()
+    val theme = LocalSimTheme.current
+    val skin = Skins.resolve(control, theme.id)
+    val themed = !(theme.isHouse && skin == "encoder")
+    val linear = com.simdeck.ui.sim.isLinearRotary(skin)
+    val tm = androidx.compose.ui.text.rememberTextMeasurer()
+    val iconPainter = IconLibrary[control.icon]?.let { androidx.compose.ui.graphics.vector.rememberVectorPainter(it) }
     val haptics = LocalHapticFeedback.current
     val density = LocalDensity.current
     var angle by remember { mutableFloatStateOf(0f) }
@@ -677,9 +746,31 @@ private fun RotaryKnob(
             val d = minOf(maxWidth, maxHeight)
             Box(
                 Modifier
-                    .size(d)
+                    .then(if (linear) Modifier.fillMaxSize() else Modifier.size(d))
                     .then(
-                        if (!active) Modifier else Modifier.pointerInput(Unit) {
+                        if (!active) Modifier else if (linear) Modifier.pointerInput(skin) {
+                            // A wheel or roller: drag up for +, down for -, one step per 14dp; a tap steps by half.
+                            awaitEachGesture {
+                                val down = awaitFirstDown()
+                                var lastY = down.position.y
+                                var acc = 0f
+                                var moved = false
+                                val stepPx = 14.dp.toPx()
+                                turning = true
+                                while (true) {
+                                    val event = awaitPointerEvent()
+                                    val c = event.changes.firstOrNull { it.id == down.id } ?: break
+                                    if (!c.pressed) break
+                                    acc += lastY - c.position.y
+                                    lastY = c.position.y
+                                    while (acc >= stepPx) { step(1); acc -= stepPx; moved = true }
+                                    while (acc <= -stepPx) { step(-1); acc += stepPx; moved = true }
+                                    c.consume()
+                                }
+                                turning = false
+                                if (!moved) step(if (down.position.y < size.height / 2f) 1 else -1)
+                            }
+                        } else Modifier.pointerInput(skin) {
                             awaitEachGesture {
                                 val down = awaitFirstDown()
                                 val c0 = Offset(size.width / 2f, size.height / 2f)
@@ -709,6 +800,10 @@ private fun RotaryKnob(
                 contentAlignment = Alignment.Center,
             ) {
                 Canvas(Modifier.fillMaxSize()) {
+                    if (themed) {
+                        drawRotarySkin(skin, theme, control, shownAngle, steps, turning, enabled, indicator?.text, tm, iconPainter)
+                        return@Canvas
+                    }
                     val r = size.minDimension / 2
                     val c = center
                     val ring = (r * 0.18f).coerceIn(6.dp.toPx(), 14.dp.toPx())
@@ -749,7 +844,7 @@ private fun RotaryKnob(
                 }
                 val vector = IconLibrary[control.icon]
                 val readout = indicator?.text
-                if (readout != null) {
+                if (themed) Unit else if (readout != null) {
                     Text(readout, style = RaceType.readout, color = Race.Ink)
                 } else if (vector != null && d >= 110.dp) {
                     Icon(vector, null, tint = Race.InkMuted, modifier = Modifier.size(d * 0.16f).offset(y = d * 0.12f))
@@ -759,8 +854,8 @@ private fun RotaryKnob(
         if (control.label.isNotBlank() && showLabel) {
             Text(
                 control.label.uppercase(),
-                style = RaceType.capLabel,
-                color = Race.InkMuted,
+                style = if (theme.isHouse) RaceType.capLabel else theme.legendStyle(12.sp),
+                color = if (theme.isHouse) Race.InkMuted else theme.legendMuted,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,

@@ -473,6 +473,11 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("autoSwitch", true)
         set(v) = prefs.edit().putBoolean("autoSwitch", v).apply()
 
+    /** Panel lighting of themed pages: auto, day or night. */
+    var lighting: String
+        get() = prefs.getString("lighting", "AUTO") ?: "AUTO"
+        set(v) = prefs.edit().putString("lighting", v).apply()
+
     /** Joysticks move one axis at a time, so a game's "move the axis" capture picks the right one. */
     var bindHelper: Boolean
         get() = prefs.getBoolean("bindHelper", false)

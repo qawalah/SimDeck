@@ -43,6 +43,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material.icons.rounded.BrightnessAuto
+import androidx.compose.material.icons.rounded.LightMode
+import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -60,6 +63,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.simdeck.model.Control
+import com.simdeck.model.PanelGroup
+import com.simdeck.model.Themes
+import com.simdeck.ui.sim.Lighting
+import com.simdeck.ui.sim.LocalSimTheme
+import com.simdeck.ui.sim.drawPanelGroup
+import com.simdeck.ui.sim.simEnvironment
+import com.simdeck.ui.sim.simTheme
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.text.rememberTextMeasurer
 import com.simdeck.model.GameId
 import com.simdeck.model.Page
 import com.simdeck.model.PlayState
@@ -110,26 +124,38 @@ fun PlayScreen(
     onOpenConnection: (() -> Unit)? = null,
     onPageControl: (controlId: String) -> Unit = {},
     onDismissWarnings: () -> Unit = {},
+    lighting: Lighting = Lighting.AUTO,
+    onLighting: (Lighting) -> Unit = {},
 ) {
     val pages = state.profile.pages
     val pageIndex = state.pageIndex.coerceIn(0, (pages.size - 1).coerceAtLeast(0))
     val page = pages.getOrNull(pageIndex)
+    // The equipment theme of this page (docs/THEMES.md), lit for day or night.
+    val themeId = Themes.resolve(state.profile, page, state.vehicle.category)
+    val night = when (lighting) {
+        Lighting.NIGHT -> true
+        Lighting.DAY -> false
+        Lighting.AUTO -> state.game["lights.low"] == true || state.game["lights.high"] == true
+    }
+    val sim = remember(themeId, night) { simTheme(themeId, night) }
     Column(
         Modifier
             .fillMaxSize()
             .background(Race.Ground)
             .windowInsetsPadding(WindowInsets.safeDrawing),
     ) {
-        PlayHud(state, pageIndex, imperialUnits, onPageChange, onEdit, onBack, onOpenConnection)
+        PlayHud(state, pageIndex, imperialUnits, onPageChange, onEdit, onBack, onOpenConnection,
+            lighting = if (themeId == Themes.RACE) null else lighting, onLighting = onLighting)
         if (state.warnings.isNotEmpty()) WarningStrip(state.warnings, onDismissWarnings)
         if (state.bindHelper) BindHelperStrip()
-        Box(Modifier.weight(1f).fillMaxWidth().padding(start = 12.dp, end = 12.dp, bottom = 12.dp, top = 4.dp)) {
+        CompositionLocalProvider(LocalSimTheme provides sim) {
+        Box(Modifier.weight(1f).fillMaxWidth().then(if (sim.isHouse) Modifier else Modifier.simEnvironment(sim)).padding(start = 12.dp, end = 12.dp, bottom = 12.dp, top = 4.dp)) {
             if (page != null && page.auto != null && page.controls.isEmpty()) {
                 AutoPageEmpty(state, onEdit)
             } else if (page == null || page.controls.isEmpty()) {
                 EmptyPage(onEdit)
             } else {
-                ControlGrid(page) { control, mod ->
+                ControlGrid(page, panels = page.panels) { control, mod ->
                     // A joystick is two axes past the UI ("<id>.x", "<id>.y"); a rocker two buttons ("<id>.up", "<id>.down").
                     val (firstId, secondId) = Joystick.ids(control)
                     ControlView(
@@ -147,14 +173,29 @@ fun PlayScreen(
                 }
             }
         }
+        }
     }
 }
 
-/** Lays out a page's controls on its grid; [content] draws one control into the given modifier. */
+/**
+ * Lays out a page's controls on its grid; [content] draws one control into the given modifier. [panels] are drawn
+ * behind the controls in the current theme's style, outset into the grid gaps.
+ */
 @Composable
-fun ControlGrid(page: Page, modifier: Modifier = Modifier, content: @Composable (Control, Modifier) -> Unit) {
+fun ControlGrid(page: Page, modifier: Modifier = Modifier, panels: List<PanelGroup> = emptyList(), content: @Composable (Control, Modifier) -> Unit) {
     BoxWithConstraints(modifier.fillMaxSize()) {
         val m = gridMetrics(page, maxWidth, maxHeight)
+        if (panels.isNotEmpty()) {
+            val sim = LocalSimTheme.current
+            val tm = rememberTextMeasurer()
+            Canvas(Modifier.fillMaxSize()) {
+                val out = m.gap.toPx() * 0.45f
+                for (g in panels) {
+                    val r = Rect(m.x(g.x).toPx() - out, m.y(g.y).toPx() - out, (m.x(g.x) + m.w(g.w)).toPx() + out, (m.y(g.y) + m.h(g.h)).toPx() + out)
+                    drawPanelGroup(sim, r, g.title, tm)
+                }
+            }
+        }
         for (c in page.controls) {
             content(
                 c,
@@ -175,6 +216,8 @@ private fun PlayHud(
     onEdit: () -> Unit,
     onBack: () -> Unit,
     onOpenConnection: (() -> Unit)?,
+    lighting: Lighting? = null,
+    onLighting: (Lighting) -> Unit = {},
 ) {
     // While anything is linked the player is probably mid-game: Edit then needs a hold, and a
     // stray tap only says so, instead of dropping them into the editor.
@@ -250,7 +293,20 @@ private fun PlayHud(
                 BluetoothLinkBadge(state.hid, compact = compact, lampOnly = tight, alert = noLink)
                 PcLinkBadge(state.connection, compact = compact, lampOnly = tight, alert = noLink)
             }
-            Spacer(Modifier.width(10.dp))
+            if (lighting != null) {
+                // Panel lighting for themed pages: automatic (follows the headlights), day, night.
+                IconButton(onClick = { onLighting(Lighting.entries[(lighting.ordinal + 1) % Lighting.entries.size]) }) {
+                    Icon(
+                        when (lighting) {
+                            Lighting.AUTO -> Icons.Rounded.BrightnessAuto
+                            Lighting.DAY -> Icons.Rounded.LightMode
+                            Lighting.NIGHT -> Icons.Rounded.DarkMode
+                        },
+                        contentDescription = "Panel lighting: " + lighting.name.lowercase(),
+                        tint = Race.InkMuted,
+                    )
+                }
+            } else Spacer(Modifier.width(10.dp))
             // Tight: Edit goes icon-only so the page pager keeps room for the page name.
             SlantButton(
                 text = if (holdHint) "Hold" else if (tight) "" else "Edit",

@@ -303,6 +303,10 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         notify("${pick.name}: switched for ${exe.removeSuffix(".exe")}")
     }
 
+    private val _lighting = MutableStateFlow(runCatching { com.simdeck.ui.sim.Lighting.valueOf(settings.lighting) }.getOrDefault(com.simdeck.ui.sim.Lighting.AUTO))
+    val lighting: StateFlow<com.simdeck.ui.sim.Lighting> = _lighting.asStateFlow()
+    fun setLighting(l: com.simdeck.ui.sim.Lighting) { _lighting.value = l; settings.lighting = l.name }
+
     fun setAutoSwitch(on: Boolean) { settings.autoSwitch = on }
     val autoSwitchEnabled: Boolean get() = settings.autoSwitch
 

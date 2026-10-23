@@ -171,6 +171,8 @@ private fun AppRoot(vm: AppViewModel) {
                     onOpenConnection = vm::openConnect,
                     onPageControl = vm::onPageControl,
                     onDismissWarnings = vm::dismissWarnings,
+                    lighting = vm.lighting.collectAsStateWithLifecycle().value,
+                    onLighting = vm::setLighting,
                 )
             }
             is Screen.Editor -> editor?.let { state ->

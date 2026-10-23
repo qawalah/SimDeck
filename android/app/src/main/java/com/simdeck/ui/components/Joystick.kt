@@ -46,7 +46,11 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.simdeck.model.Control
+import com.simdeck.ui.sim.drawFinish
+import com.simdeck.ui.sim.drawStickSkin
+import com.simdeck.ui.sim.drawStickEnds
 import com.simdeck.ui.icons.IconLibrary
 import com.simdeck.ui.theme.CapShape
 import com.simdeck.ui.theme.Race
@@ -79,6 +83,10 @@ internal fun PilotJoystick(
     modifier: Modifier,
 ) {
     val accent = control.accent.lit()
+    val theme = com.simdeck.ui.sim.LocalSimTheme.current
+    val skin = com.simdeck.model.Skins.resolve(control, theme.id)
+    val themed = !(theme.isHouse && skin == "gate")
+    val tm = androidx.compose.ui.text.rememberTextMeasurer()
     val haptic = rememberPressHaptic()
     val scope = rememberCoroutineScope()
     val sx = remember { Animatable(x) }
@@ -102,8 +110,9 @@ internal fun PilotJoystick(
         modifier
             .clip(shape)
             .drawBehind {
-                drawRect(Race.Panel)
-                drawCautionBand(accent, lit = off && enabled)
+                drawRect(if (themed) theme.panel else Race.Panel)
+                if (themed) drawFinish(theme.panelFinish, alpha = 0.7f)
+                if (!themed || theme.decor != null) drawCautionBand(if (themed) theme.decor!! else accent, lit = off && enabled)
                 drawOutline(shape.createOutline(size, layoutDirection, this), if (enabled) Race.Line else Race.LineStrong, style = Stroke(
                     1.dp.toPx(),
                     pathEffect = if (enabled) null else PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 5.dp.toPx())),
@@ -124,8 +133,8 @@ internal fun PilotJoystick(
             }
             Text(
                 control.label.uppercase(),
-                style = RaceType.capLabel,
-                color = if (off) Race.Ink else Race.InkMuted,
+                style = if (themed) theme.legendStyle(13.sp) else RaceType.capLabel,
+                color = if (themed) (if (off) theme.legend else theme.legendMuted) else if (off) Race.Ink else Race.InkMuted,
                 // Two-part names (BLADE LIFT / TILT) wrap rather than truncate.
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
@@ -178,6 +187,10 @@ internal fun PilotJoystick(
                     ),
             ) {
                 Canvas(Modifier.fillMaxSize()) {
+                    if (themed) {
+                        drawStickSkin(skin, theme, control, sx.value, sy.value, held, enabled, tm)
+                        return@Canvas
+                    }
                     val r = size.minDimension / 2f
                     val c = Offset(size.width / 2f, size.height / 2f)
                     val gateR = r * 0.94f
@@ -211,6 +224,7 @@ internal fun PilotJoystick(
                     drawCircle(Brush.verticalGradient(listOf(Race.CapHigh, Race.Cap), k.y - knobR, k.y + knobR), knobR, k)
                     drawCircle(if (held) accent else Race.LineStrong, knobR, k, style = Stroke(2.dp.toPx()))
                     drawCircle(if (enabled) accent else Race.InkFaint, knobR * 0.28f, k)
+                    drawStickEnds(theme, control, sx.value, sy.value, tm)
                 }
             }
         }

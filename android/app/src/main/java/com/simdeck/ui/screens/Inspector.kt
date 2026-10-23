@@ -75,6 +75,7 @@ fun Inspector(
     onClose: () -> Unit,
     stateKeys: List<String> = emptyList(),
     pages: List<Page> = emptyList(),
+    theme: String = com.simdeck.model.Themes.RACE,
 ) {
     var picking by remember { mutableStateOf(false) }
     val c = control
@@ -128,6 +129,7 @@ fun Inspector(
     }
     Stepper("Width", c.w, widthRange(c, page), { onResize(c.id, it, c.h) })
     Stepper("Height", c.h, heightRange(c, page), { onResize(c.id, c.w, it) })
+    ThemeLookSection(c, theme, onUpdate)
     if (c.type in setOf(ControlType.MOMENTARY, ControlType.LATCHING, ControlType.ROCKER, ControlType.SWITCH, ControlType.RADIO)) {
         ToggleRow("Safety cover", c.guard, { onUpdate(c.copy(guard = it)) }, hint = "The first tap lifts a cover, the next one operates. For ignition, gear, ejecting a trailer.")
     }

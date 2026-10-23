@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -34,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -56,6 +58,17 @@ import com.simdeck.ui.theme.Race
 import com.simdeck.ui.theme.RaceType
 import com.simdeck.ui.theme.lit
 import kotlinx.coroutines.delay
+import com.simdeck.model.Skins
+import com.simdeck.ui.sim.GuardStyle
+import com.simdeck.ui.sim.LocalSimTheme
+import com.simdeck.ui.sim.SkinFace
+import com.simdeck.ui.sim.SkinGauge
+import com.simdeck.ui.sim.SkinLamp
+import com.simdeck.ui.sim.drawRockerSkin
+import com.simdeck.ui.sim.faceState
+import com.simdeck.ui.sim.rememberThemeHaptic
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 
 /** One half of a rocker: a hold-to-act zone that reports 1 on press and 0 on release (or cancel). */
 private fun Modifier.holdZone(active: Boolean, onChange: (Boolean) -> Unit): Modifier =
@@ -84,7 +97,12 @@ fun RockerSwitch(
     modifier: Modifier,
 ) {
     val accent = control.accent.lit()
-    val haptic = rememberPressHaptic()
+    val theme = LocalSimTheme.current
+    val skin = Skins.resolve(control, theme.id)
+    val themed = !(theme.isHouse && skin == "rocker-3")
+    val haptic = if (theme.isHouse) rememberPressHaptic() else rememberThemeHaptic(theme.feel)
+    val tm = rememberTextMeasurer()
+    val painter = IconLibrary[control.icon]?.let { rememberVectorPainter(it) }
     val up by rememberUpdatedState(onUp)
     val down by rememberUpdatedState(onDown)
     var upHeld by remember { mutableStateOf(false) }
@@ -99,6 +117,26 @@ fun RockerSwitch(
         },
     ) {
         val tall = maxHeight >= maxWidth
+        if (themed) {
+            // Themed rocker: the skin draws underneath, two invisible hold zones on top.
+            Canvas(Modifier.fillMaxSize().alpha(if (enabled) 1f else 0.42f)) {
+                drawRockerSkin(skin, theme, control, upOn, downOn, tall, tm, painter, indicator?.text)
+            }
+            val zone: @Composable (Boolean, Modifier) -> Unit = { isUp, m ->
+                Box(m.semantics {
+                    role = Role.Button
+                    contentDescription = control.label + if (isUp) (if (tall) " up" else " right") else (if (tall) " down" else " left")
+                    onClick { (if (isUp) up else down)(1f); (if (isUp) up else down)(0f); true }
+                }.holdZone(active) { pressed ->
+                    if (isUp) upHeld = pressed else downHeld = pressed
+                    if (pressed) haptic()
+                    (if (isUp) up else down)(if (pressed) 1f else 0f)
+                })
+            }
+            if (tall) Column(Modifier.fillMaxSize()) { zone(true, Modifier.weight(1f).fillMaxWidth()); zone(false, Modifier.weight(1f).fillMaxWidth()) }
+            else Row(Modifier.fillMaxSize()) { zone(false, Modifier.weight(1f).fillMaxHeight()); zone(true, Modifier.weight(1f).fillMaxHeight()) }
+            return@BoxWithConstraints
+        }
         ControlCap(
             modifier = Modifier.fillMaxSize(),
             lit = upOn || downOn || indicator?.lit == true,
@@ -161,6 +199,9 @@ fun RockerSwitch(
 /** A number from the game, large, with its unit: speed, rpm, gear, fuel, a hydraulic position. */
 @Composable
 fun GaugeReadout(control: Control, indicator: IndicatorState?, modifier: Modifier) {
+    val theme = LocalSimTheme.current
+    val skin = Skins.resolve(control, theme.id)
+    if (skin != "readout") { SkinGauge(skin, control, indicator, modifier); return }
     val live = indicator?.source == FeedbackSource.GAME
     val accent = control.accent.lit()
     val text = indicator?.text ?: "--"
@@ -190,6 +231,9 @@ fun GaugeReadout(control: Control, indicator: IndicatorState?, modifier: Modifie
 /** A tell-tale lamp lit by the game: no input, just state (ABS active, park brake, high beam...). */
 @Composable
 fun TellTale(control: Control, indicator: IndicatorState?, modifier: Modifier) {
+    val theme = LocalSimTheme.current
+    val skin = Skins.resolve(control, theme.id)
+    if (!theme.isHouse || skin != "telltale") { SkinLamp(skin, control, indicator, modifier); return }
     val lit = indicator?.lit == true
     val accent = control.accent.lit()
     val ink by animateColorAsState(if (lit) accent else Race.Line, label = "lamp")
@@ -220,8 +264,9 @@ fun PageKey(control: Control, active: Boolean, enabled: Boolean, onTap: () -> Un
     val tap by rememberUpdatedState(onTap)
     val haptic = rememberPressHaptic()
     val accent = control.accent.lit()
-    ControlCap(
-        modifier = modifier
+    val theme = LocalSimTheme.current
+    val skin = Skins.resolve(control, theme.id)
+    val input = modifier
             .semantics { role = Role.Button; contentDescription = control.label; onClick { tap(); true } }
             .then(
                 if (!active) Modifier else Modifier.pointerInput(Unit) {
@@ -233,7 +278,10 @@ fun PageKey(control: Control, active: Boolean, enabled: Boolean, onTap: () -> Un
                         if (up != null) { haptic(); tap() }
                     }
                 },
-            ),
+            )
+    if (skin != "cap") { SkinFace(skin, control, faceState(false, pressed, enabled, null, null), input); return }
+    ControlCap(
+        modifier = input,
         lit = false,
         accent = accent,
         pressed = pressed,
@@ -254,18 +302,26 @@ fun GuardCover(label: String, active: Boolean, modifier: Modifier, content: @Com
     var touches by remember { mutableStateOf(0) }
     LaunchedEffect(open, touches) { if (open) { delay(GUARD_OPEN_MS); open = false } }
     val haptic = rememberPressHaptic()
+    val style = LocalSimTheme.current.guard
     Box(modifier) {
         content(Modifier.fillMaxSize().pointerInput(open) {
             // Any touch on the uncovered control keeps the cover up a little longer.
             awaitEachGesture { awaitFirstDown(requireUnconsumed = false); touches++ }
         })
         if (!open) {
+            val (fill, edge, stripe) = when (style) {
+                GuardStyle.FLIP_RED -> Triple(Color(0xFFB3241B), Color(0xFF6E120C), Color(0xFF8E1A13))
+                GuardStyle.FLIP_CLEAR -> Triple(Color.White.copy(alpha = 0.10f), Race.Red, Color.White.copy(alpha = 0.18f))
+                GuardStyle.HAZARD -> Triple(Color(0xFFF2B400), Color(0xFF1A1A1A), Color(0xFF1A1A1A))
+                GuardStyle.HOUSE -> Triple(Race.Panel, Race.Red.copy(alpha = 0.8f), Race.Red)
+            }
+            val ink = when (style) { GuardStyle.HAZARD -> Color(0xFF111111); else -> Race.Ink }
             Box(
                 Modifier
                     .fillMaxSize()
                     .clip(CapShape())
-                    .background(Race.Panel)
-                    .border(2.dp, Race.Red.copy(alpha = 0.8f), CapShape())
+                    .background(fill)
+                    .border(2.dp, edge, CapShape())
                     .semantics { role = Role.Button; contentDescription = "$label: lift the cover"; onClick { open = true; true } }
                     .then(
                         if (!active) Modifier else Modifier.pointerInput(Unit) {
@@ -277,16 +333,30 @@ fun GuardCover(label: String, active: Boolean, modifier: Modifier, content: @Com
                     ),
                 contentAlignment = Alignment.Center,
             ) {
-                Canvas(Modifier.fillMaxSize().graphicsLayer { alpha = 0.35f }) {
-                    // Hazard stripes across the cover.
-                    val step = 18.dp.toPx()
-                    var x = -size.height
-                    while (x < size.width) {
-                        drawLine(Race.Red, Offset(x, size.height), Offset(x + size.height, 0f), 5.dp.toPx())
-                        x += step
+                Canvas(Modifier.fillMaxSize().graphicsLayer { alpha = if (style == GuardStyle.HAZARD) 0.9f else 0.35f }) {
+                    when (style) {
+                        GuardStyle.FLIP_RED -> {
+                            // Ribbed flip cover with its hinge along the top.
+                            val step = 9.dp.toPx()
+                            var y = 10.dp.toPx()
+                            while (y < size.height) { drawLine(stripe, Offset(8.dp.toPx(), y), Offset(size.width - 8.dp.toPx(), y), 2.dp.toPx()); y += step }
+                            drawRect(Color.Black.copy(alpha = 0.6f), Offset.Zero, androidx.compose.ui.geometry.Size(size.width, 5.dp.toPx()))
+                        }
+                        else -> {
+                            // Diagonal hazard stripes across the cover.
+                            val step = 18.dp.toPx()
+                            var x = -size.height
+                            while (x < size.width) {
+                                drawLine(stripe, Offset(x, size.height), Offset(x + size.height, 0f), (if (style == GuardStyle.HAZARD) 8 else 5).dp.toPx())
+                                x += step
+                            }
+                        }
                     }
                 }
-                Text("COVER\n${label.uppercase()}", style = RaceType.unit, color = Race.Ink, textAlign = TextAlign.Center, maxLines = 3)
+                Text(
+                    "COVER\n${label.uppercase()}", style = RaceType.unit, color = ink, textAlign = TextAlign.Center, maxLines = 3,
+                    modifier = Modifier.background(if (style == GuardStyle.HAZARD) Color(0xFFF2B400) else Color.Transparent).padding(horizontal = 4.dp),
+                )
             }
         }
     }
