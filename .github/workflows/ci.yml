@@ -1,0 +1,164 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Create a GitHub release with this tag (for example beta-1). Leave empty for a normal CI run."
+        required: false
+        default: ""
+      allow_test_key:
+        description: "Allow a v* release signed with a test key instead of the GameCtl release key."
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  android:
+    name: Android app
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Unit tests (core)
+        run: ./gradlew --no-daemon :core:test
+      - name: Release key
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+            echo "GAMECTL_KEYSTORE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+            echo "Release key present: the release APK is signed with it."
+          else
+            echo "No release key secret: the release APK is signed with the debug key."
+          fi
+      - name: Build APKs
+        env:
+          GAMECTL_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          GAMECTL_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: ./gradlew --no-daemon :app:assembleDebug :app:assembleRelease
+      - name: Collect APK
+        run: |
+          mkdir -p ../out
+          cp app/build/outputs/apk/release/app-release.apk ../out/GameCtl.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GameCtl-android
+          path: out/GameCtl.apk
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-test-reports
+          path: android/core/build/reports/tests/
+
+  windows:
+    name: Windows companion
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: windows
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Test
+        run: dotnet test GameController.Companion.sln -c Release
+      - name: Publish
+        shell: pwsh
+        run: |
+          if (Test-Path build.ps1) { ./build.ps1 -Output ../out/companion } else {
+            $proj = Get-ChildItem -Recurse -Filter Companion.App.csproj | Select-Object -First 1
+            if (-not $proj) { $proj = Get-ChildItem -Recurse -Filter Companion.Cli.csproj | Select-Object -First 1 }
+            dotnet publish $proj.FullName -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ../out/companion
+          }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GameCtl-companion-win-x64
+          path: out/companion/
+
+  beamng:
+    name: BeamNG mod
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install LuaJIT
+        run: sudo apt-get update && sudo apt-get install -y luajit lua-socket zip
+      - name: Test
+        working-directory: beamng-mod
+        run: luajit tests/run.lua
+      - name: Package
+        run: sh beamng-mod/build.sh out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GameCtl-beamng-mod
+          path: out/gamecontroller.zip
+
+  release:
+    name: Release package
+    needs: [android, windows, beamng]
+    if: inputs.release_tag != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Assemble package
+        env:
+          TAG: ${{ inputs.release_tag }}
+          ALLOW_TEST_KEY: ${{ inputs.allow_test_key }}
+        run: |
+          set -e
+          # A v* release must be signed with the GameCtl release key, never the debug key. The APK is
+          # signed with v2/v3 only (minSdk 28), so apksigner reads it; its certificate must match the pinned fingerprint.
+          if [ "${TAG#v}" != "$TAG" ]; then
+            RELEASE_SHA256=9011afbffa132eec2d27c862365bc51172ba09274bdc650efe693de035cb82d6
+            BT=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)
+            SIGNER=$("${BT}apksigner" verify --print-certs artifacts/GameCtl-android/GameCtl.apk)
+            echo "$SIGNER"
+            DIGEST=$(echo "$SIGNER" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | head -1)
+            if [ "$DIGEST" != "$RELEASE_SHA256" ]; then
+              if [ "$ALLOW_TEST_KEY" = "true" ]; then
+                echo "::warning::$TAG is signed with a test key ($DIGEST), allowed by allow_test_key"
+              else
+                echo "::error::$TAG is not signed with the GameCtl release key (got '$DIGEST')"; exit 1
+              fi
+            fi
+          fi
+          mkdir -p pkg
+          cp artifacts/GameCtl-android/GameCtl.apk pkg/
+          cp artifacts/GameCtl-beamng-mod/gamecontroller.zip pkg/
+          (cd artifacts/GameCtl-companion-win-x64 && zip -qr ../../pkg/GameCtl-companion-win-x64.zip .)
+          cp docs/INSTALL.md docs/SMOKE_TEST.md pkg/
+          (cd pkg && sha256sum * > SHA256SUMS.txt)
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.release_tag }}
+        run: |
+          set -e
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" pkg/* --clobber
+          else
+            if [ "${TAG#v}" != "$TAG" ]; then
+              NOTES_FILE=docs/RELEASE_NOTES.md; FLAG=--latest
+            else
+              echo "Beta package built from $GITHUB_SHA. Install with INSTALL.md, then run SMOKE_TEST.md." > notes.txt
+              NOTES_FILE=notes.txt; FLAG=--prerelease
+            fi
+            gh release create "$TAG" pkg/* --target "$GITHUB_SHA" $FLAG --title "GameCtl $TAG" --notes-file "$NOTES_FILE"
+          fi
