@@ -119,4 +119,17 @@ data class EditorState(
     val bindResult: BindResult? = null,
     /** Whether "Bind in game" can be sent right now (companion connected and the mod is up). */
     val canBindInGame: Boolean = false,
+    /** The editor clipboard, null when nothing was copied. */
+    val clip: Clip? = null,
 )
+
+/** What was copied in the editor: controls or a whole page, from any profile. Kept across profiles and restarts. */
+@kotlinx.serialization.Serializable
+data class Clip(
+    val controls: List<Control> = emptyList(),
+    val page: Page? = null,
+    /** Where it came from, e.g. "BeamNG.drive / Drive", for the Paste button. */
+    val from: String = "",
+) {
+    val label: String get() = page?.let { "page ${it.name}" } ?: if (controls.size == 1) controls[0].label else "${controls.size} controls"
+}

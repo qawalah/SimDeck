@@ -198,6 +198,11 @@ private fun AppRoot(vm: AppViewModel) {
                     onPreviewGameBindings = { vm.previewGameBindings(state.profile.id) },
                     onDiscard = vm::discardEditing,
                     onDone = vm::doneEditing,
+                    actions = com.simdeck.ui.screens.EditorActions(
+                        onCopy = vm::editorCopy, onDuplicate = vm::editorDuplicate, onCopyPage = vm::editorCopyPage,
+                        onPaste = vm::editorPaste, onPlace = { vm.editorPlace(it) }, onPastePage = vm::editorPastePage,
+                    ),
+                    profiles = vm.profiles.collectAsStateWithLifecycle().value,
                     onBindHelper = vm::setBindHelper,
                     autoSwitch = vm.autoSwitchEnabled,
                     onAutoSwitch = vm::setAutoSwitch,

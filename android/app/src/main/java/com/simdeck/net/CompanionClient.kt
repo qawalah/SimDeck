@@ -473,6 +473,11 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("autoSwitch", true)
         set(v) = prefs.edit().putBoolean("autoSwitch", v).apply()
 
+    /** The editor clipboard (a Clip as JSON), so a copy survives switching profiles and restarting the app. */
+    var clip: String?
+        get() = prefs.getString("clip", null)
+        set(v) = prefs.edit().putString("clip", v).apply()
+
     /** Panel lighting of themed pages: auto, day or night. */
     var lighting: String
         get() = prefs.getString("lighting", "AUTO") ?: "AUTO"

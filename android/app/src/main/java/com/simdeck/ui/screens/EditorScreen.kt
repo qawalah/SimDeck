@@ -47,6 +47,9 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ContentCopy
+import androidx.compose.material.icons.rounded.ContentPaste
+import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Link
@@ -111,6 +114,20 @@ import com.simdeck.ui.theme.Race
 import com.simdeck.ui.theme.RaceType
 import com.simdeck.ui.theme.SlantShape
 import kotlin.math.roundToInt
+
+/** Editor actions that reach deep into the panels (inspector, page settings, palette) without threading them through. */
+class EditorActions(
+    val onCopy: (String) -> Unit = {},
+    val onDuplicate: (String) -> Unit = {},
+    val onCopyPage: () -> Unit = {},
+    val onPaste: () -> Unit = {},
+    val onPlace: (Control) -> Unit = {},
+    val onPastePage: (Page) -> Unit = {},
+)
+
+val LocalEditorActions = androidx.compose.runtime.staticCompositionLocalOf { EditorActions() }
+
+fun ControlType.paletteIconPublic(): ImageVector? = paletteIcon()
 
 /** Name and icon for each control type, as the editor presents them. */
 fun ControlType.displayName(): String = when (this) {
@@ -196,7 +213,42 @@ fun EditorScreen(
     onBindHelper: (Boolean) -> Unit = {},
     autoSwitch: Boolean = true,
     onAutoSwitch: (Boolean) -> Unit = {},
+    actions: EditorActions = EditorActions(),
+    profiles: List<Profile> = emptyList(),
 ) {
+    androidx.compose.runtime.CompositionLocalProvider(LocalEditorActions provides actions) {
+        EditorScreenBody(state, beamngCommands, onSelect, onAddControl, onMove, onResize, onDelete, onUpdate, onAddPage, onRenamePage, onDeletePage,
+            onPageChange, onGridChange, onProfileChange, onApplyGameBindings, onDiscard, onDone, onPreviewGameBindings, onBindHelper, autoSwitch, onAutoSwitch, profiles)
+    }
+}
+
+@Composable
+private fun EditorScreenBody(
+    state: EditorState,
+    beamngCommands: List<String>,
+    onSelect: (String?) -> Unit,
+    onAddControl: (ControlType, Int, Int) -> Unit,
+    onMove: (String, Int, Int) -> Unit,
+    onResize: (String, Int, Int) -> Unit,
+    onDelete: (String) -> Unit,
+    onUpdate: (Control) -> Unit,
+    onAddPage: () -> Unit,
+    onRenamePage: (Int, String) -> Unit,
+    onDeletePage: (Int) -> Unit,
+    onPageChange: (Int) -> Unit,
+    onGridChange: (columns: Int, rows: Int) -> Unit,
+    onProfileChange: ((Profile) -> Profile) -> Unit,
+    onApplyGameBindings: () -> Unit,
+    onDiscard: () -> Unit,
+    onDone: () -> Unit,
+    onPreviewGameBindings: (() -> Pair<String, List<Pair<String, Int>>>)?,
+    onBindHelper: (Boolean) -> Unit,
+    autoSwitch: Boolean,
+    onAutoSwitch: (Boolean) -> Unit,
+    profiles: List<Profile>,
+) {
+    val actions = LocalEditorActions.current
+    var presetsOpen by remember { mutableStateOf(false) }
     val profile = state.profile
     val pageIndex = state.pageIndex.coerceIn(0, (profile.pages.size - 1).coerceAtLeast(0))
     val page = profile.pages.getOrNull(pageIndex) ?: Page("p1", "Main")
@@ -283,6 +335,9 @@ fun EditorScreen(
                     rail = !wide,
                     full = freeCell == null || page.auto != null,
                     onAdd = { type -> freeCell?.let { (x, y) -> onAddControl(type, x, y) } },
+                    onPresets = { presetsOpen = true },
+                    pasteLabel = state.clip?.label,
+                    onPaste = actions.onPaste,
                 )
                 Column(Modifier.weight(1f).fillMaxHeight()) {
                     if (page.auto != null) {
@@ -392,6 +447,16 @@ fun EditorScreen(
         }
     }
 
+    if (presetsOpen) {
+        PresetSheet(
+            profile = profile, profiles = profiles,
+            catalog = BeamNGCatalog(state.vehicleFeatures, state.beamngActions),
+            onPick = { c -> actions.onPlace(c); presetsOpen = false },
+            onPastePage = { pg -> actions.onPastePage(pg); presetsOpen = false },
+            onDismiss = { presetsOpen = false },
+        )
+    }
+
     if (confirmDiscard) {
         AlertDialog(
             onDismissRequest = { confirmDiscard = false },
@@ -444,10 +509,10 @@ private fun SidePanel(
  * stay in the accessibility label). [full] disables every item; the canvas says why.
  */
 @Composable
-private fun Palette(rail: Boolean, full: Boolean, onAdd: (ControlType) -> Unit) {
+private fun Palette(rail: Boolean, full: Boolean, onAdd: (ControlType) -> Unit, onPresets: () -> Unit, pasteLabel: String?, onPaste: () -> Unit) {
     val scroll = rememberScrollState()
     Box(Modifier.width(if (rail) 56.dp else 104.dp).fillMaxHeight()) {
-        PaletteItems(rail, full, onAdd, scroll)
+        PaletteItems(rail, full, onAdd, scroll, onPresets, pasteLabel, onPaste)
         // Scroll cue: a lit fade and a chevron at the bottom while more items are below.
         if (scroll.canScrollForward) {
             Box(
@@ -465,7 +530,10 @@ private fun Palette(rail: Boolean, full: Boolean, onAdd: (ControlType) -> Unit) 
 }
 
 @Composable
-private fun PaletteItems(rail: Boolean, full: Boolean, onAdd: (ControlType) -> Unit, scroll: androidx.compose.foundation.ScrollState) {
+private fun PaletteItems(
+    rail: Boolean, full: Boolean, onAdd: (ControlType) -> Unit, scroll: androidx.compose.foundation.ScrollState,
+    onPresets: () -> Unit, pasteLabel: String?, onPaste: () -> Unit,
+) {
     Column(
         Modifier
             .fillMaxSize()
@@ -474,6 +542,12 @@ private fun PaletteItems(rail: Boolean, full: Boolean, onAdd: (ControlType) -> U
         verticalArrangement = Arrangement.spacedBy(if (rail) 6.dp else 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        // Presets first: ready-made functions are the quick way to add something that works.
+        PaletteAction(rail, "Presets", Icons.Rounded.AutoAwesome, primary = true, enabled = true, description = "Add from presets: ready-made functions, game actions and your other profiles", onClick = onPresets)
+        if (pasteLabel != null) {
+            PaletteAction(rail, "Paste", Icons.Rounded.ContentPaste, primary = false, enabled = !full || pasteLabel.startsWith("page "),
+                description = "Paste $pasteLabel", onClick = onPaste, sub = pasteLabel)
+        }
         Text("ADD", style = RaceType.unit, color = Race.InkFaint, modifier = if (rail) Modifier else Modifier.align(Alignment.Start).padding(start = 4.dp))
         ControlType.entries.forEach { t ->
             Column(
@@ -499,6 +573,30 @@ private fun PaletteItems(rail: Boolean, full: Boolean, onAdd: (ControlType) -> U
                     Text(t.displayName().uppercase(), style = RaceType.unit, color = if (full) Race.InkFaint else Race.InkMuted, textAlign = TextAlign.Center, maxLines = 2)
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun PaletteAction(rail: Boolean, label: String, icon: ImageVector, primary: Boolean, enabled: Boolean, description: String, onClick: () -> Unit, sub: String? = null) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .clip(CapShape(cut = if (rail) 8.dp else 10.dp, radius = 4.dp))
+            .background(if (primary) Race.Electric else Race.CapHigh)
+            .clickable(enabled = enabled, onClick = onClick)
+            .semantics(mergeDescendants = true) { role = Role.Button; contentDescription = description }
+            .padding(vertical = if (rail) 12.dp else 10.dp, horizontal = 6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        val ink = if (primary) com.simdeck.ui.theme.OnAccent else if (enabled) Race.Ink else Race.InkFaint
+        Icon(icon, contentDescription = null, tint = ink, modifier = Modifier.size(24.dp))
+        if (!rail) {
+            Spacer(Modifier.height(6.dp))
+            Text(label.uppercase(), style = RaceType.unit, color = ink, textAlign = TextAlign.Center, maxLines = 1)
+            sub?.let { Text(it, style = RaceType.unit, color = if (primary) ink else Race.InkMuted, textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis) }
         }
     }
 }
@@ -653,7 +751,7 @@ private fun PageAndProfile(
     autoSwitch: Boolean = true,
     onAutoSwitch: (Boolean) -> Unit = {},
 ) {
-    Hint("Tap a control to edit it, or add one from the left.", Modifier.padding(top = 12.dp))
+    Hint("Tap a control to edit it. To add one, tap Presets on the left for ready-made functions, or pick a blank type below it.", Modifier.padding(top = 12.dp))
     SectionHeader("This page")
     Field(page.name, { onRenamePage(pageIndex, it) }, "Page name")
     Stepper("Columns", page.columns, 4..12, { onGridChange(it, page.rows) })
@@ -666,9 +764,13 @@ private fun PageAndProfile(
             hint = "Fills itself with the functions of the vehicle you drive: tailgate, doors, bed, crane, outriggers. No binding needed.",
         )
     }
-    if (profile.pages.size > 1) {
-        Gap(8)
-        SlantButton("Delete page", { onDeletePage(pageIndex) }, style = SlantStyle.OUTLINE, accent = Race.Red)
+    Gap(8)
+    Row {
+        SlantButton("Copy page", LocalEditorActions.current.onCopyPage, icon = Icons.Rounded.ContentCopy, style = SlantStyle.QUIET)
+        if (profile.pages.size > 1) {
+            Spacer(Modifier.width(8.dp))
+            SlantButton("Delete page", { onDeletePage(pageIndex) }, style = SlantStyle.OUTLINE, accent = Race.Red)
+        }
     }
 
     SectionHeader("Profile")

@@ -17,6 +17,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.ContentCopy
+import androidx.compose.material.icons.rounded.LibraryAdd
 import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material3.Icon
@@ -92,6 +94,9 @@ fun Inspector(
             Spacer(Modifier.width(10.dp))
             StateTag(c.type.displayName(), quiet = true)
         }
+        val actions = LocalEditorActions.current
+        IconButton(onClick = { actions.onCopy(c.id) }) { Icon(Icons.Rounded.ContentCopy, contentDescription = "Copy ${c.label}", tint = Race.InkMuted) }
+        IconButton(onClick = { actions.onDuplicate(c.id) }) { Icon(Icons.Rounded.LibraryAdd, contentDescription = "Duplicate ${c.label}", tint = Race.InkMuted) }
         IconButton(onClick = { onDelete(c.id) }) { Icon(Icons.Rounded.Delete, contentDescription = "Delete ${c.label}", tint = Race.Red) }
         IconButton(onClick = onClose) { Icon(Icons.Rounded.Close, contentDescription = "Close inspector", tint = Race.InkMuted) }
     }

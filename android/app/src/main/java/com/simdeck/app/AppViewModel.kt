@@ -569,7 +569,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         _editor.value = EditorState(
             profile = p, pageIndex = page.coerceIn(0, p.pages.lastIndex),
             stateKeys = knownStateKeys.value.sorted(), beamngCommands = _beamngCommands.value,
-            beamngActions = gameActions.value, vehicleFeatures = vehicle.value.list, bindHelper = bindHelper.value,
+            beamngActions = gameActions.value, vehicleFeatures = vehicle.value.list, bindHelper = bindHelper.value, clip = clip,
             canBindInGame = companion.isConnected && companion.state.value.capabilities.beamng,
         )
         _screen.value = Screen.Editor(id)
@@ -593,6 +593,67 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         s.copy(profile = LayoutOps.delete(s.profile, s.pageIndex, id), selectedControlId = s.selectedControlId.takeIf { it != id })
     }
     fun editorUpdate(c: Control) = editProfile { s -> s.copy(profile = LayoutOps.updateControl(s.profile, s.pageIndex, c)) }
+    // ---- presets, copy and paste (1.3) ----
+
+    private var clip: com.simdeck.model.Clip? = runCatching {
+        settings.clip?.let { Protocol.json.decodeFromString(com.simdeck.model.Clip.serializer(), it) }
+    }.getOrNull()
+
+    private fun setClip(c: com.simdeck.model.Clip?) {
+        clip = c
+        settings.clip = c?.let { Protocol.json.encodeToString(com.simdeck.model.Clip.serializer(), it) }
+        _editor.update { it?.copy(clip = c) }
+    }
+
+    /** Puts a copy of [template] (a preset, a game action, a control from any profile) on the current page. */
+    fun editorPlace(template: Control): Boolean {
+        val s = _editor.value ?: return false
+        val placed = com.simdeck.profiles.Presets.place(s.profile, s.pageIndex, template)
+        if (placed == null) {
+            notify(if (s.profile.pages[s.pageIndex].auto != null) "This page fills itself. Add to another page." else "No room for ${template.label} on this page. Add rows or a page.")
+            return false
+        }
+        editProfile { it.copy(profile = placed.first, selectedControlId = placed.second) }
+        return true
+    }
+
+    fun editorCopy(id: String) {
+        val s = _editor.value ?: return
+        val pg = s.profile.pages[s.pageIndex]
+        val c = pg.controls.firstOrNull { it.id == id } ?: return
+        setClip(com.simdeck.model.Clip(controls = listOf(c), from = "${s.profile.name} / ${pg.name}"))
+        notify("Copied ${c.label}. Paste it on any page of any profile.")
+    }
+
+    fun editorDuplicate(id: String) {
+        val s = _editor.value ?: return
+        val c = s.profile.pages[s.pageIndex].controls.firstOrNull { it.id == id } ?: return
+        editorPlace(c)
+    }
+
+    fun editorCopyPage() {
+        val s = _editor.value ?: return
+        val pg = s.profile.pages[s.pageIndex]
+        setClip(com.simdeck.model.Clip(page = pg, from = s.profile.name))
+        notify("Copied page ${pg.name}. Paste it into any profile.")
+    }
+
+    fun editorPaste() {
+        val c = clip ?: return
+        val page = c.page
+        if (page != null) { editorPastePage(page); return }
+        var placed = 0
+        for (control in c.controls) if (editorPlace(control)) placed++
+        if (placed > 0 && c.controls.size > 1) notify("Pasted $placed of ${c.controls.size}")
+    }
+
+    fun editorPastePage(page: com.simdeck.model.Page) = editProfile { s ->
+        val p = com.simdeck.profiles.Presets.pastePage(s.profile, page)
+        s.copy(profile = p, pageIndex = p.pages.lastIndex, selectedControlId = null)
+    }
+
+    fun editorClearClip() = setClip(null)
+
     fun editorAddPage() = editProfile { s -> val p = LayoutOps.addPage(s.profile); s.copy(profile = p, pageIndex = p.pages.lastIndex, selectedControlId = null) }
     fun editorRenamePage(i: Int, name: String) = editProfile { s -> s.copy(profile = LayoutOps.renamePage(s.profile, i, name)) }
     fun editorDeletePage(i: Int) = editProfile { s ->
