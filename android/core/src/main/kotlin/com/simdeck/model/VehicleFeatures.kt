@@ -34,11 +34,46 @@ data class GameAction(val name: String, val title: String, val category: String 
 object VehicleFeaturePages {
     const val ID_PREFIX = "auto-"
 
+    /** The Vehicle page's groups (SimDeck 1.5), in the order its rail lists them. */
+    val GROUPS = listOf("Doors & body", "Lights & sound", "Machinery", "Couplers & towing", "Suspension & drivetrain", "Other")
+
+    private fun has(n: String, vararg words: String) = words.any { it in n }
+
+    /** Which group a function belongs to, from its source and the words in its name. */
+    fun groupFor(f: VehicleFeature): String {
+        val n = (f.id + " " + f.title).lowercase()
+        return when {
+            f.source == "coupler" || has(n, "coupler", "hitch", "fifth", "trailer", "tow", "kingpin", "latch") -> "Couplers & towing"
+            has(n, "light", "lamp", "beacon", "siren", "horn", "strobe", "flasher", "signal", "lightbar") -> "Lights & sound"
+            has(n, "axle", "suspension", "height", "kneel", "diff", "4wd", "awd", "4x4", "transfer", "range") -> "Suspension & drivetrain"
+            f.source == "hydro" || has(n, "hydro", "crane", "boom", "bucket", "blade", "outrigger", "stabil", "winch", "hook", "dump",
+                "tipper", "bed", "lift", "fork", "arm", "swing", "slew", "rotat", "pto", "pump", "plow", "plough", "spread", "ladder",
+                "mixer", "drum", "jack", "leg", "feet", "ramp", "tilt") -> "Machinery"
+            has(n, "door", "tailgate", "hood", "bonnet", "trunk", "boot", "hatch", "window", "mirror", "roof", "sunroof", "spoiler",
+                "wing", "canopy", "cover", "seat", "wiper", "flap") -> "Doors & body"
+            has(n, "air", "gear", "steer", "brake", "lock") -> "Suspension & drivetrain"
+            else -> "Other"
+        }
+    }
+
+    /** What pressing it does, in a few words, under the button. */
+    fun kindLabel(f: VehicleFeature): String = when {
+        f.kind == "axis" -> if (f.source == "hydro") "Hydraulic lever" else "Lever, springs back"
+        f.source == "coupler" -> "Latch: open / close"
+        f.kind == "hold" -> "Hold"
+        f.kind == "toggle" -> "Toggle"
+        else -> "Press"
+    }
+
+    /** The favourites key of a function on a vehicle: the same function on another model is a different favourite. */
+    fun favouriteKey(vehicle: String, featureId: String) = "$vehicle|$featureId"
+
     /** A short icon guess from the feature's name, so the page reads at a glance. */
     fun iconFor(f: VehicleFeature): String {
         val n = (f.id + " " + f.title).lowercase()
         return when {
             "tailgate" in n -> "tailgate"
+            "siren" in n || "horn" in n -> "horn"
             "door" in n || "hood" in n || "trunk" in n || "hatch" in n -> "door"
             "ramp" in n || "tilt" in n -> "ramp"
             "jack" in n || "feet" in n || "leg" in n -> "jack"
@@ -64,7 +99,7 @@ object VehicleFeaturePages {
      * Lays the features out on [page]'s grid: buttons one cell each, axes two cells wide. The grid grows up to
      * the editor's limits when there are many; anything that still doesn't fit is left out.
      */
-    fun controls(page: Page, features: List<VehicleFeature>): Pair<Page, Int> {
+    fun controls(page: Page, features: List<VehicleFeature>, keepAll: Boolean = false): Pair<Page, Int> {
         if (features.isEmpty()) return page.copy(controls = emptyList()) to 0
         val cells = features.fold(0) { acc, f -> acc + if (f.kind == "axis") 2 else 1 }
         var cols = page.columns
@@ -79,9 +114,10 @@ object VehicleFeaturePages {
             val w = if (f.kind == "axis") 2 else 1
             val spot = (0 until rows).asSequence().flatMap { y -> (0..cols - w).asSequence().map { x -> x to y } }
                 .firstOrNull { (x, y) -> (x until x + w).all { !taken[y][it] } }
-            if (spot == null) { dropped++; continue }
-            val (x, y) = spot
-            for (i in x until x + w) taken[y][i] = true
+            if (spot == null && !keepAll) { dropped++; continue }
+            // keepAll: the Vehicle page lists every function (1.5), so one that doesn't fit the grid still gets a control.
+            val (x, y) = spot ?: (0 to 0)
+            if (spot != null) for (i in x until x + w) taken[y][i] = true
             val action = Action.BeamNG(f.id)
             val c = if (f.kind == "axis") Control(
                 id = ID_PREFIX + f.id, type = ControlType.SLIDER, label = f.title, icon = iconFor(f), x = x, y = y, w = w, h = 1,
@@ -100,7 +136,7 @@ object VehicleFeaturePages {
     fun fill(p: Profile, features: VehicleFeatures): Profile {
         if (p.pages.none { it.auto == Page.AUTO_BEAMNG_VEHICLE }) return p
         return p.copy(pages = p.pages.map { pg ->
-            if (pg.auto == Page.AUTO_BEAMNG_VEHICLE) controls(pg, features.list).first else pg
+            if (pg.auto == Page.AUTO_BEAMNG_VEHICLE) controls(pg, features.list, keepAll = true).first else pg
         })
     }
 

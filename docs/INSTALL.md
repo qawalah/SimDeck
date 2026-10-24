@@ -86,7 +86,9 @@ panel comes first: use the companion.
 3. On the phone open the **BeamNG.drive** profile: every vehicle function, lamps light from the real game state,
    and controls the current vehicle doesn't have (fog lights, diff locks, low range...) are dimmed.
    The **Vehicle** page fills itself with what the car you drive has beyond the basics: tailgate, doors, dump bed, crane,
-   outriggers, lift axle, ramps and so on, as buttons and spring-centred sliders. Nothing to bind. Machines (loaders,
+   outriggers, lift axle, ramps and so on, as buttons and spring-centred sliders, grouped (Doors & body, Lights & sound,
+   Machinery, Couplers & towing…) with a search box. Tap the star on a function to pin it to **Favourites**, which the page
+   opens on (kept per vehicle model). Nothing to bind. Machines (loaders,
    excavators, cranes) work here too, without the vJoy setup the Utility profile needs. If the page stays empty it says why;
    for a vehicle that should have something, open the BeamNG console (` key), type `simdeckLink.report()` and send the lines.
    The **Gauges** page shows live readings: oil and coolant temperature, boost, engine load, fuel, G-forces, the brake

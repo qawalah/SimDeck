@@ -505,6 +505,11 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("bindHelper", false)
         set(v) = prefs.edit().putBoolean("bindHelper", v).apply()
 
+    /** Pinned functions of the Vehicle page, as "vehicle|feature id" (1.5). */
+    var vehicleFavourites: Set<String>
+        get() = prefs.getStringSet("vehicleFavourites", emptySet())?.toSet() ?: emptySet()
+        set(v) = prefs.edit().putStringSet("vehicleFavourites", v.toSet()).apply()
+
     /** Tuning page: apply a change by itself 1.5 s after the last edit (1.4). */
     var tuningAutoApply: Boolean
         get() = prefs.getBoolean("tuningAutoApply", false)

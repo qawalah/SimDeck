@@ -128,6 +128,8 @@ fun PlayScreen(
     onLighting: (Lighting) -> Unit = {},
     tuning: com.simdeck.model.TuningState = com.simdeck.model.TuningState(),
     tuningActions: TuningActions = TuningActions(),
+    favourites: Set<String> = emptySet(),
+    onFavourite: (String) -> Unit = {},
 ) {
     val pages = state.profile.pages
     val pageIndex = state.pageIndex.coerceIn(0, (pages.size - 1).coerceAtLeast(0))
@@ -156,6 +158,9 @@ fun PlayScreen(
                 TuningPanel(tuning, state.connection.status == com.simdeck.model.ConnectionStatus.CONNECTED, tuningActions)
             } else if (page != null && page.auto != null && page.controls.isEmpty()) {
                 AutoPageEmpty(state, onEdit)
+            } else if (page != null && page.auto == com.simdeck.model.Page.AUTO_BEAMNG_VEHICLE) {
+                VehiclePanel(state.vehicle, page.controls, favourites, onFavourite, state.values, state.indicators, state.unavailable,
+                    onControlValue, onRotaryStep)
             } else if (page == null || page.controls.isEmpty()) {
                 EmptyPage(onEdit)
             } else {

@@ -178,6 +178,8 @@ private fun AppRoot(vm: AppViewModel) {
                     lighting = vm.lighting.collectAsStateWithLifecycle().value,
                     onLighting = vm::setLighting,
                     tuning = vm.tuning.collectAsStateWithLifecycle().value,
+                    favourites = vm.favourites.collectAsStateWithLifecycle().value,
+                    onFavourite = vm::toggleFavourite,
                     tuningActions = androidx.compose.runtime.remember {
                         com.simdeck.ui.screens.TuningActions(
                             onSet = vm::tuningSet, onDefault = vm::tuningDefault, onAllDefaults = vm::tuningAllDefaults,

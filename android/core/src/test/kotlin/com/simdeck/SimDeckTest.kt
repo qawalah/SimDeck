@@ -109,6 +109,28 @@ class SimDeckTest {
         assertTrue(page.columns * page.rows >= 40)
     }
 
+    @Test fun vehicleFunctionsAreGroupedAndNoneIsDropped() {
+        fun f(id: String, title: String, kind: String = "button", source: String = "input_actions") = VehicleFeature(id, title, kind, kind == "axis", source)
+        assertEquals("Doors & body", VehicleFeaturePages.groupFor(f("action.toggle_tailgate", "Tailgate")))
+        assertEquals("Doors & body", VehicleFeaturePages.groupFor(f("action.door_RL", "Rear left door", source = "interaction")))
+        assertEquals("Couplers & towing", VehicleFeaturePages.groupFor(f("coupler.tailgateCoupler.toggle", "Tailgate latch", source = "coupler")))
+        assertEquals("Machinery", VehicleFeaturePages.groupFor(f("hydro.dump_bed", "Dump bed", "axis", "hydro")))
+        assertEquals("Machinery", VehicleFeaturePages.groupFor(f("action.crane_boom", "Crane boom", "axis")))
+        assertEquals("Lights & sound", VehicleFeaturePages.groupFor(f("action.toggle_beacon", "Beacon")))
+        assertEquals("Suspension & drivetrain", VehicleFeaturePages.groupFor(f("action.lift_axle_toggle", "Lift axle")))
+        assertEquals("Suspension & drivetrain", VehicleFeaturePages.groupFor(f("action.ride_height_up", "Ride height up")))
+        assertEquals("Other", VehicleFeaturePages.groupFor(f("action.radio_toggle", "Radio")))
+        assertEquals("Hydraulic lever", VehicleFeaturePages.kindLabel(f("hydro.x", "X", "axis", "hydro")))
+        assertTrue(VehicleFeaturePages.kindLabel(f("coupler.x.toggle", "X", source = "coupler")).startsWith("Latch"))
+        assertEquals("Press", VehicleFeaturePages.kindLabel(f("action.door", "Door", source = "interaction")))
+        // the Vehicle page keeps every function, however many
+        val many = (1..150).map { f("action.a$it", "A$it") }
+        val p = BuiltInProfiles.beamng()
+        val filled = VehicleFeaturePages.fill(p, VehicleFeatures("truck", many))
+        assertEquals(150, filled.pages.first { it.auto == Page.AUTO_BEAMNG_VEHICLE }.controls.size)
+        assertEquals("pickup|action.toggle_tailgate", VehicleFeaturePages.favouriteKey("pickup", "action.toggle_tailgate"))
+    }
+
     @Test fun newMessagesParse() {
         val f = Protocol.parse("""{"v":1,"type":"beamng.features","vehicle":"pickup","list":[{"id":"hydro.bed","title":"Bed","kind":"axis","centered":true,"source":"hydro","stateKey":"hydro.bed"}],"diag":{"vehicle":"pickup","sources":{"input_actions":2},"errors":[]}}""")
         assertIs<Incoming.BeamNGFeatures>(f)

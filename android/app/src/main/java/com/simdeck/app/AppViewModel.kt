@@ -153,6 +153,16 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     val tuning: StateFlow<TuningState> = _tuning.asStateFlow()
     private var autoApplyJob: Job? = null
 
+    private val _favourites = MutableStateFlow(settings.vehicleFavourites)
+    /** Pinned Vehicle page functions, per vehicle model (1.5). */
+    val favourites: StateFlow<Set<String>> = _favourites.asStateFlow()
+
+    fun toggleFavourite(featureId: String) {
+        val key = VehicleFeaturePages.favouriteKey(vehicle.value.vehicle, featureId)
+        _favourites.update { if (key in it) it - key else it + key }
+        settings.vehicleFavourites = _favourites.value
+    }
+
     init {
         companion.listener = object : CompanionClient.Listener {
             override fun onWelcome() {

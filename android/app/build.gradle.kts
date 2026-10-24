@@ -13,8 +13,8 @@ android {
         applicationId = "com.simdeck.app"
         minSdk = 28 // BluetoothHidDevice needs Android 9
         targetSdk = 35
-        versionCode = 13
-        versionName = "1.4.0"
+        versionCode = 14
+        versionName = "1.5.0"
     }
 
     // Release signing comes from the environment (CI secrets), never from the repository:

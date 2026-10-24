@@ -1,3 +1,17 @@
+# SimDeck 1.5.0 (phone app)
+
+- **The BeamNG Vehicle page is now a list you can find your way in.** Instead of filling the whole screen with a few
+  huge buttons (or squeezing dozens into tiny ones), every function of the vehicle you drive is a same-size button with a
+  line under it saying what it does (Press, Hold, Latch: open / close, Hydraulic lever…).
+  - **Groups** on the left: Doors & body, Lights & sound, Machinery, Couplers & towing, Suspension & drivetrain, Other,
+    each with its count, plus All.
+  - **Search** finds a function by name or kind ("door", "bed", "crane", "lever").
+  - **Favourites**: tap the star on any function to pin it. Favourites have their own group, come first everywhere, and
+    the page opens on them. They are kept per vehicle model, so a pinned tailgate on the pickup doesn't show on the semi.
+  - Every function the mod finds is shown; before, a vehicle with very many could lose some that didn't fit the grid.
+- The editor's preview of a Vehicle page shows the same list.
+- Companion stays 1.4.1 and the mod 1.4.0.
+
 # SimDeck 1.4.1 (PC companion)
 
 - **The companion installs and updates the BeamNG mod itself.** It carries the mod inside, finds BeamNG's user folder

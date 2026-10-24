@@ -379,10 +379,9 @@ private fun EditorScreenBody(
                             if (page.auto == Page.AUTO_BEAMNG_TUNING) {
                                 TuningPanel(com.simdeck.model.TuningState(), connected = false, actions = TuningActions())
                             } else if (page.auto != null) {
-                                val preview = remember(page, state.vehicleFeatures) { com.simdeck.model.VehicleFeaturePages.controls(page, state.vehicleFeatures).first }
-                                ControlGrid(preview) { c, m ->
-                                    com.simdeck.ui.components.ControlView(c, 0f, null, true, {}, {}, m, interactive = false)
-                                }
+                                val preview = remember(page, state.vehicleFeatures) { com.simdeck.model.VehicleFeaturePages.controls(page, state.vehicleFeatures, keepAll = true).first }
+                                VehiclePanel(com.simdeck.model.VehicleFeatures("preview", state.vehicleFeatures), preview.controls, emptySet(), {},
+                                    emptyMap(), emptyMap(), emptySet(), { _, _ -> }, { _, _ -> }, interactive = false)
                             } else {
                                 if (page.panels.isNotEmpty()) ControlGrid(page.copy(controls = emptyList()), panels = page.panels) { _, _ -> }
                                 EditCanvas(page, state.selectedControlId, { onSelect(it); if (it != null) showSettings = false }, onMove, onResize)
