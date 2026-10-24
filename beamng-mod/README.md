@@ -16,7 +16,7 @@ This optional add-on lets the SimDeck phone app work hand in hand with BeamNG.dr
    ```
 2. Copy `simdeck.zip` into your BeamNG user folder's `mods` folder. That is usually
    `%LOCALAPPDATA%\BeamNG.drive\<version>\mods` (older versions use `Documents\BeamNG.drive\mods`). In game you can open it from **Options > Other > Open user folder**.
-3. Start BeamNG.drive and make sure **SimDeck for BeamNG** is enabled in **Mods** (it shows version 1.3.0 and author ALI). Remove older copies (`gamecontroller.zip`, `simdeck_bridge.zip`) first.
+3. Start BeamNG.drive and make sure **SimDeck for BeamNG** is enabled in **Mods** (it shows version 1.4.0 and author ALI). Remove older copies (`gamecontroller.zip`, `simdeck_bridge.zip`) first.
 4. Start the SimDeck companion on the same PC. The mod connects by itself within a few seconds and shows "Connected to the SimDeck companion". It keeps retrying every 3 seconds while the companion is closed, so the start order doesn't matter.
 
 To remove it, delete the zip or disable it in **Mods**. If you applied bindings from the app, they live in `settings/inputmaps/<vidpid>_simdeck.json` in the user folder; delete that file to remove them, or change them as usual in **Options > Controls**.
@@ -59,6 +59,24 @@ Each found function goes to the phone as a feature with a title (translated wher
 
 **If a function is missing**, open the console and run `simdeckLink.report()`: it prints the diagnostics (which files were read, what the vehicle Lua scan found, any errors) and every feature with its command id. Those lines are what to send in a bug report.
 
+### Readings (gauges, SimDeck 1.4)
+
+Beyond the lamp keys, the mod reports live readings: oil and coolant temperature, boost, engine load and throttle, fuel left
+in litres and tank size, battery charge (electric cars), gear number, clutch, every pedal and the steering angle, speed over
+ground, altitude, G-forces, odometer and trip, the warning lamps (check engine, oil, low fuel, tyre deflated), and per wheel
+the brake surface and core temperature and whether the tyre is deflated. On request it also passes on any raw electrics
+value as `e.<name>`. With every vehicle scan it sends the list of readings the car actually has (`readings`), and it only
+sends the values the phones watch (`readings.watch`), so a profile without gauges adds no traffic.
+
+### Tuning (the Tuning page, SimDeck 1.4)
+
+Vehicle Lua reads the car's tuning variables (`v.data.variables`, the same ones the game's Tuning menu shows: category,
+sub-category, title, unit, range, display range and step) and sends them with every scan; the values the car runs with
+come from its config (`core_vehicle_manager.getVehicleData(id).config.vars`). `tuning.apply` clamps each value to its range,
+drops names the car doesn't have, merges them into the config and respawns the car in place with it, the way the Tuning
+menu's Apply does: the vehicle reloads (and is repaired) where it stands. The console shows
+`tuning applied: <n> settings, {<values>}`.
+
 ### Notes on specific features
 
 - **ESC and traction control** are one system in BeamNG with several modes per car (for example Regular, Sport, Off). `esc.active` and `tcs.active` are true when the current mode has ESC on, and `esc.mode` gives the mode's name. `esc.toggle` and `tcs.toggle` run the game's own `toggleESCMode` action (so newer drive-mode systems work too). The `esc` and `tcs` setters step through the modes until ESC is on or off. When the car has no readable ESC controller, `has.esc` is left out instead of being sent as false.
@@ -73,6 +91,9 @@ Each found function goes to the phone as a feature with a title (translated wher
 - **A held game action can release in the next car.** If you hold a phone button that runs a game-engine action (an `action.<name>` binding such as Look back) and switch car with Ctrl+E while holding it, the release runs in the car you switched to, because that action always addresses the current player car. Horn, Start and Recover are not affected: they release in the car they were pressed in.
 - **Trailers and props.** When you are in a vehicle with no engine or controllers (a trailer, a prop), the mod reports lamps and speed only. It leaves availability out rather than guessing, so the phone keeps its controls visible, and pressing them does nothing.
 - **Winch.** Stock BeamNG has no winch, so `winch.active` is never reported.
+- **Tuning reloads the vehicle.** As in the game's own menu, applying tuning respawns the car where it is: damage is
+  repaired and the car briefly loses speed. Auto apply on the phone waits 1.5 s after the last change.
+- **Brake temperatures** need the game's brake thermals (on by default); a car without them reports no `brake.*` readings.
 - **One companion per PC.** The mod connects to the companion on this PC only (`127.0.0.1:47803`).
 
 ## Tests

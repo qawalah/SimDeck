@@ -78,13 +78,20 @@ panel comes first: use the companion.
 1. Copy `simdeck.zip` (still zipped) into `%LOCALAPPDATA%\BeamNG.drive\<version>\mods\`. In BeamNG,
    **Options > Other > Open user folder** opens that folder; the zip goes in its `mods` folder.
    Remove any older copy first (`gamecontroller.zip`, `simdeck_bridge.zip`): two copies fight over the same port.
-2. Start BeamNG with the companion running. In the companion window the node **BeamNG mod** shows "Mod 1.3.0 connected".
+2. Start BeamNG with the companion running. In the companion window the node **BeamNG mod** shows "Mod 1.4.0 connected".
 3. On the phone open the **BeamNG.drive** profile: every vehicle function, lamps light from the real game state,
    and controls the current vehicle doesn't have (fog lights, diff locks, low range...) are dimmed.
    The **Vehicle** page fills itself with what the car you drive has beyond the basics: tailgate, doors, dump bed, crane,
    outriggers, lift axle, ramps and so on, as buttons and spring-centred sliders. Nothing to bind. Machines (loaders,
    excavators, cranes) work here too, without the vJoy setup the Utility profile needs. If the page stays empty it says why;
    for a vehicle that should have something, open the BeamNG console (` key), type `simdeckLink.report()` and send the lines.
+   The **Gauges** page shows live readings: oil and coolant temperature, boost, engine load, fuel, G-forces, the brake
+   temperature of each wheel, the odometer and warning lamps. To show another reading anywhere, add a gauge (or **Presets >
+   Gauges**) and tap the list button next to **Game value**: readings are grouped (Engine, Fuel & energy, Brakes, Tyres,
+   Motion…), searchable and show their live value; **All signals** lists every raw value the car reports.
+   The **Tuning** page works like the game's Tuning menu: categories on the left, every setting of the car you drive with its
+   slider, - / + steps and unit. Tap a value to type it exactly. Changes collect until **Apply**; switch on **Auto** to apply
+   1.5 s after the last change. Applying reloads the car where it stands (and repairs it), exactly like the game's Apply.
 4. Prefer Bluetooth? Use **BeamNG.drive (Bluetooth pad)**. Bind it once: with the companion connected, BeamNG running with the
    mod, and the pad known to the companion (phone paired over Bluetooth, or vJoy installed), open the profile, tap **Edit**,
    then on a phone the **gear icon** in the top bar (on a tablet the right-hand panel), scroll to **BEAMNG** and tap
@@ -126,6 +133,9 @@ panel comes first: use the companion.
   keys, gauges and lamps, BeamNG actions of the vehicle you drive, or any control of another profile) and it lands on the
   page already set up. For a blank control pick a type below it, then set what it does in the inspector: keys, gamepad
   buttons/axes, macros, BeamNG commands or Xbox buttons. Drag to move, drag the corner to resize.
+- **Picking a command or a reading:** the BeamNG command field and every game-value field have a list button. The list is
+  grouped (This vehicle, Lights & signals, Drivetrain, Game actions… for commands; Engine, Brakes, Motion… for readings)
+  and searchable by name, id or a related word ("blinker" finds the signals, "water" the coolant).
 - **Copy and paste:** **Copy** or **Duplicate** in the inspector, **Copy page** under the page settings; **Paste** then
   appears in the left column on any page of any profile. Profiles export and import as `.simdeck.json` files.
 - **Edit on the PC:** with the phone connected over Wi-Fi, open **Layouts** in the companion, pick the phone and a profile,
@@ -143,7 +153,7 @@ panel comes first: use the companion.
   the phone tap **MAKE DISCOVERABLE** and add it again.
 - **The PC's sound moved to the phone after pairing.** See section 2a, step 2.
 - **No lamps in BeamNG.** Check that **SimDeck for BeamNG** is enabled in BeamNG's mod manager and that the companion window shows
-  "Mod 1.3.0 connected".
+  "Mod 1.4.0 connected".
 - **A machine or utility profile does nothing in the game.** Look for the amber warning strip on the phone: it names the vJoy
   buttons or axes to enable in *Configure vJoy*. Then rebind in the game with **Bind helper** on.
 - **Reporting a problem.** The companion's settings and log are in `%APPDATA%\SimDeck\` (`companion.json`,

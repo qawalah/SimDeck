@@ -1,3 +1,46 @@
+# SimDeck 1.4.0
+
+The phone now reads the car, not just its lamps, can tune it like the game's Tuning menu, and finding a command or a
+reading is a grouped, searchable list instead of a text field.
+
+## Live readings (BeamNG)
+- The mod reports oil temperature, coolant temperature, boost, engine load and throttle, fuel left in litres and tank size,
+  battery charge (electric cars), gear number, clutch, all pedals and the steering angle, speed over ground, altitude,
+  G-forces, odometer and trip, the warning lamps (check engine, oil, low fuel, tyre deflated), and for each wheel the brake
+  temperature (surface and core) and a deflated tyre. On top of that, any raw electrics signal the car has.
+- Only the readings a phone shows are sent, so profiles without gauges cost nothing.
+- New **Gauges** page in the BeamNG.drive profile: oil, coolant and boost dials, engine load and fuel bars, fuel litres,
+  lateral and longitudinal G, the four brake temperatures, odometer, check-engine and oil lamps.
+- **Presets > Gauges**: every reading as a ready-made gauge or lamp with its unit, scale, dial range and coloured bands.
+
+## Tuning page (BeamNG)
+- A new **Tuning** page shows the tuning settings of the car you drive, as the game's Tuning menu does: categories (Brakes,
+  Suspension, Wheels, Transmission…) with sub-groups (Front, Rear), each setting with a slider, - / + steps, its value
+  in the game's units and display range, and a button back to the default. Tap a value to type it exactly. Search finds a
+  setting by name.
+- Changes collect (the Apply button counts them) until **Apply**; **Revert** drops them, **Defaults** sets everything back.
+  With **Auto** on, a change applies 1.5 s after you stop moving the slider.
+- Applying reloads the car where it stands (and repairs it), like the game's own Apply; the page then shows the values the
+  car runs with. Add a Tuning page to any BeamNG profile in the editor (page settings > Tuning page).
+- Profiles with a Tuning page are saved as schema 6; 1.3 can't open them (it says so).
+
+## Grouped, searchable pickers
+- **Commands**: the BeamNG command field has a list button: the vehicle's own functions first, then the mod's commands
+  grouped (Engine, Lights & signals, Assists & brakes, Cruise control, Drivetrain, Gears, Camera, Recovery & game), then
+  every game action grouped by the game's category. Each line says how it behaves (flips on each press, on while the
+  switch is on, active while held). Sliders and joysticks only see what takes a value (hydraulics, analog actions).
+- **Readings**: every game-value field (gauge value, lamp key, selector position, "only available when") has the same kind
+  of list, grouped (Driving, Engine, Fuel & energy, Drivetrain, Driver inputs, Motion, Brakes, Tyres, Warnings, Lights &
+  signals, Systems & locks, Game, All signals) with the live value beside each reading. Picking a reading for a gauge also
+  sets its unit, scale, decimals and dial range.
+- Search matches every word in names, ids, groups and related words: "rear diff", "blinker", "water", "brake FL".
+
+## Not tested on real hardware
+Built and checked with the automated tests (phone core 60, companion 146, mod 234) and rendered screenshots of the new
+pages. Not yet run in BeamNG: the readings and tuning use the game's documented electrics names and the same config
+respawn the BeamMP mod uses, but please check them in game (see beamng-mod/EXPECTED.md for the console lines). The earlier
+caveats still apply.
+
 # SimDeck 1.3.0
 
 Adding a control no longer means building it from scratch, controls and whole pages copy between profiles, and the phone's

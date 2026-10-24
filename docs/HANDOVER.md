@@ -23,12 +23,22 @@ The app has two routes, and it can use both at once:
 
 ### Android module layout
 
-- `:core` is plain JVM with no Android dependency: the model (`Profile`, `Page`, `Control`, `Action`), `InputEngine`, `Feedback`, `Protocol`, the HID descriptor, `BuiltInProfiles`, `LayoutOps`, `Presets` (the preset library, next-free gamepad numbering and placing or pasting controls and pages), and `ProfileJson` (import and export as `.simdeck.json`, schema 5), and `VehicleFeaturePages` (fills auto pages from the mod's `beamng.features`). `-PcoreOnly=true` builds and tests it without the Android SDK.
+- `:core` is plain JVM with no Android dependency: the model (`Profile`, `Page`, `Control`, `Action`), `InputEngine`, `Feedback`, `Protocol`, the HID descriptor, `BuiltInProfiles`, `LayoutOps`, `Presets` (the preset library, next-free gamepad numbering and placing or pasting controls and pages), and `ProfileJson` (import and export as `.simdeck.json`, schema 6), and `VehicleFeaturePages` (fills auto pages from the mod's `beamng.features`). `-PcoreOnly=true` builds and tests it without the Android SDK.
 - `:app` holds the Compose UI (`ui/screens`, `ui/components`, `ui/theme`, `ui/icons`, and `ui/sim` for equipment themes: `SimTheme` tokens per theme, generated textures and panel groups, and the skin painters for every control type; `Themes` and `Skins` ids live in `:core`), `AppViewModel`, `BluetoothHidLink`, `CompanionClient`, and storage.
 
 Control types are momentary, latching, switch, button group, slider, rotary, joystick, rocker, gauge, lamp (indicator) and page key. A joystick is two spring-centred slider axes on the wire: `<id>.x` and `<id>.y`; a rocker is two momentary buttons: `<id>.up` and `<id>.down`. Gauges, lamps and page keys never go on the wire (`ControlType.displayOnly`).
 
 `AppViewModel` keeps the stored profile (`baseProfile`) apart from the one being played (`activeProfile`), which is the stored one with its auto pages filled for the current vehicle; every `beamng.features` refills it and re-syncs the companion. It also handles `notice` (warning strip), `foreground` (automatic profile switching by `Profile.processNames`) and the bind helper (joystick axis lock).
+
+### Readings and tuning (1.4)
+
+`core/.../model/Readings.kt` is the catalogue of live values (title, group, unit, scale, dial range) the pickers, presets
+and the Gauges page use; `Commands.kt` groups the BeamNG commands for the command picker; `Tuning.kt` holds the tuning
+settings and the game's display rules (display range, percent for unit-less values, steps). The phone sends
+`readings.watch` with the keys its profiles show (all of them while a picker is open); the companion merges the phones and
+forwards it; the mod's vehicle Lua only reports watched readings. Tuning is read in vehicle Lua (`v.data.variables`) and
+applied in game-engine Lua by merging the values into the vehicle's config and respawning it, as the Tuning menu does.
+The UI is `ui/components/GroupedPicker.kt`, `ui/screens/Pickers.kt` and `ui/screens/TuningPanel.kt`.
 
 ### Editing from the PC (1.3)
 
@@ -82,6 +92,7 @@ Unit tests cannot cover Bluetooth pairing, vJoy, ViGEm, SendInput, or BeamNG in 
 
 ## History and known limits
 
+- 1.4.0 added live readings, the Gauges and Tuning pages and the grouped pickers; not yet run in BeamNG either.
 - 1.2.0 added equipment themes ([THEMES.md](THEMES.md)); 1.3.0 added presets, copy and paste, the PC layout editor and the
   theme extras. Neither has been run on a real phone, in BeamNG or with vJoy yet.
 - 1.1.0 merged the earlier SimDeck prototype into this codebase (which was called GameControl until then) and renamed it SimDeck throughout, including the Android package (`com.simdeck.app`). It added the multi-source vehicle feature discovery in the mod, vJoy configuration checks in the companion, and the controls, profiles and icons the prototype had. None of 1.1.0 has been run in BeamNG or with vJoy yet: run SMOKE_TEST plus the Vehicle page and utility checks in RELEASE_NOTES before calling it released.

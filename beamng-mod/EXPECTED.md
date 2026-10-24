@@ -10,13 +10,14 @@ Values in angle brackets change from run to run.
 
 | When | Line | Also on screen |
 |---|---|---|
-| The mod loads (game start, or the mod is enabled) | `SimDeck mod 1.3.0 loaded, looking for the companion on 127.0.0.1:47803` | none |
+| The mod loads (game start, or the mod is enabled) | `SimDeck mod 1.4.0 loaded, looking for the companion on 127.0.0.1:47803` | none |
 | The companion links (within about 3 s of both running) | `connected to the companion` | message "Connected to the SimDeck companion" |
 | A car is entered, switched to, spawned or reloaded | `vehicle <car folder>: has.esc=<true/unknown> has.cruise=<…> has.fog=<…> has.light_bar=<…> has.awd=<…> has.range=<…> has.diff.front=<…> has.diff.center=<…> has.diff.rear=<…> has.gearbox.modes=<…>` | none |
 | A vehicle is entered or its scan finishes | `vehicle features for <car folder> (<category>): <count> (input_actions=<n> interaction=<n> common=<n> game=<n> couplers=<n> hydros=<n>)` | the phone's Vehicle page fills |
 | `simdeckLink.report()` typed in the console | `report for <car folder>: {<diagnostics as JSON>}` then one line per feature: `<command id> <kind> <source> <title>` | none |
 | A phone command arrives | `command <name> <value>`, for example `command lights.low 1`, `command horn 1` then `command horn 0`, `command esc.toggle 1` | the game reacts |
 | Start is held | `starter: mainController.setStarter` (main route) or `starter: ignition level fallback` | engine cranks |
+| Tuning applied from the phone | `tuning applied: <n> settings, {"$<name>":<value>,…}` | the vehicle reloads in place |
 | The companion closes | `companion connection closed: closed` | message "SimDeck companion disconnected" |
 | Some game actions run (Shift up/down, Recover, Look back…) | `action failed in game engine Lua, running it in vehicle Lua (this is normal for some actions): <detail>` | none; this one is expected |
 | Bind in game | none in the console | message "Bound N actions to vJoy device 1" or "Bound N actions to the phone controller". If BeamNG couldn't confirm: "Saved N bindings for … BeamNG could not confirm they are active: make sure the controller is connected, then check Options > Controls." |
@@ -28,6 +29,8 @@ While the companion isn't running, the mod tries again every 3 seconds without w
 - `action failed in vehicle Lua: <detail>`
 - `BeamNG action not available: <name>`
 - `action failed: <detail>`
+- `tuning failed: <detail>`
+- `readings scan failed: <detail>` or `tuning scan failed: <detail>`
 - `unknown command <name>`
 - `vehicle Lua went quiet, reloading the vehicle part` (repeated)
 - `state check failed: <detail>` (shown as `E`)
