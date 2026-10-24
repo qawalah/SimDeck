@@ -1,6 +1,5 @@
 package com.simdeck.ui.screens
 
-import com.simdeck.ui.components.KeyField
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -166,7 +165,8 @@ fun Inspector(
         }
         ControlType.GAUGE -> {
             SectionHeader("Reading")
-            KeyField(c.feedbackKey.orEmpty(), { onUpdate(c.copy(feedbackKey = it.trim().ifBlank { null })) }, "Game value", stateKeys, "speed")
+            ReadingField(c.feedbackKey.orEmpty(), { onUpdate(c.copy(feedbackKey = it.trim().ifBlank { null })) }, { r -> onUpdate(c.showing(r)) },
+                "Game value", "oil.temp", filter = { !it.lamp }, title = "Pick what the gauge shows")
             Field(c.scale.toString(), { t -> t.toDoubleOrNull()?.let { onUpdate(c.copy(scale = it)) } }, "Multiply by", hint = "3.6 turns m/s into km/h, 2.237 into mph, 100 a 0-1 level into %", number = true)
             Stepper("Decimals", c.decimals, 0..3, { onUpdate(c.copy(decimals = it)) })
             Field(c.unit.orEmpty(), { onUpdate(c.copy(unit = it.trim().ifBlank { null })) }, "Unit", hint = "Printed under the number, e.g. km/h")
@@ -215,11 +215,15 @@ fun Inspector(
     Hint("Optional. Lets the game drive this control's light and availability through the BeamNG mod or telemetry.")
     Gap(4)
     if (c.type == ControlType.SWITCH || c.type == ControlType.RADIO) {
-        KeyField(c.positionKey.orEmpty(), { onUpdate(c.copy(positionKey = it.trim().ifBlank { null })) }, "Position state key", stateKeys, "gearbox.mode")
+        ReadingField(c.positionKey.orEmpty(), { onUpdate(c.copy(positionKey = it.trim().ifBlank { null })) }, { r -> onUpdate(c.copy(positionKey = r.key)) },
+            "Position state key", "gearbox.mode", title = "Pick the value that sets the position")
     } else {
-        KeyField(c.feedbackKey.orEmpty(), { onUpdate(c.copy(feedbackKey = it.trim().ifBlank { null })) }, "Light state key", stateKeys, "lights.low")
+        ReadingField(c.feedbackKey.orEmpty(), { onUpdate(c.copy(feedbackKey = it.trim().ifBlank { null })) },
+            { r -> onUpdate(if (c.type == ControlType.INDICATOR) c.showing(r).copy(type = c.type) else c.copy(feedbackKey = r.key)) },
+            "Light state key", "lights.low", title = "Pick what lights it")
     }
-    KeyField(c.visibleWhen.orEmpty(), { onUpdate(c.copy(visibleWhen = it.trim().ifBlank { null })) }, "Only available when", stateKeys.filter { it.startsWith("has.") }.ifEmpty { stateKeys }, "has.diff.front")
+    ReadingField(c.visibleWhen.orEmpty(), { onUpdate(c.copy(visibleWhen = it.trim().ifBlank { null })) }, { r -> onUpdate(c.copy(visibleWhen = r.key)) },
+        "Only available when", "has.diff.front", filter = { it.lamp }, title = "Pick when it is available")
     }
     if (game == GameId.BEAMNG && c.action is Action.VJoyButton) {
         Field(c.bindTo.orEmpty(), { onUpdate(c.copy(bindTo = it.trim().ifBlank { null })) }, "Bind in game to", hint = "BeamNG action name, used by Bind in game", mono = true)

@@ -177,12 +177,23 @@ private fun AppRoot(vm: AppViewModel) {
                     onDismissWarnings = vm::dismissWarnings,
                     lighting = vm.lighting.collectAsStateWithLifecycle().value,
                     onLighting = vm::setLighting,
+                    tuning = vm.tuning.collectAsStateWithLifecycle().value,
+                    tuningActions = androidx.compose.runtime.remember {
+                        com.simdeck.ui.screens.TuningActions(
+                            onSet = vm::tuningSet, onDefault = vm::tuningDefault, onAllDefaults = vm::tuningAllDefaults,
+                            onRevert = vm::tuningRevert, onApply = vm::tuningApply, onRefresh = vm::tuningRefresh, onAutoApply = vm::setTuningAutoApply,
+                        )
+                    },
                 )
                 }
             }
             is Screen.Editor -> editor?.let { state ->
                 androidx.compose.runtime.CompositionLocalProvider(
                     com.simdeck.ui.screens.LocalBeamNGCatalog provides com.simdeck.ui.screens.BeamNGCatalog(state.vehicleFeatures, state.beamngActions),
+                    com.simdeck.ui.screens.LocalReadingSource provides com.simdeck.ui.screens.ReadingSource(
+                        info = vm.readingInfo.collectAsStateWithLifecycle().value, stateKeys = state.stateKeys,
+                        game = vm.gameValues, onPicker = vm::readingPickerOpen,
+                    ),
                 ) {
                 EditorScreen(
                     state = state,

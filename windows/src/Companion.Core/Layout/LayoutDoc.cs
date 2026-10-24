@@ -337,7 +337,9 @@ public sealed class LayoutDoc
         var p = (JsonObject)Profile.DeepClone();
         int schema = Num(p, "schema", 1);
         var controls = Enumerable.Range(0, PageCount).SelectMany(Controls).ToList();
-        int need = controls.Any(c => c["backlight"] != null) ? 5
+        // 6: a tuning page (SimDeck 1.4); 5: a control backlight (1.3); 4: equipment themes (1.2).
+        int need = Enumerable.Range(0, PageCount).Any(i => (string?)PageAt(i)["auto"] == "beamng.tuning") ? 6
+            : controls.Any(c => c["backlight"] != null) ? 5
             : p["theme"] != null || Enumerable.Range(0, PageCount).Any(i => PageAt(i)["theme"] != null || PageAt(i)["panels"] != null) ||
               controls.Any(c => c["skin"] != null || c["legends"] != null || c["ends"] != null || c["stations"] != null || c["bands"] != null) ? 4 : 1;
         p["schema"] = Math.Max(schema, need);

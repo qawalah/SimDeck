@@ -112,7 +112,9 @@ public sealed class LayoutCanvas : Control
 
         if (d.IsAuto(page))
         {
-            var ft = Text("Vehicle page: fills itself on the phone with the functions of the vehicle you drive.", 15, C(t.LegendMuted));
+            var ft = Text((string?)d.PageAt(page)["auto"] == "beamng.tuning"
+                ? "Tuning page: on the phone it shows the tuning settings of the vehicle you drive."
+                : "Vehicle page: fills itself on the phone with the functions of the vehicle you drive.", 15, C(t.LegendMuted));
             ctx.DrawText(ft, new Point((Bounds.Width - ft.Width) / 2, (Bounds.Height - ft.Height) / 2));
             return;
         }

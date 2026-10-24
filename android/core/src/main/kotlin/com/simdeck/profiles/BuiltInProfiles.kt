@@ -306,6 +306,10 @@ object BuiltInProfiles {
             return Control(id, ControlType.GAUGE, label, null, x, y, w, 1, Accent.CYAN, feedbackKey = key, scale = r.scale,
                 unit = r.unit.ifBlank { null }, decimals = r.decimals)
         }
+        // Brake temperatures per wheel (most BeamNG vehicles name their wheels FL, FR, RL, RR).
+        fun brake(id: String, label: String, wheel: String, x: Int) =
+            readout(id, label, "brake.$wheel.temp", x, 3).copy(unit = "°C", skin = "segment",
+                bands = listOf(Band(0.0, 80.0, "blue"), Band(80.0, 550.0, "green"), Band(650.0, 900.0, "red")), min = 0.0, max = 900.0)
         val gauges = Page(
             id = "bng_gauges", name = "Gauges", columns = 8, rows = 4,
             controls = listOf(
@@ -313,15 +317,16 @@ object BuiltInProfiles {
                 dial("bng_g_coolant", "coolant.temp", 2, 0),
                 dial("bng_g_boost", "boost", 4, 0),
                 dial("bng_g_load", "engine.load", 6, 0, skin = "bar"),
-                readout("bng_g_fuel_l", "Fuel", "fuel.volume", 0, 2, w = 2),
+                // Numbers as a digital window in every theme; dials only where there is a range to read.
+                readout("bng_g_fuel_l", "Fuel", "fuel.volume", 0, 2, w = 2).copy(skin = "segment"),
                 dial("bng_g_fuel", "fuel", 2, 2, skin = "bar", h = 1),
-                readout("bng_g_lat", "Lateral G", "g.x", 4, 2, w = 2),
-                readout("bng_g_long", "Long. G", "g.y", 6, 2, w = 2),
-                readout("bng_g_brake_fl", "Brake FL", "brake.FL.temp", 0, 3).copy(unit = "°C"),
-                readout("bng_g_brake_fr", "Brake FR", "brake.FR.temp", 1, 3).copy(unit = "°C"),
-                readout("bng_g_brake_rl", "Brake RL", "brake.RL.temp", 2, 3).copy(unit = "°C"),
-                readout("bng_g_brake_rr", "Brake RR", "brake.RR.temp", 3, 3).copy(unit = "°C"),
-                readout("bng_g_odo", "Odometer", "odometer", 4, 3, w = 2),
+                readout("bng_g_lat", "Lateral G", "g.x", 4, 2, w = 2).copy(skin = "segment"),
+                readout("bng_g_long", "Long. G", "g.y", 6, 2, w = 2).copy(skin = "segment"),
+                brake("bng_g_brake_fl", "Brake FL", "FL", 0),
+                brake("bng_g_brake_fr", "Brake FR", "FR", 1),
+                brake("bng_g_brake_rl", "Brake RL", "RL", 2),
+                brake("bng_g_brake_rr", "Brake RR", "RR", 3),
+                readout("bng_g_odo", "Odometer", "odometer", 4, 3, w = 2).copy(skin = "segment"),
                 lamp("bng_g_cel", "Check engine", "check_engine", "warning.checkengine", 6, 3, Accent.AMBER),
                 lamp("bng_g_oilw", "Oil hot", "temp", "warning.oil", 7, 3, Accent.RED),
             ),

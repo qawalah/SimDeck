@@ -51,6 +51,9 @@ class CompanionClient(
         fun onProfilesRequest() {}
         fun onProfileGet(id: String) {}
         fun onProfilePut(json: String) {}
+        fun onReadings(list: List<com.simdeck.model.ReadingInfo>) {}
+        fun onTuning(vehicle: String, list: List<com.simdeck.model.TuningVar>) {}
+        fun onTuningResult(ok: Boolean, message: String) {}
         fun onDisconnected() {}
     }
 
@@ -203,6 +206,9 @@ class CompanionClient(
             is Incoming.ProfilesRequest -> listener?.onProfilesRequest()
             is Incoming.ProfileGet -> listener?.onProfileGet(msg.id)
             is Incoming.ProfilePut -> listener?.onProfilePut(msg.json)
+            is Incoming.BeamNGReadings -> listener?.onReadings(msg.list)
+            is Incoming.BeamNGTuning -> listener?.onTuning(msg.vehicle, msg.list)
+            is Incoming.TuningResult -> listener?.onTuningResult(msg.ok, msg.message)
             is Incoming.VersionMismatch -> {
                 ws?.send("""{"v":1,"type":"error","code":"version_mismatch","message":"phone supports v${Protocol.VERSION}"}""")
                 userDisconnected = true // do not reconnect into the same mismatch
@@ -498,6 +504,11 @@ class Settings(context: Context) {
     var bindHelper: Boolean
         get() = prefs.getBoolean("bindHelper", false)
         set(v) = prefs.edit().putBoolean("bindHelper", v).apply()
+
+    /** Tuning page: apply a change by itself 1.5 s after the last edit (1.4). */
+    var tuningAutoApply: Boolean
+        get() = prefs.getBoolean("tuningAutoApply", false)
+        set(v) = prefs.edit().putBoolean("tuningAutoApply", v).apply()
 
     fun token(host: String): String? = prefs.getString("token:$host", null)
     fun saveToken(host: String, token: String) = prefs.edit().putString("token:$host", token).apply()

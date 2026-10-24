@@ -22,6 +22,10 @@ import com.simdeck.model.VehicleFeaturePages
 import com.simdeck.model.VehicleFeatures
 import com.simdeck.model.PlayState
 import com.simdeck.model.Profile
+import com.simdeck.model.ReadingInfo
+import com.simdeck.model.Readings
+import com.simdeck.model.TuningState
+import com.simdeck.model.TuningVar
 import com.simdeck.net.CompanionClient
 import com.simdeck.net.Settings
 import com.simdeck.profiles.LayoutOps
@@ -36,6 +40,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
@@ -132,9 +138,26 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     private val _beamngCommands = MutableStateFlow<List<String>>(emptyList())
     val beamngCommands: StateFlow<List<String>> = _beamngCommands.asStateFlow()
 
+    // ---- readings and tuning (1.4) ---------------------------------------------------------
+
+    private val _readingInfo = MutableStateFlow<List<ReadingInfo>>(emptyList())
+    /** What the BeamNG vehicle can report, for the reading picker. */
+    val readingInfo: StateFlow<List<ReadingInfo>> = _readingInfo.asStateFlow()
+    /** Live game values, for the pickers' previews. */
+    val gameValues: StateFlow<Map<String, Any>> get() = game
+    /** Open reading pickers: while any is open the mod sends every reading, so the picker shows live values. */
+    private val pickersOpen = MutableStateFlow(0)
+    private val watchTick = MutableStateFlow(0)
+    private var lastWatch: String? = null
+    private val _tuning = MutableStateFlow(TuningState(autoApply = settings.tuningAutoApply))
+    val tuning: StateFlow<TuningState> = _tuning.asStateFlow()
+    private var autoApplyJob: Job? = null
+
     init {
         companion.listener = object : CompanionClient.Listener {
             override fun onWelcome() {
+                lastWatch = null
+                watchTick.update { it + 1 }
                 engine.resetSequence()
                 game.value = emptyMap()
                 syncProfile()
@@ -180,11 +203,31 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 else companion.send(Protocol.profileData(p))
             }
             override fun onProfilePut(json: String) = saveFromPc(json)
+            override fun onReadings(list: List<ReadingInfo>) { _readingInfo.value = list }
+            override fun onTuning(vehicle: String, list: List<TuningVar>) {
+                _tuning.update { t ->
+                    // Edits survive a refresh of the same car; another car starts clean.
+                    val keep = if (vehicle == t.vehicle) t.pending.filter { (k, v) -> list.any { it.name == k && kotlin.math.abs(it.value - v) > 1e-12 } } else emptyMap()
+                    t.copy(vehicle = vehicle, vars = list, pending = keep, applying = false,
+                        message = if (vehicle != t.vehicle) null else t.message)
+                }
+            }
+            override fun onTuningResult(ok: Boolean, message: String) {
+                _tuning.update { t ->
+                    if (!ok) t.copy(applying = false, ok = false, message = message)
+                    // The vehicle reloads and sends its new values; show the applied ones meanwhile.
+                    else t.copy(applying = false, ok = true, message = message,
+                        vars = t.vars.map { v -> t.pending[v.name]?.let { v.copy(value = it) } ?: v }, pending = emptyMap())
+                }
+            }
             override fun onDisconnected() {
                 engine.onCompanionLost()
                 game.value = emptyMap()
                 pending.value = emptyMap()
                 warnings.value = emptyMap()
+                lastWatch = null
+                _readingInfo.value = emptyList()
+                _tuning.update { TuningState(autoApply = it.autoApply) }
             }
         }
         hid.currentReport = { id -> engine.hidReport(id) }
@@ -204,6 +247,20 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         settings.lastHost?.let { host -> if (settings.token(host.substringBefore(":")) != null) companion.connect(host) }
         if (hid.hasPermission() && hid.isBluetoothOn()) hid.enable()
 
+        // Tell the companion which readings to report: what the played and the edited profile show, or everything
+        // while a reading picker is open (1.4).
+        viewModelScope.launch {
+            combine(
+                activeProfile, _editor.map { it?.profile }.distinctUntilChanged(), pickersOpen, watchTick,
+                companion.state.map { it.status == ConnectionStatus.CONNECTED }.distinctUntilChanged(),
+            ) { a, e, open, _, conn ->
+                if (!conn) null
+                else Protocol.readingsWatch(((a?.let { Readings.watchKeys(it) } ?: emptyList()) + (e?.let { Readings.watchKeys(it) } ?: emptyList())).distinct().sorted(), open > 0)
+            }.collect { msg ->
+                if (msg == null) { lastWatch = null; return@collect }
+                if (msg != lastWatch) { lastWatch = msg; companion.send(msg) }
+            }
+        }
         // Keep the PC companion's layout editor list current.
         viewModelScope.launch {
             repo.profiles.collect { list -> if (companion.isConnected) companion.send(Protocol.profilesList(list)) }
@@ -364,6 +421,56 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun dismissWarnings() { warnings.value = emptyMap() }
+
+    // ---- reading picker and tuning (1.4) ----
+
+    fun readingPickerOpen(open: Boolean) = pickersOpen.update { (it + if (open) 1 else -1).coerceAtLeast(0) }
+
+    fun tuningSet(name: String, value: Double) {
+        _tuning.update { t ->
+            val v = t.vars.firstOrNull { it.name == name } ?: return@update t
+            val snapped = v.snap(value)
+            t.copy(pending = if (kotlin.math.abs(snapped - v.value) < 1e-12) t.pending - name else t.pending + (name to snapped), message = null)
+        }
+        if (_tuning.value.autoApply) {
+            autoApplyJob?.cancel()
+            autoApplyJob = viewModelScope.launch { delay(1500); tuningApply() }
+        }
+    }
+
+    fun tuningDefault(name: String) {
+        val v = _tuning.value.vars.firstOrNull { it.name == name } ?: return
+        v.default?.let { tuningSet(name, it) }
+    }
+
+    fun tuningAllDefaults() {
+        _tuning.update { t ->
+            t.copy(pending = t.vars.mapNotNull { v -> v.default?.takeIf { kotlin.math.abs(it - v.value) > 1e-12 }?.let { v.name to v.snap(it) } }.toMap(), message = null)
+        }
+    }
+
+    fun tuningRevert() {
+        autoApplyJob?.cancel()
+        _tuning.update { it.copy(pending = emptyMap(), message = null) }
+    }
+
+    fun tuningApply() {
+        autoApplyJob?.cancel()
+        val t = _tuning.value
+        if (t.pending.isEmpty() || t.applying) return
+        if (!companion.isConnected) { _tuning.update { it.copy(ok = false, message = "Not connected to the PC") }; return }
+        companion.send(Protocol.tuningApply(t.pending))
+        _tuning.update { it.copy(applying = true, message = "Applying… the vehicle reloads where it is") }
+    }
+
+    fun tuningRefresh() {
+        if (companion.isConnected) companion.send(Protocol.tuningRequest())
+    }
+
+    fun setTuningAutoApply(on: Boolean) {
+        settings.tuningAutoApply = on
+        _tuning.update { it.copy(autoApply = on) }
+    }
 
     /** A PAGE control was tapped. */
     fun onPageControl(id: String) {

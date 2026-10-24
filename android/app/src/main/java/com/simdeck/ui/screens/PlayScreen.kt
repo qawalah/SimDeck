@@ -126,6 +126,8 @@ fun PlayScreen(
     onDismissWarnings: () -> Unit = {},
     lighting: Lighting = Lighting.AUTO,
     onLighting: (Lighting) -> Unit = {},
+    tuning: com.simdeck.model.TuningState = com.simdeck.model.TuningState(),
+    tuningActions: TuningActions = TuningActions(),
 ) {
     val pages = state.profile.pages
     val pageIndex = state.pageIndex.coerceIn(0, (pages.size - 1).coerceAtLeast(0))
@@ -150,7 +152,9 @@ fun PlayScreen(
         if (state.bindHelper) BindHelperStrip()
         CompositionLocalProvider(LocalSimTheme provides sim) {
         Box(Modifier.weight(1f).fillMaxWidth().then(if (sim.isHouse) Modifier else Modifier.simEnvironment(sim)).padding(start = 12.dp, end = 12.dp, bottom = 12.dp, top = 4.dp)) {
-            if (page != null && page.auto != null && page.controls.isEmpty()) {
+            if (page != null && page.auto == com.simdeck.model.Page.AUTO_BEAMNG_TUNING) {
+                TuningPanel(tuning, state.connection.status == com.simdeck.model.ConnectionStatus.CONNECTED, tuningActions)
+            } else if (page != null && page.auto != null && page.controls.isEmpty()) {
                 AutoPageEmpty(state, onEdit)
             } else if (page == null || page.controls.isEmpty()) {
                 EmptyPage(onEdit)

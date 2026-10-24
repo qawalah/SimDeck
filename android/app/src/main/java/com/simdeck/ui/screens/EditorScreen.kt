@@ -344,7 +344,8 @@ private fun EditorScreenBody(
                 Column(Modifier.weight(1f).fillMaxHeight()) {
                     if (page.auto != null) {
                         Text(
-                            if (state.vehicleFeatures.isEmpty()) "Vehicle page: fills itself in play with the functions of the vehicle you drive. Nothing reported yet."
+                            if (page.auto == Page.AUTO_BEAMNG_TUNING) "Tuning page: in play it shows the tuning settings of the vehicle you drive, like the game's Tuning menu."
+                            else if (state.vehicleFeatures.isEmpty()) "Vehicle page: fills itself in play with the functions of the vehicle you drive. Nothing reported yet."
                             else "Vehicle page: fills itself in play. Preview from the vehicle you drive now.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = Race.Cyan,
@@ -375,7 +376,9 @@ private fun EditorScreenBody(
                         // Controls are drawn in the page's theme (day lighting), so what is placed is what is played.
                         val sim = remember(profile.theme, page.theme) { com.simdeck.ui.sim.simTheme(com.simdeck.model.Themes.resolve(profile, page), false) }
                         androidx.compose.runtime.CompositionLocalProvider(com.simdeck.ui.sim.LocalSimTheme provides sim) {
-                            if (page.auto != null) {
+                            if (page.auto == Page.AUTO_BEAMNG_TUNING) {
+                                TuningPanel(com.simdeck.model.TuningState(), connected = false, actions = TuningActions())
+                            } else if (page.auto != null) {
                                 val preview = remember(page, state.vehicleFeatures) { com.simdeck.model.VehicleFeaturePages.controls(page, state.vehicleFeatures).first }
                                 ControlGrid(preview) { c, m ->
                                     com.simdeck.ui.components.ControlView(c, 0f, null, true, {}, {}, m, interactive = false)
@@ -764,6 +767,12 @@ private fun PageAndProfile(
             page.auto == Page.AUTO_BEAMNG_VEHICLE,
             { on -> onProfileChange { p -> p.copy(pages = p.pages.mapIndexed { i, pg -> if (i == pageIndex) pg.copy(auto = if (on) Page.AUTO_BEAMNG_VEHICLE else null, controls = if (on) emptyList() else pg.controls) else pg }) } },
             hint = "Fills itself with the functions of the vehicle you drive: tailgate, doors, bed, crane, outriggers. No binding needed.",
+        )
+        ToggleRow(
+            "Tuning page",
+            page.auto == Page.AUTO_BEAMNG_TUNING,
+            { on -> onProfileChange { p -> p.copy(pages = p.pages.mapIndexed { i, pg -> if (i == pageIndex) pg.copy(auto = if (on) Page.AUTO_BEAMNG_TUNING else null, controls = if (on) emptyList() else pg.controls) else pg }) } },
+            hint = "Shows the tuning settings of the vehicle you drive (tyre pressure, suspension, gearing, brake bias...), like the game's Tuning menu.",
         )
     }
     Gap(8)

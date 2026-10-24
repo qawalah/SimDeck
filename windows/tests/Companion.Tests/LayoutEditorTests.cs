@@ -69,6 +69,9 @@ public class LayoutEditorTests
         Assert.Equal(4, (int)outp["schema"]!);
         d.SetField(0, "h", "backlight", "blue");
         Assert.Equal(5, (int)d.ForPhone()["schema"]!);
+        d.SetPageField(0, "auto", "beamng.tuning");
+        Assert.Equal(6, (int)d.ForPhone()["schema"]!); // the tuning page (1.4)
+        d.SetPageField(0, "auto", null);
         d.SetPageField(0, "columns", 2);
         Assert.Equal(4, (int)d.PageAt(0)["columns"]!); // grids never shrink below 4 columns
     }

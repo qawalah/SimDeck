@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -81,6 +82,17 @@ private fun ActionKind.blank(): Action = when (this) {
     ActionKind.BEAMNG -> Action.BeamNG("")
     ActionKind.XBOX_BUTTON -> Action.XInputButton("A")
     ActionKind.XBOX_AXIS -> Action.XInputAxis("LT")
+}
+
+/** The command's name in words, under the field. */
+@Composable
+private fun commandHint(command: String, axisOnly: Boolean): String {
+    if (command.isBlank()) return if (axisOnly) "e.g. action.accelerate, hydro.<name>" else "e.g. lights.low.toggle, action.toggle_tailgate"
+    val catalog = LocalBeamNGCatalog.current
+    val known = com.simdeck.model.BeamNGCommands.title(command)
+        ?: catalog.vehicle.firstOrNull { it.id == command }?.title
+        ?: catalog.actions.firstOrNull { "action." + it.name == command }?.title
+    return known ?: "Sent to the mod as written"
 }
 
 /** One-line summary used on collapsed rows, e.g. "Key LCTRL + H (tap)". */
@@ -183,40 +195,27 @@ fun ActionEditor(
             }
             is Action.Macro -> MacroEditor(action, onChange)
             is Action.BeamNG -> {
-                val catalog = LocalBeamNGCatalog.current
+                var browsing by remember { mutableStateOf(false) }
                 Field(
                     action.command, { onChange(action.copy(command = it.trim())) }, "Command",
-                    hint = if (axisOnly) "e.g. action.accelerate, hydro.<name>" else "e.g. lights.low.toggle, action.toggle_tailgate", mono = true,
+                    hint = commandHint(action.command, axisOnly),
+                    mono = true,
+                    trailing = {
+                        IconButton(onClick = { browsing = true }) {
+                            Icon(androidx.compose.material.icons.Icons.Rounded.Search, contentDescription = "Browse BeamNG commands", tint = Race.Ink)
+                        }
+                    },
                 )
-                val q = action.command.lowercase()
-                fun hit(vararg t: String) = q.isBlank() || t.any { q in it.lowercase() }
-                // The vehicle being driven first: its own functions, by name.
-                val vehicle = catalog.vehicle.filter { (!axisOnly || it.kind == "axis") && hit(it.id, it.title) }.take(8)
-                if (vehicle.isNotEmpty()) {
-                    Gap(6)
-                    Text("THIS VEHICLE", style = RaceType.unit, color = Race.InkFaint)
-                    Gap(4)
-                    ChoiceChips(vehicle.map { it.title }, vehicle.firstOrNull { it.id == action.command }?.title, { t -> vehicle.firstOrNull { it.title == t }?.let { onChange(action.copy(command = it.id)) } })
+                if (action.command.isBlank()) {
+                    SlantButton("Browse commands", { browsing = true }, icon = androidx.compose.material.icons.Icons.Rounded.Search, style = SlantStyle.QUIET)
                 }
-                val actions = catalog.actions.filter { (!axisOnly || it.axis) && hit("action." + it.name, it.title) }.take(if (q.isBlank()) 6 else 10)
-                if (actions.isNotEmpty()) {
-                    Gap(6)
-                    Text("GAME ACTIONS", style = RaceType.unit, color = Race.InkFaint)
-                    Gap(4)
-                    ChoiceChips(actions.map { it.title }, actions.firstOrNull { "action." + it.name == action.command }?.title, { t -> actions.firstOrNull { it.title == t }?.let { onChange(action.copy(command = "action." + it.name)) } })
-                }
-                val matches = beamngCommands.filter { action.command.isBlank() || action.command in it }.take(8)
-                if (matches.isNotEmpty() && !axisOnly) {
-                    Gap(6)
-                    Text("COMMANDS", style = RaceType.unit, color = Race.InkFaint)
-                    Gap(4)
-                    ChoiceChips(matches, action.command, { onChange(action.copy(command = it)) })
-                }
+                val catalog = LocalBeamNGCatalog.current
                 if (beamngCommands.isEmpty() && catalog.actions.isEmpty()) {
-                    Hint("Connect to the PC with BeamNG and the SimDeck mod running to pick from the game's actions and this vehicle's functions.")
+                    Hint("Connect to the PC with BeamNG and the SimDeck mod running to also pick from the game's actions and this vehicle's functions.")
                 } else if (axisOnly) {
                     Hint("The slider's value goes straight to the game: no binding needed.")
                 }
+                if (browsing) CommandPickerSheet(action.command, beamngCommands, axisOnly, { onChange(action.copy(command = it)) }, { browsing = false })
             }
             is Action.XInputButton -> {
                 ChoiceChips(XboxButtons, action.button, { onChange(action.copy(button = it)) })
