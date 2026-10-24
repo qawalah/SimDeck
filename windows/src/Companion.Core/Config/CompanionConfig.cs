@@ -31,6 +31,10 @@ public sealed class CompanionConfig
     public bool EnableMdns { get; set; } = true;
     public bool StartMinimized { get; set; }
     public bool StartWithWindows { get; set; }
+    /// <summary>Install and update the BeamNG mod by itself while the game is closed (1.4.1).</summary>
+    public bool AutoInstallBeamNgMod { get; set; } = true;
+    /// <summary>BeamNG's user folder when it isn't in the default place; null finds it.</summary>
+    public string? BeamNgUserFolder { get; set; }
     public List<PairedDevice> Devices { get; set; } = new();
 
     /// <summary>

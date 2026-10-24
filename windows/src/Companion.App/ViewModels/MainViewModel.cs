@@ -76,6 +76,19 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty] private string _outGaugePortText = "";
     [ObservableProperty] private string? _settingsNote;
 
+    // BeamNG mod (1.4.1)
+    [ObservableProperty] private string _modSummary = "";
+    [ObservableProperty] private string _modFolder = "";
+    [ObservableProperty] private bool _modAuto;
+    [ObservableProperty] private string? _modResult;
+    [ObservableProperty] private bool _modResultOk;
+    [ObservableProperty] private string _modButton = "INSTALL NOW";
+    [ObservableProperty] private bool _modCanInstall;
+    [ObservableProperty] private bool _modHasFolder;
+    [ObservableProperty] private bool _modCustomFolder;
+    public bool HasModInstaller => Host.ModInstaller != null;
+    public string ModBundled => "Built into this companion: SimDeck mod " + SimDeck.Companion.BeamNG.ModInstaller.BundledVersion;
+
     public bool IsWindows => _platform.IsWindows;
     public string ConfigPath => Host.Store.Path;
     public string LogPath => Path.Combine(Path.GetDirectoryName(ConfigPath) ?? ".", App.SecondInstance ? "companion-second.log" : "companion.log");
@@ -127,8 +140,11 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         Host.GameState += game; _unsubscribe.Add(() => Host.GameState -= game);
         Host.Router.Activity += activity; _unsubscribe.Add(() => Host.Router.Activity -= activity);
         Host.BluetoothChanged += phones; _unsubscribe.Add(() => Host.BluetoothChanged -= phones);
+        Action modChanged = () => Ui(RefreshMod);
+        Host.ModChanged += modChanged; _unsubscribe.Add(() => Host.ModChanged -= modChanged);
 
         LoadSettings();
+        RefreshMod();
         RefreshPin();
         RefreshPhones();
         RefreshOutputs();
@@ -288,9 +304,16 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         bool modOk = Host.BeamNg?.Connected == true;
         bn.State = modOk ? NodeState.Live : NodeState.Off;
         bn.Status = modOk ? (Host.BeamNg?.ModVersion is { } v ? $"Mod {v} connected" : "Mod connected") : "Game not running";
-        bn.Detail = modOk ? $"{Host.BeamNg?.KnownCommands.Count ?? 0} commands, live vehicle state" : "Waiting for BeamNG.drive";
+        var mod = Host.Mod;
+        bool olderRunning = modOk && Host.BeamNg?.ModVersion is { } running && SimDeck.Companion.BeamNG.ModInstaller.Compare(running, SimDeck.Companion.BeamNG.ModInstaller.BundledVersion) < 0;
+        bn.Detail = modOk
+            ? $"{Host.BeamNg?.KnownCommands.Count ?? 0} commands, live vehicle state" + (olderRunning ? $" · {SimDeck.Companion.BeamNG.ModInstaller.BundledVersion} installs when the game closes" : "")
+            : mod is { Installed: true } ? $"Mod {mod.InstalledVersion} installed · waiting for BeamNG.drive" : "Waiting for BeamNG.drive";
         bn.Optional = !modOk;
-        bn.Setup = modOk ? "" : "For BeamNG.drive only. Copy simdeck.zip into Documents\\BeamNG.drive\\current\\mods (or BeamNG's user folder \\mods), start the game and load a vehicle. It connects to this PC by itself.";
+        bn.Setup = modOk ? ""
+            : Host.ModInstaller == null ? "For BeamNG.drive only. Copy simdeck.zip into BeamNG's user folder \\mods, start the game and load a vehicle. It connects to this PC by itself."
+            : mod is { Installed: true } ? "For BeamNG.drive only. Start the game and load a vehicle: the mod connects to this PC by itself."
+            : "For BeamNG.drive only. The companion installs the mod into the game's mods folder for you: see Settings, BeamNG mod.";
 
         var tm = Outputs[4];
         bool ogOn = Host.Config.EnableOutGauge, ogLive = Host.OutGaugeActive, ogFailed = ogOn && Host.OutGaugeFailed;
@@ -470,6 +493,63 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         Host.Log(ok ? "info" : "warn", ok ? "Firewall rule added for private networks" : "The firewall rule was not added (the Windows prompt was declined or failed)");
         await CheckFirewallAsync();
     }
+
+    // ------------------------------------------------------------ BeamNG mod (1.4.1)
+
+    bool _loadingMod;
+
+    void RefreshMod()
+    {
+        _loadingMod = true;
+        ModAuto = Host.Config.AutoInstallBeamNgMod;
+        _loadingMod = false;
+        ModCustomFolder = !string.IsNullOrWhiteSpace(Host.Config.BeamNgUserFolder);
+        if (Host.Mod is not { } m) { ModSummary = Host.ModInstaller == null ? "" : "Looking for BeamNG.drive…"; RefreshOutputs(); return; }
+        ModSummary = m.Summary + (m.GameRunning && m.NeedsInstall ? " The game is running: it installs when you close it." : "");
+        ModFolder = m.ModsFolder ?? (ModCustomFolder ? Host.Config.BeamNgUserFolder + " (not found)" : "Not found");
+        ModHasFolder = m.ModsFolder != null;
+        ModCanInstall = m.ModsFolder != null && !m.GameRunning;
+        ModButton = !m.Installed ? "INSTALL NOW" : m.NeedsInstall ? "UPDATE NOW" : "REINSTALL";
+        if (Host.LastModResult is { } r) { ModResult = r.Message; ModResultOk = r.Ok; }
+        RefreshOutputs();
+    }
+
+    partial void OnModAutoChanged(bool value)
+    {
+        if (_loadingMod) return;
+        _ = Task.Run(() =>
+        {
+            try { Host.Store.Update(x => x.AutoInstallBeamNgMod = value); Host.CheckMod(); }
+            catch (Exception e) { Host.Log("warn", $"Could not save the mod setting: {e.Message}"); }
+        });
+    }
+
+    [RelayCommand]
+    void InstallMod()
+    {
+        ModResult = "Installing…";
+        ModResultOk = true;
+        Host.CheckMod(install: true);
+    }
+
+    [RelayCommand]
+    void OpenModsFolder()
+    {
+        if (Host.Mod?.ModsFolder is { } f) Try("open the mods folder", () => { Directory.CreateDirectory(f); _platform.OpenFolder(f); });
+    }
+
+    /// <summary>From the Settings view's folder picker; null goes back to finding the folder.</summary>
+    public void SetBeamNgUserFolder(string? path)
+    {
+        _ = Task.Run(() =>
+        {
+            try { Host.Store.Update(x => x.BeamNgUserFolder = string.IsNullOrWhiteSpace(path) ? null : path); Host.CheckMod(); }
+            catch (Exception e) { Host.Log("warn", $"Could not save the BeamNG folder: {e.Message}"); }
+        });
+    }
+
+    [RelayCommand]
+    void FindBeamNgFolder() => SetBeamNgUserFolder(null);
 
     [RelayCommand]
     void OpenConfigFolder() => Try("open the settings folder", () => _platform.OpenFolder(Path.GetDirectoryName(ConfigPath) ?? "."));

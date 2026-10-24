@@ -35,6 +35,15 @@ public sealed class HostOptions
     public TimeSpan BluetoothScanInterval { get; init; } = TimeSpan.FromSeconds(2);
     /// <summary>The executable of the window in front (e.g. "BeamNG.drive.x64.exe"), for automatic profile switching. Null: not reported.</summary>
     public Func<string?>? ForegroundApp { get; init; }
+    /// <summary>Installs and updates the BeamNG mod (1.4.1). Null: no mod management (the default off Windows and in tests).</summary>
+    public ModInstaller? ModInstaller { get; init; }
+
+    /// <summary>These options plus a mod installer.</summary>
+    public HostOptions WithModInstaller(ModInstaller installer) => new()
+    {
+        PlatformMdns = PlatformMdns, Identity = Identity, Bind = Bind, IdleTimeout = IdleTimeout, BluetoothPads = BluetoothPads,
+        BluetoothScanInterval = BluetoothScanInterval, ForegroundApp = ForegroundApp, ModInstaller = installer,
+    };
 }
 
 /// <summary>
@@ -83,6 +92,46 @@ public sealed class CompanionHost : IDisposable
     public InputRouter Router { get; }
     public Pairing Pairing { get; }
     public BeamNgLink? BeamNg { get; private set; }
+
+    // ---------------------------------------------------------------- BeamNG mod install (1.4.1)
+
+    /// <summary>The last check of the game's mods folder; null before the first one or without an installer.</summary>
+    public ModStatus? Mod { get; private set; }
+    public ModInstaller? ModInstaller => _options.ModInstaller;
+    /// <summary>Raised (on the thread pool) after every mod check or install.</summary>
+    public event Action? ModChanged;
+    int _modChecking;
+
+    /// <summary>
+    /// Looks at the game's mods folder and, when automatic install is on, installs or updates the built-in mod while the game
+    /// is closed. Runs on the thread pool; overlapping calls are skipped.
+    /// </summary>
+    public void CheckMod(bool install = false)
+    {
+        if (_options.ModInstaller is not { } inst || Interlocked.Exchange(ref _modChecking, 1) == 1) return;
+        _ = Task.Run(() =>
+        {
+            try
+            {
+                var st = inst.Check();
+                bool auto = Config.AutoInstallBeamNgMod && st.NeedsInstall && !st.GameRunning;
+                if (install || auto)
+                {
+                    var r = inst.Install();
+                    Log(r.Ok ? "info" : "warn", (install ? "" : "Automatic: ") + r.Message);
+                    LastModResult = r;
+                    st = inst.Check();
+                }
+                Mod = st;
+                ModChanged?.Invoke();
+            }
+            catch (Exception e) { Log("warn", $"BeamNG mod check failed: {e.Message}"); }
+            finally { Volatile.Write(ref _modChecking, 0); }
+        });
+    }
+
+    /// <summary>The last install's result, for the Settings page.</summary>
+    public ModInstallResult? LastModResult { get; private set; }
     public ConfigStore Store => _store;
     public CompanionConfig Config => _store.Config;
 
@@ -252,6 +301,8 @@ public sealed class CompanionHost : IDisposable
         }
 
         if (_tickCount % 10 == 0) PollForeground();
+        // The mod: checked every 10 s, so an update lands as soon as the game closes.
+        if (_tickCount % 100 == 0) CheckMod();
         // Drivers can be installed or a vJoy device enabled while we run.
         if (++_tickCount % 50 == 0)
         {

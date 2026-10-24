@@ -10,4 +10,9 @@
     <InternalsVisibleTo Include="Companion.Tests" />
   </ItemGroup>
 
+  <!-- The BeamNG mod, built in so the companion can install and update it (ModInstaller, 1.4.1). -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\..\beamng-mod\simdeck\**\*" LogicalName="simdeck-mod/%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
 </Project>

@@ -75,9 +75,13 @@ panel comes first: use the companion.
 
 ## 3. BeamNG.drive
 
-1. Copy `simdeck.zip` (still zipped) into `%LOCALAPPDATA%\BeamNG.drive\<version>\mods\`. In BeamNG,
-   **Options > Other > Open user folder** opens that folder; the zip goes in its `mods` folder.
-   Remove any older copy first (`gamecontroller.zip`, `simdeck_bridge.zip`): two copies fight over the same port.
+1. The companion (1.4.1 and later) installs the mod for you: it finds BeamNG's user folder
+   (`%LOCALAPPDATA%\BeamNG\BeamNG.drive\current`, or the newest `%LOCALAPPDATA%\BeamNG.drive\<version>` of older games),
+   writes `mods\simdeck.zip`, and updates it whenever the companion has a newer one. It only writes while BeamNG is closed and
+   turns off old copies (`gamecontroller.zip`, `simdeck_bridge.zip`, renamed SimDeck zips) by renaming them to
+   `.disabled-by-simdeck`. See **Settings > BeamNG mod** in the companion: **Install now**, **Open** the mods folder, or
+   **Choose…** the user folder if yours is somewhere else (the BeamNG Launcher's *Manage User Folder* shows where).
+   By hand instead: copy `simdeck.zip` (still zipped) into the user folder's `mods` folder and remove older copies.
 2. Start BeamNG with the companion running. In the companion window the node **BeamNG mod** shows "Mod 1.4.0 connected".
 3. On the phone open the **BeamNG.drive** profile: every vehicle function, lamps light from the real game state,
    and controls the current vehicle doesn't have (fog lights, diff locks, low range...) are dimmed.

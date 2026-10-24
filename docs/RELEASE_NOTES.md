@@ -1,3 +1,15 @@
+# SimDeck 1.4.1 (PC companion)
+
+- **The companion installs and updates the BeamNG mod itself.** It carries the mod inside, finds BeamNG's user folder
+  (the current `BeamNG\BeamNG.drive\current` layout or the older per-version folders), writes `mods\simdeck.zip` when the
+  mod is missing or older, and turns off old copies that would clash by renaming them (`.disabled-by-simdeck`). It never
+  writes while the game runs; an update waits until you close BeamNG. Settings has a **BeamNG mod** section: what is
+  installed, automatic install on or off, **Install now**, **Open** the mods folder, and **Choose…** for a user folder in
+  another place.
+- The Outputs page's BeamNG row says when the mod is installed but the game isn't running, and when a newer mod installs
+  once the game closes.
+- Phone app and mod are unchanged (1.4.0).
+
 # SimDeck 1.4.0
 
 The phone now reads the car, not just its lamps, can tune it like the game's Tuning menu, and finding a command or a

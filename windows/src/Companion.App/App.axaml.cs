@@ -49,7 +49,11 @@ public partial class App : Application
             _fileLog = new SimDeck.Companion.Logging.FileLog(SimDeck.Companion.Logging.FileLog.DefaultPath(SecondInstance));
             var store = new ConfigStore();
             _platform = PlatformFactory.Create(store.Config);
-            _host = new CompanionHost(store, _platform.Router, _platform.Options);
+            // The BeamNG mod is installed and kept up to date by the first instance on Windows (1.4.1).
+            var options = OperatingSystem.IsWindows() && !SecondInstance
+                ? _platform.Options.WithModInstaller(new SimDeck.Companion.BeamNG.ModInstaller(() => store.Config.BeamNgUserFolder))
+                : _platform.Options;
+            _host = new CompanionHost(store, _platform.Router, options);
             _host.Logged += e => _fileLog?.Write(e.At, e.Level, e.Message);
             _host.Log("info", $"SimDeck Companion {MainViewModel.Version} starting; settings in {store.Path}");
             _vm = new MainViewModel(_host, _platform);

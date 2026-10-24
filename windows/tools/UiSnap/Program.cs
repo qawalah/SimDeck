@@ -55,7 +55,15 @@ c.WsPort = FreeTcp(); c.UdpPort = FreeUdp(); c.DiscoveryPort = FreeUdp(); c.Beam
 c.EnableMdns = false;
 var platform = PlatformFactory.Create(c);
 var pads = new SnapPads();
-var host = new CompanionHost(store, platform.Router, new HostOptions { Identity = platform.Options.Identity, BluetoothPads = pads });
+// A fake BeamNG user folder with an old SimDeck mod, so the Settings page shows the update.
+var fakeAppData = Path.Combine(Path.GetTempPath(), $"uisnap-appdata-{Guid.NewGuid():N}");
+var fakeMods = Path.Combine(fakeAppData, "BeamNG", "BeamNG.drive", "current", "mods");
+Directory.CreateDirectory(fakeMods);
+using (var z = System.IO.Compression.ZipFile.Open(Path.Combine(fakeMods, "simdeck.zip"), System.IO.Compression.ZipArchiveMode.Create))
+using (var w = new StreamWriter(z.CreateEntry("mod_info/simdeck/info.json").Open())) w.Write("{\"version_string\": \"1.2.0\"}");
+var host = new CompanionHost(store, platform.Router, new HostOptions { Identity = platform.Options.Identity, BluetoothPads = pads,
+    ModInstaller = new SimDeck.Companion.BeamNG.ModInstaller(() => null, fakeAppData, () => false) });
+c.AutoInstallBeamNgMod = false; // show "ready to install" first
 var vm = new MainViewModel(host, platform);
 host.Pairing.UsePin("482913");
 host.Start();
@@ -68,7 +76,8 @@ Pump(300);
 Snap(win, "01-status-first-run");
 vm.GoCommand.Execute("phones"); Snap(win, "02-phones-empty");
 vm.GoCommand.Execute("outputs"); Snap(win, "03-outputs");
-vm.GoCommand.Execute("settings"); Snap(win, "04-settings");
+vm.GoCommand.Execute("settings"); Pump(600); Snap(win, "04-settings");
+vm.InstallModCommand.Execute(null); Pump(800); win.Height = 900; Pump(200); Snap(win, "04b-settings-mod-installed"); win.Height = 760; Pump(100);
 vm.GoCommand.Execute("layouts"); Snap(win, "14-layouts-no-phone");
 vm.GoCommand.Execute("status");
 

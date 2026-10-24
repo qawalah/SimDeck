@@ -36,6 +36,37 @@
             </StackPanel>
           </Border>
 
+          <Border Classes="section" IsVisible="{Binding HasModInstaller}">
+            <StackPanel Spacing="4">
+              <TextBlock Text="BeamNG mod" Classes="h2" />
+              <TextBlock Text="{Binding ModSummary}" Classes="wrap" />
+              <TextBlock Text="{Binding ModBundled}" Classes="small muted" />
+              <Grid Classes="row" ColumnDefinitions="*,Auto">
+                <StackPanel>
+                  <TextBlock Text="Install and update it automatically" />
+                  <TextBlock Text="Writes simdeck.zip into the game's mods folder whenever this companion has a newer one, only while BeamNG is closed, and turns off old copies that would clash." Classes="small muted wrap" />
+                </StackPanel>
+                <ToggleSwitch Grid.Column="1" IsChecked="{Binding ModAuto}" />
+              </Grid>
+              <Grid Classes="row" ColumnDefinitions="*,Auto">
+                <StackPanel>
+                  <TextBlock Text="Mods folder" />
+                  <TextBlock Text="{Binding ModFolder}" Classes="small muted num wrap" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                  <Button Classes="quiet" Content="OPEN" Command="{Binding OpenModsFolderCommand}" IsEnabled="{Binding ModHasFolder}" />
+                  <Button Classes="quiet" Content="CHOOSE…" Click="ChooseBeamNgFolder" ToolTip.Tip="Pick BeamNG's user folder (Launcher, Manage User Folder) if it isn't found" />
+                  <Button Classes="quiet" Content="FIND AGAIN" Command="{Binding FindBeamNgFolderCommand}" IsVisible="{Binding ModCustomFolder}" />
+                </StackPanel>
+              </Grid>
+              <StackPanel Orientation="Horizontal" Spacing="12">
+                <Button Classes="primary" Content="{Binding ModButton}" Command="{Binding InstallModCommand}" IsEnabled="{Binding ModCanInstall}" />
+                <TextBlock Text="{Binding ModResult}" Classes="small wrap" VerticalAlignment="Center" MaxWidth="520"
+                           Foreground="{StaticResource InkMuted}" IsVisible="{Binding ModResult, Converter={x:Static c:Converters.NotEmpty}}" />
+              </StackPanel>
+            </StackPanel>
+          </Border>
+
           <Border Classes="section">
             <StackPanel Spacing="4">
               <TextBlock Text="Startup" Classes="h2" />

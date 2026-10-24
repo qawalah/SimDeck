@@ -40,6 +40,12 @@ forwards it; the mod's vehicle Lua only reports watched readings. Tuning is read
 applied in game-engine Lua by merging the values into the vehicle's config and respawning it, as the Tuning menu does.
 The UI is `ui/components/GroupedPicker.kt`, `ui/screens/Pickers.kt` and `ui/screens/TuningPanel.kt`.
 
+### Installing the mod (1.4.1)
+
+`windows/src/Companion.Core/BeamNG/ModInstaller.cs`: the mod's files are embedded in Companion.Core (see its csproj),
+zipped at run time like `beamng-mod/build.sh` does. The host checks the mods folder every 10 s and, with
+`AutoInstallBeamNgMod` on, installs while BeamNG is closed. Only the first instance on Windows gets an installer (App.axaml.cs).
+
 ### Editing from the PC (1.3)
 
 The companion's **Layouts** page edits the phone's profiles over the existing WebSocket (`profiles.*` / `profile.*` messages

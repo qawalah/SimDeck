@@ -1,6 +1,6 @@
 # SimDeck: an Android control surface for Windows games
 
-**Version 1.4.0.** Turn an Android phone or tablet into an extra controller for any Windows game: buttons, toggles,
+**Version 1.4.1.** Turn an Android phone or tablet into an extra controller for any Windows game: buttons, toggles,
 switches, sliders, pilot joysticks, rotaries and indicator lamps beyond your gamepad, organised in per-game profiles.
 BeamNG.drive is fully supported both ways (live vehicle state on the phone, game commands, in-game auto-binding, and a
 Vehicle page that fills itself with the functions of the vehicle you drive), and there are built-in profiles for a generic
