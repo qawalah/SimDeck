@@ -257,6 +257,77 @@ Companion to phone:
 - `foreground` is sent when the program in front on the PC changes (and to each new session). The phone opens the profile whose `processNames` contain that exe, if the user allows automatic switching.
 - `capabilities` gains `vjoyInfo`: `[{"device":1,"buttons":8,"axes":["X","Y","Z"]}]` for each vJoy device the companion can read.
 
+## Readings and tuning (SimDeck 1.4)
+
+### Readings
+
+Live values beyond the lamp keys above, for gauges. Mod to companion, with every vehicle scan (and again when a phone
+starts watching everything):
+
+```json
+{"v":1,"type":"readings","vehicle":"pickup","list":[
+  {"key":"oil.temp","group":"Engine","title":"Oil temperature","unit":"C"},
+  {"key":"brake.FL.temp","group":"Brakes","title":"Brake temperature FL","unit":"C"},
+  {"key":"e.watertemp","group":"All signals","title":"watertemp","unit":""}]}
+```
+
+The companion relays it to phones as `beamng.readings` (same fields) and sends the last one to phones that connect later.
+Readings are only reported while watched. Phone to companion, whenever the keys it shows change:
+
+```json
+{"v":1,"type":"readings.watch","keys":["oil.temp","coolant.temp","brake.FL.temp"],"all":false}
+```
+
+`all:true` while the phone's reading picker is open (every reading, with live values). The companion sends the union of
+all phones to the mod (same message) and an empty watch when the last phone leaves. Watched values arrive in the normal
+`state` messages under their keys.
+
+| Key | Unit (as sent) | Source |
+|---|---|---|
+| `oil.temp`, `coolant.temp` | °C | electrics `oiltemp`, `watertemp` |
+| `boost`, `boost.max` | psi | `boost` (or `turboBoost`), `boostMax` |
+| `engine.load`, `engine.throttle` | 0..1 | `engineLoad`, `engineThrottle` |
+| `rpm.tacho` | rpm | `rpmTacho` |
+| `fuel.volume`, `fuel.capacity` | litres | `fuelVolume`, `fuelCapacity` |
+| `battery` | 0..1 | electric energy storages |
+| `electrical.load` | 0..1 | `electricalLoadCoef` |
+| `gear.index`, `clutch`, `wheelspeed` (m/s), `shifting` | | `gearIndex`, `clutchRatio`, `wheelspeed`, `isShifting` |
+| `input.throttle`, `input.brake`, `input.clutch`, `input.parkingbrake` | 0..1 | the `*_input` electrics |
+| `input.steering` (-1..1), `steering.angle` (degrees) | | `steering_input`, `steering` |
+| `airspeed` (m/s), `altitude` (m), `odometer`, `trip` (m) | | same names |
+| `g.x`, `g.y`, `g.z` | g | `accXSmooth` etc. / 9.81 |
+| `warning.checkengine`, `warning.oil`, `warning.lowfuel`, `warning.lowpressure` | boolean | `checkengine`, `oil`, `lowfuel`, `lowpressure` |
+| `brake.<wheel>.temp`, `brake.<wheel>.core` | °C | each wheel's brake surface and core temperature |
+| `tire.<wheel>.deflated` | boolean | each wheel's tyre |
+| `e.<name>` | as the game has it | any raw electrics value |
+
+A reading the vehicle doesn't have is left out of the list and never sent.
+
+### Tuning
+
+The vehicle's tuning variables (jbeam `variables`, the game's Tuning menu). Mod to companion with every vehicle scan and
+on request; relayed to phones as `beamng.tuning` and cached for phones that connect later:
+
+```json
+{"v":1,"type":"tuning","vehicle":"pickup","list":[
+  {"name":"$tirepressure_F","title":"Tire Pressure","category":"Wheels","subCategory":"Front","unit":"psi",
+   "min":0,"max":50,"minDis":null,"maxDis":null,"stepDis":null,"default":30,"val":28,"description":"..."}]}
+```
+
+`val` is the value the vehicle runs with now. When `minDis`/`maxDis` are given, the phone shows
+`minDis + (val - min) / (max - min) * (maxDis - minDis)`; with an empty `unit` it shows -100 % to 100 % in 1 % steps,
+like the game. Phone to companion to mod:
+
+```json
+{"v":1,"type":"tuning.request"}
+{"v":1,"type":"tuning.apply","vars":{"$tirepressure_F":32,"$brakebias":0.62}}
+```
+
+The mod clamps each value to the variable's range, drops names the vehicle doesn't have, merges them into the vehicle's
+config and respawns it in place, as the game's Tuning menu does (the vehicle reloads and is repaired). It answers
+`{"v":1,"type":"tuning.result","ok":true,"message":"Applied 2 settings. The vehicle reloads where it is."}`, relayed as
+`beamng.tuning.result`, then sends the new `tuning` list once the vehicle is back.
+
 ## Layout editing from the PC (SimDeck 1.3)
 
 The companion's Layouts page reads and writes the phone's profiles. The phone stays their owner. Companion to phone:

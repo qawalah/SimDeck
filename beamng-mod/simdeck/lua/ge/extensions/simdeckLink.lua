@@ -12,7 +12,7 @@ if not socketOk then
 end
 
 local PROTOCOL_VERSION = 1
-local MOD_VERSION = "1.3.0"
+local MOD_VERSION = "1.4.0"
 local HOST = "127.0.0.1"
 local PORT = 47803
 local RETRY_INTERVAL = 3      -- seconds between connection attempts
@@ -34,6 +34,7 @@ local finishBindings          -- defined with the bindings code
 local releaseHeld             -- defined with the connection code
 local bindingsLoaded          -- defined with the bindings code
 local attachVehicle           -- defined with the vehicle code
+local watchCode               -- defined with the readings code
 
 local state = {}              -- last known values, merged
 local pending = {}            -- values changed since the last send
@@ -50,6 +51,8 @@ local gameTimer = 0
 local heldActions = {}        -- [actionName] = true while an action.* or hold command is down
 local actionLevel = {}        -- [action.* command] = last value sent to it (analog or 1), nil at rest
 local analogCommands = {}     -- action.* commands that ever got an analog value: run with the direct filter
+local readingWatch = { keys = {}, all = false } -- readings the phones watch (readings.watch), passed to vehicle Lua
+local lastTuning = nil        -- the player vehicle's tuning variables, as last sent ({ [name] = def })
 local actions = nil           -- action definitions read from the game's files
 local actionsVehicle = nil    -- vehicle directory the vehicle-specific actions were read for
 
@@ -655,6 +658,105 @@ local function onVehicleState(id, json, full)
   end
 end
 
+-- ============= READINGS AND TUNING (SimDeck 1.4) =============
+
+watchCode = function()
+  return string.format("if m.setWatch then m.setWatch(%q, %s) end", encode(readingWatch.keys), tostring(readingWatch.all == true))
+end
+
+local function sendWatchTo(veh)
+  if not veh then return end
+  veh:queueLuaCommand("local m = extensions.simdeckVehicle if m then " .. watchCode() .. " end")
+end
+
+-- from the companion: the union of what the phones show (gauges, lamps) plus everything while a picker is open
+local function setReadingWatch(msg)
+  local keys = {}
+  if type(msg.keys) == "table" then
+    for _, k in ipairs(msg.keys) do if type(k) == "string" and #k <= 128 then table.insert(keys, k) end end
+  end
+  readingWatch = { keys = keys, all = msg.all == true }
+  sendWatchTo(playerVehicle())
+end
+
+-- called from vehicle Lua with what it can report
+local function onVehicleReadings(id, json)
+  if id ~= be:getPlayerVehicleID(0) then return end
+  local list = decode(json) or {}
+  send({ type = "readings", vehicle = vehicleDir(playerVehicle()) or "", list = list })
+end
+
+-- the vehicle's applied config values win over the jbeam defaults vehicle Lua saw
+local function configVars(id)
+  local mgr = rawget(_G, "core_vehicle_manager") or (extensions and extensions.core_vehicle_manager)
+  if type(mgr) ~= "table" or type(mgr.getVehicleData) ~= "function" then return nil end
+  local ok, data = pcall(mgr.getVehicleData, id)
+  if ok and type(data) == "table" and type(data.config) == "table" then return data, data.config.vars end
+  return nil
+end
+
+-- called from vehicle Lua with the vehicle's tuning variables
+local function onVehicleTuning(id, json)
+  if id ~= be:getPlayerVehicleID(0) then return end
+  local list = decode(json) or {}
+  local _, vars = configVars(id)
+  lastTuning = {}
+  for _, d in ipairs(list) do
+    if type(d) == "table" and type(d.name) == "string" then
+      if type(vars) == "table" and type(vars[d.name]) == "number" then d.val = vars[d.name] end
+      lastTuning[d.name] = d
+    end
+  end
+  send({ type = "tuning", vehicle = vehicleDir(playerVehicle()) or "", list = list })
+end
+
+local function tuningResult(ok, message)
+  send({ type = "tuning.result", ok = ok, message = message, vehicle = vehicleDir(playerVehicle()) or "" })
+end
+
+-- apply tuning values like the game's Tuning menu: merge them into the vehicle's config and respawn it in place
+local function applyTuning(msg)
+  local veh = playerVehicle()
+  if not veh then return tuningResult(false, "No vehicle to tune") end
+  if type(msg.vars) ~= "table" then return tuningResult(false, "Nothing to apply") end
+  local vars, n = {}, 0
+  for name, val in pairs(msg.vars) do
+    local d = lastTuning and lastTuning[name]
+    val = tonumber(val)
+    if d and val and val == val then
+      local lo, hi = math.min(d.min, d.max), math.max(d.min, d.max)
+      vars[name] = math.max(lo, math.min(hi, val))
+      n = n + 1
+    end
+  end
+  if n == 0 then return tuningResult(false, "This vehicle has none of those settings") end
+  local ok, err = pcall(function()
+    local data = configVars(veh:getID())
+    if data and type(veh.respawn) == "function" and type(rawget(_G, "serialize")) == "function" then
+      data.config.vars = data.config.vars or {}
+      for k, val in pairs(vars) do data.config.vars[k] = val end
+      veh:respawn(serialize(data.config))
+      return
+    end
+    local pm = rawget(_G, "core_vehicle_partmgmt") or (extensions and extensions.core_vehicle_partmgmt)
+    if type(pm) == "table" and type(pm.setConfigVars) == "function" then pm.setConfigVars(vars) return end
+    error("this game version has no way to apply tuning from a mod")
+  end)
+  if not ok then
+    logW("tuning failed: " .. tostring(err))
+    return tuningResult(false, "The game refused the tuning: " .. tostring(err))
+  end
+  for k, val in pairs(vars) do if lastTuning[k] then lastTuning[k].val = val end end
+  logI(string.format("tuning applied: %d settings, %s", n, encode(vars)))
+  tuningResult(true, n == 1 and "Applied 1 setting. The vehicle reloads where it is." or
+    string.format("Applied %d settings. The vehicle reloads where it is.", n))
+end
+
+local function requestTuning()
+  local veh = playerVehicle()
+  if veh then veh:queueLuaCommand("local m = extensions.simdeckVehicle if m and m.requestTuning then m.requestTuning() end") end
+end
+
 -- load the vehicle extension into the player vehicle and ask it for a full snapshot
 attachVehicle = function()
   local veh = playerVehicle()
@@ -674,7 +776,9 @@ attachVehicle = function()
   local id = veh:getID()
   attachTries = (id == attachedId) and attachTries + 1 or 1
   attachedId = id
-  veh:queueLuaCommand("local m = extensions.simdeckVehicle if not m then extensions.load('simdeckVehicle') m = extensions.simdeckVehicle end if m then m.requestFull() if m.requestFeatures then m.requestFeatures() end end")
+  -- one command per load (the readings watch rides along), so a car that never answers is easy to spot
+  veh:queueLuaCommand("local m = extensions.simdeckVehicle if not m then extensions.load('simdeckVehicle') m = extensions.simdeckVehicle end " ..
+    "if m then " .. watchCode() .. " m.requestFull() if m.requestFeatures then m.requestFeatures() end end")
 end
 
 local function requestFullState()
@@ -1014,6 +1118,12 @@ local function handleMessage(line)
     applyBindings(msg)
   elseif t == "state.request" then
     requestFullState()
+  elseif t == "readings.watch" then
+    setReadingWatch(msg)
+  elseif t == "tuning.request" then
+    requestTuning()
+  elseif t == "tuning.apply" then
+    applyTuning(msg)
   elseif t == "ping" then
     send({ type = "pong", t = msg.t })
   end
@@ -1177,6 +1287,7 @@ local function onVehicleSwitched(oldId, newId)
   actions = nil
   vehicleScan = nil
   enabledInteractions = nil
+  lastTuning = nil
   if status == "connected" then attachVehicle() end
 end
 
@@ -1223,6 +1334,8 @@ M.onExtensionUnloaded = onExtensionUnloaded
 
 M.onVehicleState = onVehicleState
 M.onVehicleFeatures = onVehicleFeatures
+M.onVehicleReadings = onVehicleReadings
+M.onVehicleTuning = onVehicleTuning
 M.report = report
 M._classify = classify
 M.runAction = runAction

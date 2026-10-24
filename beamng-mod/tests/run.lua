@@ -624,6 +624,91 @@ do
   check(link.report() >= 7, "report() lists the features")
 end
 
+-- ============= READINGS AND TUNING (1.4) =============
+do
+  local function approx(a, b) return type(a) == "number" and math.abs(a - b) < 1e-6 end
+  e.oiltemp, e.watertemp, e.boost, e.fuelVolume, e.fuelCapacity, e.accXSmooth = 92.3, 88.8, 7.42, 41.27, 60, 4.905
+  ve.wheels = { wheels = {
+    [0] = { name = "FL", brakeSurfaceTemperature = 120.4, brakeCoreTemperature = 80, isTireDeflated = false },
+    [1] = { name = "RR", brakeSurfaceTemperature = 95, isTireDeflated = true },
+  } }
+  ve.v.data.variables = {
+    ["$tirepressure_F"] = { name = "$tirepressure_F", type = "range", unit = "psi", category = "Wheels", subCategory = "Front",
+      min = 0, max = 50, default = 30, val = 30, title = "Tire Pressure", description = "Front tyre pressure" },
+    ["$brakebias"] = { name = "$brakebias", type = "range", unit = "", category = "Brakes", min = 0, max = 1, default = 0.6, val = 0.6,
+      title = "Brake Bias", minDis = 0, maxDis = 100, stepDis = 1 },
+    ["$hidden"] = { name = "$hidden", type = "range", unit = "", category = "X", min = 0, max = 1, default = 0, val = 0, title = "Hidden", hideInUI = true },
+  }
+  local respawned = nil
+  local vehData = { config = { vars = { ["$tirepressure_F"] = 28 }, partsTree = {} } }
+  ge.core_vehicle_manager = { getVehicleData = function(id) return id == 7 and vehData or nil end }
+  ge.serialize = function(t) return json.encode(t) end
+  veh.respawn = function(_, cfg) respawned = cfg end
+
+  inbox = {}
+  sendToMod({ type = "state.request" })
+  pump(10)
+  local r = lastOfType("readings")
+  local byKey = {}
+  for _, it in ipairs(r and r.list or {}) do byKey[it.key] = it end
+  check(r ~= nil and r.vehicle == "pickup", "readings catalogue for the vehicle")
+  check(byKey["oil.temp"] and byKey["oil.temp"].group == "Engine" and byKey["oil.temp"].unit == "C", "oil temperature offered, grouped, in C")
+  check(byKey["coolant.temp"] and byKey["boost"] and byKey["fuel.volume"] and byKey["g.x"], "coolant, boost, fuel litres and G offered")
+  check(byKey["boost.max"] == nil and byKey["battery"] == nil, "readings the car does not have are left out")
+  check(byKey["brake.FL.temp"] and byKey["brake.FL.temp"].title == "Brake temperature FL" and byKey["brake.RR.temp"], "brake temperature per wheel")
+  check(byKey["brake.RR.core"] == nil and byKey["tire.RR.deflated"] ~= nil, "per-wheel values only where the wheel has them")
+  check(byKey["e.oiltemp"] and byKey["e.oiltemp"].group == "All signals", "raw electrics offered under All signals")
+  check(merged()["oil.temp"] == nil, "readings nobody watches are not sent")
+
+  sendToMod({ type = "readings.watch", keys = { "oil.temp", "brake.FL.temp", "e.watertemp", "g.x" } })
+  pump(6)
+  local st = merged()
+  check(approx(st["oil.temp"], 92.5), "watched oil temperature sent, in 0.5 steps: " .. tostring(st["oil.temp"]))
+  check(approx(st["brake.FL.temp"], 120) and approx(st["e.watertemp"], 88.8) and approx(st["g.x"], 0.5), "watched brake temp, raw signal and G")
+  check(st["coolant.temp"] == nil and st["e.oiltemp"] == nil, "unwatched readings stay out")
+  e.oiltemp = 101
+  pump(4)
+  check(approx(merged()["oil.temp"], 101), "a watched reading follows the game")
+
+  sendToMod({ type = "readings.watch", keys = {}, all = true })
+  pump(6)
+  st = merged()
+  check(approx(st["fuel.volume"], 41.3) and st["tire.RR.deflated"] == true and approx(st["coolant.temp"], 89), "watching all sends every reading")
+
+  -- tuning
+  local t = lastOfType("tuning")
+  local tv = {}
+  for _, d in ipairs(t and t.list or {}) do tv[d.name] = d end
+  check(t ~= nil and #t.list == 2 and tv["$hidden"] == nil, "tuning variables sent, hidden ones left out")
+  check(t and t.list[1].name == "$brakebias", "tuning sorted by category")
+  local tp = tv["$tirepressure_F"] or {}
+  check(tp.val == 28 and tp.default == 30 and tp.category == "Wheels" and tp.subCategory == "Front" and tp.unit == "psi",
+    "tuning variable fields, the applied config value wins")
+  check(tv["$brakebias"] and tv["$brakebias"].maxDis == 100 and tv["$brakebias"].stepDis == 1, "display range and step kept")
+
+  inbox = {}
+  sendToMod({ type = "tuning.apply", vars = { ["$tirepressure_F"] = 99, ["$nope"] = 1 } })
+  pump(4)
+  local res = lastOfType("tuning.result")
+  local cfg = respawned and json.decode(respawned) or {}
+  check(res and res.ok == true, "tuning applied")
+  check(cfg.vars and cfg.vars["$tirepressure_F"] == 50 and cfg.vars["$nope"] == nil, "applied through the vehicle config, clamped, unknown names dropped")
+  respawned = nil
+  sendToMod({ type = "tuning.apply", vars = { ["$nope"] = 1 } })
+  pump(4)
+  res = lastOfType("tuning.result")
+  check(res and res.ok == false and respawned == nil, "nothing applied when the vehicle has none of the settings")
+  inbox = {}
+  sendToMod({ type = "tuning.request" })
+  pump(4)
+  check(lastOfType("tuning") ~= nil, "tuning sent again on request")
+
+  sendToMod({ type = "readings.watch", keys = {} })
+  pump(4)
+  ve.v.data.variables = nil
+  ve.wheels = nil
+end
+
 -- leaving the vehicle drops vehicle keys
 playerId = -1
 link.onVehicleSwitched(7, -1)

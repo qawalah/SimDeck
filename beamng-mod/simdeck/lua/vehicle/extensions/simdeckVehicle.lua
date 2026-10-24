@@ -22,6 +22,7 @@ local fullRequested = true
 
 -- features found on this vehicle, filled by scanVehicle()
 local features = nil
+local sendReadings, sendTuning -- defined with the readings and tuning code
 
 -- ============= HELPERS =============
 
@@ -317,6 +318,8 @@ local function sendFeatures()
   end
   obj:queueGameEngineLua(string.format("if simdeckLink then simdeckLink.onVehicleFeatures(%d, %q) end",
     obj:getID(), jsonEncode(scan)))
+  sendReadings()
+  sendTuning()
 end
 
 local function toggleCoupler(name)
@@ -335,6 +338,218 @@ end
 local function setHydro(src, value)
   if type(src) ~= "string" then return end
   electrics.values[src] = math.max(-1, math.min(1, tonumber(value) or 0))
+end
+
+-- ============= READINGS (SimDeck 1.4) =============
+-- Live values for gauges beyond the lamps above: temperatures, boost, fuel litres, G-forces, pedals, brake
+-- temperatures per wheel and, on request, every raw electrics signal ("e.<name>"). They are only sent while the
+-- phone watches them (readings.watch), so a profile without gauges costs nothing. Units are the game's own; the
+-- phone's catalogue converts (m/s to km/h, psi to bar...).
+
+local watch, watchAll = {}, false
+local G = 9.81
+
+local function num(x)
+  if type(x) ~= "number" or x ~= x or x == math.huge or x == -math.huge then return nil end
+  return x
+end
+local function flag(x)
+  if x == nil then return nil end
+  return truthy(x)
+end
+local function scaled(x, k) x = num(x) return x and x * k or nil end
+
+-- energy storages (tanks and batteries), read through the game's energyStorage module when it exists
+local function batteryLevel()
+  local es = rawget(_G, "energyStorage")
+  if type(es) ~= "table" or type(es.getStorages) ~= "function" then return nil end
+  local ok, all = pcall(es.getStorages)
+  if not ok or type(all) ~= "table" then return nil end
+  local stored, cap = 0, 0
+  for _, st in pairs(all) do
+    if type(st) == "table" and tostring(st.energyType or ""):lower():find("electric") then
+      stored = stored + (num(st.storedEnergy) or 0)
+      cap = cap + (num(st.energyCapacity) or 0)
+    end
+  end
+  if cap <= 0 then return nil end
+  return stored / cap
+end
+
+-- { key, group, title, unit (as reported), rounding step, getter(electrics) }
+local READINGS = {
+  { "oil.temp", "Engine", "Oil temperature", "C", 0.5, function(e) return num(e.oiltemp) end },
+  { "coolant.temp", "Engine", "Coolant temperature", "C", 0.5, function(e) return num(e.watertemp) end },
+  { "boost", "Engine", "Boost", "psi", 0.1, function(e) return num(e.boost) or num(e.turboBoost) end },
+  { "boost.max", "Engine", "Boost maximum", "psi", 0.1, function(e) return num(e.boostMax) end },
+  { "engine.load", "Engine", "Engine load", "ratio", 0.01, function(e) return num(e.engineLoad) end },
+  { "engine.throttle", "Engine", "Engine throttle", "ratio", 0.01, function(e) return num(e.engineThrottle) end },
+  { "rpm.tacho", "Engine", "Tachometer", "rpm", 10, function(e) return num(e.rpmTacho) end },
+  { "fuel.volume", "Fuel & energy", "Fuel left", "L", 0.1, function(e) return num(e.fuelVolume) end },
+  { "fuel.capacity", "Fuel & energy", "Tank size", "L", 0.1, function(e) return num(e.fuelCapacity) end },
+  { "battery", "Fuel & energy", "Battery charge", "ratio", 0.001, function() return batteryLevel() end },
+  { "electrical.load", "Fuel & energy", "Electrical load", "ratio", 0.01, function(e) return num(e.electricalLoadCoef) end },
+  { "gear.index", "Drivetrain", "Gear number", "", 1, function(e) return num(e.gearIndex) end },
+  { "clutch", "Drivetrain", "Clutch engagement", "ratio", 0.01, function(e) return num(e.clutchRatio) or num(e.clutch) end },
+  { "wheelspeed", "Drivetrain", "Wheel speed", "m/s", 0.1, function(e) return num(e.wheelspeed) end },
+  { "shifting", "Drivetrain", "Shifting", "", nil, function(e) return flag(e.isShifting) end },
+  { "input.throttle", "Driver inputs", "Throttle pedal", "ratio", 0.01, function(e) return num(e.throttle_input) end },
+  { "input.brake", "Driver inputs", "Brake pedal", "ratio", 0.01, function(e) return num(e.brake_input) end },
+  { "input.clutch", "Driver inputs", "Clutch pedal", "ratio", 0.01, function(e) return num(e.clutch_input) end },
+  { "input.parkingbrake", "Driver inputs", "Hand brake lever", "ratio", 0.01, function(e) return num(e.parkingbrake_input) end },
+  { "input.steering", "Driver inputs", "Steering input", "-1..1", 0.01, function(e) return num(e.steering_input) end },
+  { "steering.angle", "Driver inputs", "Steering wheel angle", "deg", 1, function(e) return num(e.steering) end },
+  { "airspeed", "Motion", "Speed over ground", "m/s", 0.1, function(e) return num(e.airspeed) end },
+  { "altitude", "Motion", "Altitude", "m", 0.5, function(e) return num(e.altitude) end },
+  { "g.x", "Motion", "G-force sideways", "g", 0.01, function(e) return scaled(e.accXSmooth, 1 / G) end },
+  { "g.y", "Motion", "G-force forward / back", "g", 0.01, function(e) return scaled(e.accYSmooth, 1 / G) end },
+  { "g.z", "Motion", "G-force vertical", "g", 0.01, function(e) return scaled(e.accZSmooth, 1 / G) end },
+  { "odometer", "Motion", "Odometer", "m", 10, function(e) return num(e.odometer) end },
+  { "trip", "Motion", "Trip", "m", 10, function(e) return num(e.trip) end },
+  { "warning.checkengine", "Warnings", "Check engine", "", nil, function(e) return flag(e.checkengine) end },
+  { "warning.oil", "Warnings", "Oil overheating", "", nil, function(e) return flag(e.oil) end },
+  { "warning.lowfuel", "Warnings", "Low fuel", "", nil, function(e) return flag(e.lowfuel) end },
+  { "warning.lowpressure", "Warnings", "Tyre deflated", "", nil, function(e) return flag(e.lowpressure) end },
+}
+
+-- per wheel: { suffix, group, title, unit, step, field }
+local WHEEL_READINGS = {
+  { "temp", "Brakes", "Brake temperature", "C", 1, function(w) return num(w.brakeSurfaceTemperature) end },
+  { "core", "Brakes", "Brake core temperature", "C", 1, function(w) return num(w.brakeCoreTemperature) end },
+  { "deflated", "Tyres", "Tyre deflated", "", nil, function(w) return flag(w.isTireDeflated) end },
+}
+local WHEEL_PREFIX = { temp = "brake.", core = "brake.", deflated = "tire." }
+
+local function eachWheel(fn)
+  local wh = rawget(_G, "wheels")
+  if type(wh) ~= "table" or type(wh.wheels) ~= "table" then return end
+  for _, w in pairs(wh.wheels) do
+    if type(w) == "table" and type(w.name) == "string" and w.name ~= "" then fn(w) end
+  end
+end
+
+local function wheelKey(def, w)
+  return WHEEL_PREFIX[def[1]] .. w.name .. "." .. def[1]
+end
+
+local function rounded(val, step)
+  if type(val) == "number" and step then return round(val, step) end
+  return val
+end
+
+local function wants(key) return watchAll or watch[key] == true end
+
+-- adds the watched readings to a state table
+local function addReadings(s)
+  if not watchAll and next(watch) == nil then return end
+  local e = electrics.values
+  for _, r in ipairs(READINGS) do
+    if wants(r[1]) then
+      local ok, val = pcall(r[6], e)
+      if ok and val ~= nil then s[r[1]] = rounded(val, r[5]) end
+    end
+  end
+  eachWheel(function(w)
+    for _, d in ipairs(WHEEL_READINGS) do
+      local key = wheelKey(d, w)
+      if wants(key) then
+        local ok, val = pcall(d[6], w)
+        if ok and val ~= nil then s[key] = rounded(val, d[5]) end
+      end
+    end
+  end)
+  local anyRaw = watchAll
+  if not anyRaw then for k in pairs(watch) do if k:sub(1, 2) == "e." then anyRaw = true break end end end
+  if anyRaw then
+    for name, val in pairs(e) do
+      local key = "e." .. tostring(name)
+      if wants(key) then
+        if type(val) == "number" then val = num(val) and round(val, 0.01) or nil end
+        if type(val) == "number" or type(val) == "boolean" or type(val) == "string" then s[key] = val end
+      end
+    end
+  end
+end
+
+-- what this vehicle can report, for the phone's reading picker
+local function readingsCatalog()
+  local list = {}
+  local e = electrics.values
+  for _, r in ipairs(READINGS) do
+    local ok, val = pcall(r[6], e)
+    if ok and val ~= nil then table.insert(list, { key = r[1], group = r[2], title = r[3], unit = r[4] }) end
+  end
+  eachWheel(function(w)
+    for _, d in ipairs(WHEEL_READINGS) do
+      local ok, val = pcall(d[6], w)
+      if ok and val ~= nil then
+        table.insert(list, { key = wheelKey(d, w), group = d[2], title = d[3] .. " " .. w.name, unit = d[4] })
+      end
+    end
+  end)
+  local raw = {}
+  for name, val in pairs(e) do
+    if type(name) == "string" and (type(val) == "number" or type(val) == "boolean" or type(val) == "string") then table.insert(raw, name) end
+  end
+  table.sort(raw)
+  for _, name in ipairs(raw) do table.insert(list, { key = "e." .. name, group = "All signals", title = name, unit = "" }) end
+  return list
+end
+
+sendReadings = function()
+  local ok, list = pcall(readingsCatalog)
+  if not ok then log('W', 'simdeck', 'readings scan failed: ' .. tostring(list)); list = {} end
+  toGE(string.format("if simdeckLink and simdeckLink.onVehicleReadings then simdeckLink.onVehicleReadings(%d, %q) end",
+    obj:getID(), jsonEncode(list)))
+end
+
+-- ============= TUNING (SimDeck 1.4) =============
+-- The vehicle's tuning variables (jbeam "variables", what the game's Tuning menu shows). Applying them is done on
+-- the game engine side, which owns the vehicle's config.
+
+local function tuningList()
+  local out = {}
+  local vars = v and type(v.data) == "table" and v.data.variables
+  if type(vars) ~= "table" then return out end
+  for key, d in pairs(vars) do
+    if type(d) == "table" and not truthy(d.hideInUI) and d.hideInUI ~= "true" and (d.type == nil or d.type == "range")
+        and num(d.min) and num(d.max) then
+      local name = type(d.name) == "string" and d.name or tostring(key)
+      table.insert(out, {
+        name = name, title = type(d.title) == "string" and d.title ~= "" and d.title or name:gsub("^%$", ""),
+        category = type(d.category) == "string" and d.category ~= "" and d.category or "Other",
+        subCategory = type(d.subCategory) == "string" and d.subCategory ~= "" and d.subCategory or nil,
+        description = type(d.description) == "string" and d.description ~= "" and d.description or nil,
+        unit = type(d.unit) == "string" and d.unit or "",
+        min = d.min, max = d.max, minDis = num(d.minDis), maxDis = num(d.maxDis), stepDis = num(d.stepDis),
+        default = num(d.default), val = num(d.val) or num(d.default),
+      })
+    end
+  end
+  table.sort(out, function(a, b)
+    if a.category ~= b.category then return a.category < b.category end
+    if (a.subCategory or "") ~= (b.subCategory or "") then return (a.subCategory or "") < (b.subCategory or "") end
+    return a.title < b.title
+  end)
+  return out
+end
+
+sendTuning = function()
+  local ok, list = pcall(tuningList)
+  if not ok then log('W', 'simdeck', 'tuning scan failed: ' .. tostring(list)); list = {} end
+  toGE(string.format("if simdeckLink and simdeckLink.onVehicleTuning then simdeckLink.onVehicleTuning(%d, %q) end",
+    obj:getID(), jsonEncode(list)))
+end
+
+-- from simdeckLink: the readings the phones need (a JSON list of keys), or all of them
+local function setWatch(keysJson, all)
+  local keys = type(keysJson) == "string" and jsonDecode(keysJson) or keysJson
+  local nw = {}
+  if type(keys) == "table" then for _, k in pairs(keys) do if type(k) == "string" then nw[k] = true end end end
+  local wasAll = watchAll
+  watch, watchAll = nw, all == true
+  if watchAll and not wasAll then sendReadings() end -- the picker opened: refresh what this car has
+  fullRequested = true
 end
 
 -- ============= STATE =============
@@ -450,6 +665,7 @@ local function collectState()
   for _, src in ipairs(hydroSources) do
     if type(e[src]) == "number" then s["hydro." .. src] = round(e[src], 0.01) end
   end
+  addReadings(s)
   return s
 end
 
@@ -783,10 +999,15 @@ M.setActive = setActive
 M.requestFull = requestFull
 M.command = command
 M.requestFeatures = sendFeatures
+M.setWatch = setWatch
+M.requestTuning = sendTuning
+M.requestReadings = sendReadings
 
 -- exposed for the offline tests
 M._collectState = collectState
 M._scanVehicle = scanVehicle
 M._scanFeatures = scanFeatures
+M._tuningList = tuningList
+M._readingsCatalog = readingsCatalog
 
 return M
