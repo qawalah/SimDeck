@@ -11,6 +11,7 @@ import com.simdeck.model.KeyTrigger
 import com.simdeck.model.Page
 import com.simdeck.model.Position
 import com.simdeck.model.Profile
+import com.simdeck.model.Readings
 import com.simdeck.model.VehicleFeature
 import com.simdeck.model.VehicleFeaturePages
 
@@ -109,8 +110,16 @@ object Presets {
         }
     }
 
-    /** The built-in library: generic presets, then every built-in profile's controls. */
-    val builtIn: List<Preset> by lazy { generic + BuiltInProfiles.all.flatMap { fromProfile(it) } }
+    /** Every live reading from the BeamNG mod as a gauge (or a lamp for on/off values), grouped like the reading picker. */
+    val readings: List<Preset> by lazy {
+        Readings.known.map { r ->
+            Preset("reading.${r.key}", r.title, "Gauges: ${r.group}", "BeamNG readings", setOf(GameId.BEAMNG),
+                "Shows ${r.key}" + if (r.unit.isNotBlank()) " in ${r.unit}" else "", Readings.control(r))
+        }
+    }
+
+    /** The built-in library: generic presets, readings, then every built-in profile's controls. */
+    val builtIn: List<Preset> by lazy { generic + readings + BuiltInProfiles.all.flatMap { fromProfile(it) } }
 
     /** A BeamNG input action as a one-tap button (axis actions become a spring-centred slider). */
     fun gameAction(a: GameAction): Preset {

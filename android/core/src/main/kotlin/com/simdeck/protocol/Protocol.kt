@@ -11,6 +11,8 @@ import com.simdeck.model.Control
 import com.simdeck.model.Joystick
 import com.simdeck.model.ControlType
 import com.simdeck.model.Profile
+import com.simdeck.model.ReadingInfo
+import com.simdeck.model.TuningVar
 import com.simdeck.model.Action as ModelAction
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
@@ -151,6 +153,21 @@ object Protocol {
         })
     }
 
+    // ---- readings and tuning (SimDeck 1.4) ----
+
+    /** The readings this phone shows; [all] while the reading picker is open. */
+    fun readingsWatch(keys: Collection<String>, all: Boolean): String = obj("readings.watch") {
+        put("keys", buildJsonArray { keys.forEach { add(JsonPrimitive(it)) } })
+        put("all", all)
+    }
+
+    fun tuningRequest(): String = obj("tuning.request") {}
+
+    /** New values (game range) by variable name. */
+    fun tuningApply(vars: Map<String, Double>): String = obj("tuning.apply") {
+        put("vars", buildJsonObject { vars.forEach { (k, v) -> put(k, v) } })
+    }
+
     private inline fun obj(type: String, body: kotlinx.serialization.json.JsonObjectBuilder.() -> Unit): String =
         buildJsonObject {
             put("v", VERSION)
@@ -208,6 +225,13 @@ object Protocol {
                     GameAction(name, a.s("title") ?: name, a.s("cat") ?: "", a.b("vehicle"), a.b("axis"))
                 } ?: emptyList()
             )
+            "beamng.readings" -> Incoming.BeamNGReadings(str("vehicle") ?: "", list(o).mapNotNull { e ->
+                val r = e as? JsonObject ?: return@mapNotNull null
+                val key = r.s("key")?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+                ReadingInfo(key, r.s("group") ?: "Other", r.s("title") ?: key, r.s("unit") ?: "")
+            })
+            "beamng.tuning" -> Incoming.BeamNGTuning(str("vehicle") ?: "", list(o).mapNotNull { tuningVar(it) })
+            "beamng.tuning.result" -> Incoming.TuningResult(o["ok"]?.jsonPrimitive?.booleanOrNull ?: false, str("message") ?: "")
             "notice" -> Incoming.Notice(str("level") ?: "info", str("code") ?: "", str("message") ?: "")
             "foreground" -> Incoming.Foreground(str("exe") ?: "")
             // Layout editing from the PC companion (SimDeck 1.3).
@@ -224,6 +248,25 @@ object Protocol {
     }
 
     private fun JsonObject.s(k: String) = (this[k] as? JsonPrimitive)?.contentOrNull
+    private fun JsonObject.d(k: String) = (this[k] as? JsonPrimitive)?.takeIf { !it.isString }?.doubleOrNull?.takeIf { it.isFinite() }
+
+    /** A message's "list"; an empty Lua table may arrive as {} instead of []. */
+    private fun list(o: JsonObject): List<JsonElement> = (o["list"] as? JsonArray) ?: emptyList()
+
+    private fun tuningVar(e: JsonElement): TuningVar? {
+        val t = e as? JsonObject ?: return null
+        val name = t.s("name")?.takeIf { it.isNotBlank() } ?: return null
+        val min = t.d("min") ?: return null
+        val max = t.d("max") ?: return null
+        val def = t.d("default")
+        return TuningVar(
+            name = name, title = t.s("title")?.takeIf { it.isNotBlank() } ?: name.removePrefix("$"),
+            category = t.s("category")?.takeIf { it.isNotBlank() } ?: "Other", subCategory = t.s("subCategory")?.takeIf { it.isNotBlank() },
+            description = t.s("description")?.takeIf { it.isNotBlank() }, unit = t.s("unit") ?: "",
+            min = min, max = max, minDis = t.d("minDis"), maxDis = t.d("maxDis"), stepDis = t.d("stepDis")?.takeIf { it > 0 },
+            default = def, value = t.d("val") ?: def ?: min,
+        )
+    }
     private fun JsonObject.b(k: String) = (this[k] as? JsonPrimitive)?.booleanOrNull ?: false
 
     /** "beamng.features": the list (an empty Lua table may arrive as {} instead of []) and the diagnostics block. */
@@ -305,6 +348,11 @@ sealed interface Incoming {
     /** A message for the user, e.g. code "vjoy_config" when vJoy is set up with too few buttons for the profile. */
     data class Notice(val level: String, val code: String, val message: String) : Incoming
     data class Foreground(val exe: String) : Incoming
+    /** What the BeamNG vehicle can report (SimDeck 1.4). */
+    data class BeamNGReadings(val vehicle: String, val list: List<ReadingInfo>) : Incoming
+    /** The BeamNG vehicle's tuning settings; an empty list when there is no vehicle or no game. */
+    data class BeamNGTuning(val vehicle: String, val list: List<TuningVar>) : Incoming
+    data class TuningResult(val ok: Boolean, val message: String) : Incoming
     /** The PC companion asks for the list of this phone's profiles. */
     data object ProfilesRequest : Incoming
     /** The PC companion asks for one profile, to edit it. */

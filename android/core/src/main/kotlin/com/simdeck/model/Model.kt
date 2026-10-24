@@ -71,6 +71,8 @@ data class Page(
 ) {
     companion object {
         const val AUTO_BEAMNG_VEHICLE = "beamng.vehicle"
+        /** The BeamNG vehicle's tuning settings, like the game's Tuning menu (SimDeck 1.4). Schema 6. */
+        const val AUTO_BEAMNG_TUNING = "beamng.tuning"
     }
 }
 

@@ -11,6 +11,7 @@ import com.simdeck.model.OutputRoute
 import com.simdeck.model.Page
 import com.simdeck.model.Position
 import com.simdeck.model.Profile
+import com.simdeck.model.Readings
 import com.simdeck.model.PanelGroup
 import com.simdeck.model.Station
 import com.simdeck.model.Band
@@ -295,12 +296,44 @@ object BuiltInProfiles {
                 momentary("bng_ax_horn", "Horn", "horn", 7, 3, bng("horn")),
             ),
         )
+        // Live readings from the mod (1.4): temperatures, boost, fuel, G, brakes. Ranges in display units.
+        fun dial(id: String, key: String, x: Int, y: Int, skin: String = "steam", w: Int = 2, h: Int = 2): Control {
+            val r = Readings.forKey(key)
+            return Readings.control(r).copy(id = id, x = x, y = y, w = w, h = h, skin = skin)
+        }
+        fun readout(id: String, label: String, key: String, x: Int, y: Int, w: Int = 1): Control {
+            val r = Readings.forKey(key)
+            return Control(id, ControlType.GAUGE, label, null, x, y, w, 1, Accent.CYAN, feedbackKey = key, scale = r.scale,
+                unit = r.unit.ifBlank { null }, decimals = r.decimals)
+        }
+        val gauges = Page(
+            id = "bng_gauges", name = "Gauges", columns = 8, rows = 4,
+            controls = listOf(
+                dial("bng_g_oil", "oil.temp", 0, 0),
+                dial("bng_g_coolant", "coolant.temp", 2, 0),
+                dial("bng_g_boost", "boost", 4, 0),
+                dial("bng_g_load", "engine.load", 6, 0, skin = "bar"),
+                readout("bng_g_fuel_l", "Fuel", "fuel.volume", 0, 2, w = 2),
+                dial("bng_g_fuel", "fuel", 2, 2, skin = "bar", h = 1),
+                readout("bng_g_lat", "Lateral G", "g.x", 4, 2, w = 2),
+                readout("bng_g_long", "Long. G", "g.y", 6, 2, w = 2),
+                readout("bng_g_brake_fl", "Brake FL", "brake.FL.temp", 0, 3).copy(unit = "°C"),
+                readout("bng_g_brake_fr", "Brake FR", "brake.FR.temp", 1, 3).copy(unit = "°C"),
+                readout("bng_g_brake_rl", "Brake RL", "brake.RL.temp", 2, 3).copy(unit = "°C"),
+                readout("bng_g_brake_rr", "Brake RR", "brake.RR.temp", 3, 3).copy(unit = "°C"),
+                readout("bng_g_odo", "Odometer", "odometer", 4, 3, w = 2),
+                lamp("bng_g_cel", "Check engine", "check_engine", "warning.checkengine", 6, 3, Accent.AMBER),
+                lamp("bng_g_oilw", "Oil hot", "temp", "warning.oil", 7, 3, Accent.RED),
+            ),
+        )
+        val tuning = Page(id = "bng_tuning", name = "Tuning", columns = 8, rows = 4, auto = Page.AUTO_BEAMNG_TUNING)
         return Profile(
             id = BEAMNG_ID, name = "BeamNG.drive", game = GameId.BEAMNG, builtIn = true, theme = null, themeFollowsVehicle = true,
-            pages = listOf(drive, drivetrain, vehicle, more, world, analog), output = OutputRoute.COMPANION,
+            pages = listOf(drive, drivetrain, vehicle, more, world, analog, gauges, tuning), output = OutputRoute.COMPANION,
             processNames = BEAMNG_EXE,
-            description = "Every vehicle function with live lights from the game, plus a Vehicle page that fills itself with what " +
-                "the car you drive has (tailgate, doors, bed, crane, outriggers...). Needs the PC companion and the BeamNG mod.",
+            description = "Every vehicle function with live lights from the game, a Vehicle page that fills itself with what " +
+                "the car you drive has (tailgate, doors, bed, crane, outriggers...), live gauges (oil and coolant temperature, boost, " +
+                "brakes) and a Tuning page like the game's. Needs the PC companion and the BeamNG mod.",
         )
     }
 
