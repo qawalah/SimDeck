@@ -59,6 +59,9 @@ public sealed class CompanionHost : IDisposable
     IReadOnlyList<string> _beamngCommands = Array.Empty<string>();
     JsonObject? _beamngFeatures;   // last "beamng.features" message, sent to phones that connect later
     JsonObject? _beamngActions;    // last "beamng.actions" message
+    JsonObject? _beamngReadings;   // last "beamng.readings" message (1.4)
+    JsonObject? _beamngTuning;     // last "beamng.tuning" message (1.4)
+    string? _lastWatch;            // last readings.watch sent to the mod
     string? _foreground;
     long _lastOutGaugeMs = long.MinValue / 2, _lastOutGaugeFlushMs;
     bool _outgaugeWasActive;
@@ -121,6 +124,8 @@ public sealed class CompanionHost : IDisposable
         Router = router;
         _options = options ?? new HostOptions();
         Pairing = new Pairing(store);
+        // A phone leaving takes its watched readings with it (1.4).
+        SessionsChanged += PushWatch;
     }
 
     // ---------------------------------------------------------------- lifecycle
@@ -169,11 +174,16 @@ public sealed class CompanionHost : IDisposable
         {
             var link = new BeamNgLink(c.BeamNgPort);
             link.Log += s => Log("info", s);
-            link.ConnectionChanged += _ => { if (!link.Connected) OnBeamNgDisconnected(); PushCapabilities(); StatusChanged?.Invoke(); };
+            link.ConnectionChanged += _ =>
+            {
+                if (!link.Connected) OnBeamNgDisconnected(); else { _lastWatch = WatchText(Array.Empty<string>(), false); PushWatch(); }
+                PushCapabilities(); StatusChanged?.Invoke();
+            };
             link.StateReceived += OnBeamNgState;
             link.CommandsReceived += OnBeamNgCommands;
             link.FeaturesReceived += OnBeamNgFeatures;
             link.ActionsReceived += OnBeamNgActions;
+            link.ModMessage += OnBeamNgModMessage;
             // Relayed unchanged (ok, written, message, ...); a malformed "ok" only affects the log level.
             link.BindingsResult += r =>
             {
@@ -655,6 +665,8 @@ public sealed class CompanionHost : IDisposable
         if (_beamngCommands.Count > 0) session.Send(CommandsMessage());
         if (_beamngFeatures is { } bf) session.Send((JsonObject)bf.DeepClone());
         if (_beamngActions is { } ba) session.Send((JsonObject)ba.DeepClone());
+        if (_beamngReadings is { } br) session.Send((JsonObject)br.DeepClone());
+        if (_beamngTuning is { } bt) session.Send((JsonObject)bt.DeepClone());
         if (_foreground is { } fg) session.Send(ForegroundMessage(fg));
         return session;
     }
@@ -699,6 +711,11 @@ public sealed class CompanionHost : IDisposable
                 ProfileSaved?.Invoke(s, m.Str("id") ?? "", m.Bool("ok"), m.Str("message") ?? "");
                 Log(m.Bool("ok") ? "info" : "warn", $"{s.DeviceName}: layout {(m.Bool("ok") ? "saved" : "not saved")}: {m.Str("message")}");
                 break;
+            case "readings.watch": SetWatch(s, m); break;
+            case "tuning.request":
+                BeamNg?.Send(JsonExt.Msg("tuning.request"));
+                break;
+            case "tuning.apply": ForwardTuning(s, m); break;
             // pong, and anything newer than us, is ignored (forward compatibility).
         }
     }
@@ -748,6 +765,8 @@ public sealed class CompanionHost : IDisposable
             s.Send(StateMessage("beamng", Snapshot(_beamngState), full: true));
             if (_beamngCommands.Count > 0) s.Send(CommandsMessage());
             if (_beamngFeatures is { } bf) s.Send((JsonObject)bf.DeepClone());
+            if (_beamngReadings is { } br) s.Send((JsonObject)br.DeepClone());
+            if (_beamngTuning is { } bt) s.Send((JsonObject)bt.DeepClone());
         }
         else if (OutGaugeActive)
             s.Send(StateMessage("outgauge", Snapshot(_outgaugeState), full: true));
@@ -857,6 +876,16 @@ public sealed class CompanionHost : IDisposable
             Broadcast(empty);
         }
         _beamngActions = null;
+        _beamngReadings = null;
+        if (_beamngTuning != null)
+        {
+            _beamngTuning = null;
+            var empty = JsonExt.Msg("beamng.tuning");
+            empty["vehicle"] = "";
+            empty["list"] = new JsonArray();
+            Broadcast(empty);
+        }
+        _lastWatch = null;
     }
 
     /// <summary>The mod's vehicle feature list, relayed as "beamng.features" (PROTOCOL.md, Vehicle features).</summary>
@@ -882,6 +911,89 @@ public sealed class CompanionHost : IDisposable
         relay["list"] = m["list"] is JsonArray l ? l.DeepClone() : new JsonArray();
         _beamngActions = relay;
         Broadcast(relay);
+    }
+
+    // ---------------------------------------------------------------- readings and tuning (SimDeck 1.4)
+
+    /// <summary>The mod's readings catalogue, tuning list and tuning results, relayed with a "beamng." prefix.</summary>
+    void OnBeamNgModMessage(JsonObject m)
+    {
+        var type = m["type"]?.GetValue<string>() ?? "";
+        var relay = (JsonObject)m.DeepClone();
+        relay["v"] = ProtocolInfo.Version;
+        relay["type"] = "beamng." + type;
+        switch (type)
+        {
+            case "readings":
+                if (relay["list"] is not JsonArray) relay["list"] = new JsonArray();
+                _beamngReadings = relay;
+                break;
+            case "tuning":
+                if (relay["list"] is not JsonArray) relay["list"] = new JsonArray();
+                _beamngTuning = relay;
+                Log("info", $"BeamNG tuning for {m["vehicle"]}: {((JsonArray)relay["list"]!).Count} settings");
+                break;
+            case "tuning.result":
+                bool ok = m["ok"] is JsonValue v && v.TryGetValue<bool>(out var b) && b;
+                Log(ok ? "info" : "warn", $"BeamNG tuning: {m["message"]}");
+                break;
+        }
+        Broadcast(relay);
+    }
+
+    const int MaxWatchKeys = 512;
+
+    void SetWatch(PhoneSession s, JsonElement m)
+    {
+        var keys = new List<string>();
+        if (m.TryGetProperty("keys", out var arr) && arr.ValueKind == JsonValueKind.Array)
+            foreach (var k in arr.EnumerateArray())
+                if (k.ValueKind == JsonValueKind.String && k.GetString() is { Length: > 0 and <= 128 } key && keys.Count < MaxWatchKeys) keys.Add(key);
+        s.WatchKeys = keys;
+        s.WatchAll = m.Bool("all");
+        PushWatch();
+    }
+
+    /// <summary>Sends the mod the union of what every phone watches, when it changed.</summary>
+    void PushWatch()
+    {
+        if (BeamNg?.Connected != true) return;
+        var sessions = Sessions;
+        var keys = sessions.SelectMany(x => x.WatchKeys).Distinct(StringComparer.Ordinal).OrderBy(x => x, StringComparer.Ordinal).Take(MaxWatchKeys).ToList();
+        var text = WatchText(keys, sessions.Any(x => x.WatchAll));
+        if (text == _lastWatch) return; // a fresh mod watches nothing, so an empty watch is not sent on connect
+        _lastWatch = text;
+        BeamNg.Send(JsonNode.Parse(text)!.AsObject());
+    }
+
+    static string WatchText(IReadOnlyList<string> keys, bool all)
+    {
+        var msg = JsonExt.Msg("readings.watch");
+        msg["keys"] = new JsonArray(keys.Select(k => (JsonNode)JsonValue.Create(k)!).ToArray());
+        msg["all"] = all;
+        return msg.ToJsonString();
+    }
+
+    /// <summary>Tuning values from a phone: names and numbers only, then on to the mod, which clamps them.</summary>
+    void ForwardTuning(PhoneSession s, JsonElement m)
+    {
+        if (!m.TryGetProperty("vars", out var vars) || vars.ValueKind != JsonValueKind.Object) { s.Send(JsonExt.Error("bad_message", "tuning.apply needs vars")); return; }
+        var clean = new JsonObject();
+        foreach (var p in vars.EnumerateObject())
+            if (p.Value.ValueKind == JsonValueKind.Number && p.Name.Length is > 0 and <= 128 && clean.Count < 500 && double.IsFinite(p.Value.GetDouble()))
+                clean[p.Name] = p.Value.GetDouble();
+        if (BeamNg?.Connected != true)
+        {
+            var r = JsonExt.Msg("beamng.tuning.result");
+            r["ok"] = false;
+            r["message"] = "BeamNG is not connected";
+            s.Send(r);
+            return;
+        }
+        var msg = JsonExt.Msg("tuning.apply");
+        msg["vars"] = clean;
+        BeamNg.Send(msg);
+        Log("info", $"{s.DeviceName}: tuning {clean.ToJsonString()}");
     }
 
     static JsonObject ForegroundMessage(string exe)

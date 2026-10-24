@@ -41,6 +41,8 @@ public sealed class BeamNgLink : ICommandSink, IDisposable
     public event Action<JsonObject>? FeaturesReceived;
     /// <summary>Every BeamNG input action the mod can run, for the phone's action browser.</summary>
     public event Action<JsonObject>? ActionsReceived;
+    /// <summary>"readings", "tuning" and "tuning.result" (SimDeck 1.4), passed on whole.</summary>
+    public event Action<JsonObject>? ModMessage;
     public event Action<string>? Log;
 
     public int Port => ((IPEndPoint)_listener.LocalEndpoint).Port;
@@ -163,6 +165,11 @@ public sealed class BeamNgLink : ICommandSink, IDisposable
                 break;
             case "actions":
                 if (JsonNode.Parse(line) is JsonObject a) ActionsReceived?.Invoke(a);
+                break;
+            case "readings":
+            case "tuning":
+            case "tuning.result":
+                if (JsonNode.Parse(line) is JsonObject mm) ModMessage?.Invoke(mm);
                 break;
         }
     }

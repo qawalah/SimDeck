@@ -23,6 +23,9 @@ public sealed class PhoneSession
     public long EventCount;
     public string? ProfileId { get; set; }
     public string? Game { get; set; }
+    /// <summary>Readings this phone shows (readings.watch, SimDeck 1.4); <see cref="WatchAll"/> while its picker is open.</summary>
+    public IReadOnlyCollection<string> WatchKeys { get; set; } = Array.Empty<string>();
+    public bool WatchAll { get; set; }
 
     public PhoneSession(WebSocket ws, string key, string deviceId, string deviceName, IPAddress remote, BindingEngine engine)
     {

@@ -183,6 +183,62 @@ public sealed class SimDeckFeatureTests : IDisposable
         Assert.Contains("action.bed_tilt", zeros);
     }
 
+    /// <summary>Reads mod-bound lines until one of the given type arrives.</summary>
+    static async Task<JsonObject> ModExpect(StreamReader r, string type)
+    {
+        for (int i = 0; i < 40; i++)
+        {
+            var m = JsonNode.Parse((await ReadLine(r))!)!.AsObject();
+            if ((string?)m["type"] == type) return m;
+        }
+        throw new TimeoutException(type);
+    }
+
+    [Fact]
+    public async Task Readings_and_tuning_are_relayed_and_watches_merge_across_phones()
+    {
+        await using var p = await Pair();
+        using var mod = new TcpClient();
+        await mod.ConnectAsync(IPAddress.Loopback, _store.Config.BeamNgPort);
+        var w = new StreamWriter(mod.GetStream()) { AutoFlush = true, NewLine = "\n" };
+        var r = new StreamReader(mod.GetStream());
+        await w.WriteLineAsync("""{"v":1,"type":"hello","role":"beamng","modVersion":"1.4.0"}""");
+        await w.WriteLineAsync("""{"v":1,"type":"readings","vehicle":"pickup","list":[{"key":"oil.temp","group":"Engine","title":"Oil temperature","unit":"C"}]}""");
+        var rd = await p.Expect("beamng.readings");
+        Assert.Equal("oil.temp", (string?)rd["list"]![0]!["key"]);
+        await w.WriteLineAsync("""{"v":1,"type":"tuning","vehicle":"pickup","list":[{"name":"$tirepressure_F","title":"Tire Pressure","category":"Wheels","unit":"psi","min":0,"max":50,"default":30,"val":28}]}""");
+        var tn = await p.Expect("beamng.tuning");
+        Assert.Equal(28, (double)tn["list"]![0]!["val"]!);
+
+        // two phones: the mod gets the union, and "all" while one of them has its picker open
+        await p.Send("""{"v":1,"type":"readings.watch","keys":["oil.temp","boost"],"all":false}""");
+        var w1 = await ModExpect(r, "readings.watch");
+        Assert.Equal(new[] { "boost", "oil.temp" }, w1["keys"]!.AsArray().Select(x => (string)x!).ToArray());
+        await using var p2 = new Phone();
+        await p2.Connect(_store.Config.WsPort);
+        await p2.Send($$"""{"v":1,"type":"hello","deviceId":"d9","deviceName":"T2","appVersion":"1","pin":"{{_host.Pairing.Pin}}"}""");
+        await p2.Expect("welcome");
+        Assert.Equal("pickup", (string?)(await p2.Expect("beamng.tuning"))["vehicle"]); // cached for late phones
+        await p2.Send("""{"v":1,"type":"readings.watch","keys":["coolant.temp"],"all":true}""");
+        var w2 = await ModExpect(r, "readings.watch");
+        Assert.Equal(3, w2["keys"]!.AsArray().Count);
+        Assert.True((bool)w2["all"]!);
+        await p2.DisposeAsync();
+        var w3 = await ModExpect(r, "readings.watch");
+        Assert.False((bool)w3["all"]!);
+        Assert.Equal(2, w3["keys"]!.AsArray().Count);
+
+        // tuning: only names and numbers reach the mod; the result comes back
+        await p.Send("""{"v":1,"type":"tuning.apply","vars":{"$tirepressure_F":32,"$bad":"x"}}""");
+        var ap = await ModExpect(r, "tuning.apply");
+        Assert.Equal(32, (double)ap["vars"]!["$tirepressure_F"]!);
+        Assert.Null(ap["vars"]!["$bad"]);
+        await w.WriteLineAsync("""{"v":1,"type":"tuning.result","ok":true,"message":"Applied 1 setting."}""");
+        Assert.True((bool)(await p.Expect("beamng.tuning.result"))["ok"]!);
+        await p.Send("""{"v":1,"type":"tuning.request"}""");
+        await ModExpect(r, "tuning.request");
+    }
+
     static async Task<string?> ReadLine(StreamReader r)
     {
         using var cts = new CancellationTokenSource(3000);
