@@ -58,3 +58,14 @@ SimDeck's Android app is released through DevStore. Pushing to `main` runs `.git
 - Don't add a keystore-file `signingConfig` and don't commit keystores. CI signs releases.
 - Keep `gradlew`, `gradlew.bat` and `gradle/wrapper/*` committed.
 - Note: DevStore releases are signed with the DevStore key, not the SimDeck release key pinned in `ci.yml`, so a phone with a SimDeck-key build installed must uninstall it before the first DevStore install.
+
+## DevStore release (Windows companion)
+
+The same `release.yml` also builds the Windows companion with `dotnet publish` (self-contained, single file, win-x64) and, when `windows/devstore.json` has a new `version`, publishes a `windows-v…` release that the DevStore Updater installs.
+
+- Never change `name` (`simdeck-companion`), `language` or `type` in `windows/devstore.json`. The exe is renamed to `simdeck-companion.exe`.
+- Bump `version` in `windows/devstore.json` **and** `VersionPrefix` in `windows/Directory.Build.props` together. The build passes `-p:Version` from the first.
+- `updateWhileRunning` is on because the companion lives in the tray: an update installs while it runs and starts the next time it's opened.
+- Settings live in `%APPDATA%\SimDeck`, outside the install folder. Keep it that way, since the install folder is replaced on every update.
+- The BeamNG mod is embedded from `beamng-mod/simdeck` (see `Companion.Core.csproj`), so the whole repo must stay checked out for the build. Don't move that folder without updating the csproj.
+- Tags: `android-v…` for the phone app, `windows-v…` for the companion. In Obtainium, filter the repo's releases with `^android-`.

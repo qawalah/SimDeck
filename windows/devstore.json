@@ -1,0 +1,11 @@
+{
+  "name": "simdeck-companion",
+  "displayName": "SimDeck Companion",
+  "description": "Receives your phone's SimDeck buttons, knobs and joysticks over Wi-Fi and sends them to your Windows games as keyboard, vJoy or gamepad input. Lives in the tray and installs the BeamNG mod for you.",
+  "type": "gui",
+  "language": "dotnet",
+  "entry": "src/Companion.App/Companion.App.csproj",
+  "version": "1.4.1",
+  "updateWhileRunning": true,
+  "icon": "src/Companion.App/Assets/companion.png"
+}
