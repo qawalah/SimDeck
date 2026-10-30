@@ -18,3 +18,12 @@ beamng-mod/dist/
 # Misc
 out/
 .DS_Store
+
+# Secrets (never commit)
+*.jks
+*.keystore
+*.p12
+local.properties
+.env
+*.apk
+*.exe
