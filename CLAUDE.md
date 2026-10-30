@@ -48,3 +48,13 @@ CI (`.github/workflows/ci.yml`) runs all three test suites on every push.
 - Machine profiles keep joystick buttons at 32 or below, with one number per shared job.
 - Never commit signing keys or passwords. A `v*` release must be signed with the SimDeck release key, whose fingerprint is pinned in `ci.yml`. 1.0.0 was the exception: it was released with a test key, as HANDOVER explains.
 - Every message carries the protocol version. Bump `ProfileJson.SCHEMA` when the profile format changes.
+
+## DevStore release
+
+SimDeck's Android app is released through DevStore. Pushing to `main` runs `.github/workflows/release.yml`, which builds `android/` and signs it with the shared DevStore key. A new `versionCode` publishes a GitHub Release that installs through Obtainium.
+
+- Never change `applicationId` (`com.simdeck.app`).
+- Bump `versionCode` (+1) and `versionName` in `android/app/build.gradle.kts` for every change the user should receive. No bump means no release (the build still runs as a check).
+- Don't add a keystore-file `signingConfig` and don't commit keystores. CI signs releases.
+- Keep `gradlew`, `gradlew.bat` and `gradle/wrapper/*` committed.
+- Note: DevStore releases are signed with the DevStore key, not the SimDeck release key pinned in `ci.yml`, so a phone with a SimDeck-key build installed must uninstall it before the first DevStore install.

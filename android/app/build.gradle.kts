@@ -13,7 +13,7 @@ android {
         applicationId = "com.simdeck.app"
         minSdk = 28 // BluetoothHidDevice needs Android 9
         targetSdk = 35
-        versionCode = 14
+        versionCode = 15
         versionName = "1.5.0"
     }
 
