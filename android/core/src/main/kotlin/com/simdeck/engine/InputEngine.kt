@@ -56,13 +56,6 @@ class InputEngine(
             resetAxes()
         }
 
-    /**
-     * The output setting of each control, when one profile holds controls with different settings: a stack's
-     * merged profile, where each half keeps its own ([com.simdeck.model.StackedProfiles.outputOf]). Null: the
-     * profile's [Profile.output] for every control. Set it before [profile].
-     */
-    var outputFor: ((Control) -> OutputRoute)? = null
-
     private val hid = HidState()
     private var seq = 0L
     private val lastValue = HashMap<String, Float>()
@@ -85,7 +78,7 @@ class InputEngine(
     fun routeFor(control: Control): Route {
         val p = profile ?: return Route.NONE
         val hidOk = links.hidConnected && hidCapable(control)
-        return when (outputFor?.invoke(control) ?: p.output) {
+        return when (p.output) {
             OutputRoute.HID -> if (hidOk) Route.HID else if (links.companionConnected && !hidCapable(control)) Route.COMPANION else Route.NONE
             OutputRoute.COMPANION -> if (links.companionConnected) Route.COMPANION else Route.NONE
             OutputRoute.AUTO -> when {

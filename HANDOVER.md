@@ -1,6 +1,6 @@
 # SimDeck: handover to GitHub + Claude Code
 
-Snapshot of the complete project at: phone app 1.6.0, Windows companion 1.4.1, BeamNG mod 1.4.0, profile schema 6.
+Snapshot of the complete project at: phone app 1.6.1, Windows companion 1.4.1, BeamNG mod 1.4.0, profile schema 6.
 Also read `CLAUDE.md` (rules for working in this repo) and `docs/HANDOVER.md` (detailed architecture guide). This file is the short entry point.
 
 ## What it does
@@ -11,7 +11,7 @@ Windows companion over Wi-Fi, or both. A BeamNG.drive mod reports vehicle state 
 Main features
 - Per-game profiles (Generic, Keyboard, BeamNG.drive x2, MudRunner, SnowRunner, Expeditions, ETS2, ATS, FS25, ACC, MSFS, Bulldozer, Utility vehicles).
 - Equipment themes (airliner, aircraft, heavy equipment, farm, truck, road car, overland, motorsport), round buttons, dial gauges.
-- Portrait or landscape (rotate button on the play bar), and stacks: two profiles played at once, top/bottom upright or side by side.
+- Portrait or landscape (rotate button on the play bar), and split view: two pages of a profile at once, top/bottom upright or side by side.
 - Presets, copy/paste of controls across pages and profiles, layout editor on the phone and in the Windows companion (Layouts page).
 - BeamNG: Vehicle page (every function of the current car, grouped, searchable, per-vehicle favourites), Gauges page (oil/coolant temp, boost, fuel, G, per-wheel brakes, any electrics signal), Tuning page (like the in-game Tuning menu), grouped searchable command/reading pickers.
 - Companion installs/updates the BeamNG mod itself (while the game is closed), keyboard via scancodes, vJoy, optional ViGEm Xbox pad, macros.
@@ -24,7 +24,7 @@ Main features
 | BeamNG mod | `beamng-mod/` | Lua mod (game-engine + vehicle extensions), also embedded inside the companion exe |
 
 ## Identity
-- Android: `applicationId` = `com.simdeck.app`, `versionCode` = 16, `versionName` = 1.6.0 (`android/app/build.gradle.kts`), minSdk 28.
+- Android: `applicationId` = `com.simdeck.app`, `versionCode` = 17, `versionName` = 1.6.1 (`android/app/build.gradle.kts`), minSdk 28.
 - Windows: assembly `SimDeckCompanion`, version 1.4.1 (`windows/Directory.Build.props`).
 - BeamNG mod: 1.4.0 (`beamng-mod/simdeck/mod_info/simdeck/info.json` and `MOD_VERSION` in `simdeckLink.lua`).
 - `ProfileJson.SCHEMA` = 6. Protocol v1 (`protocol/PROTOCOL.md`).
@@ -39,7 +39,7 @@ Main features
 - Before each release bump versions (Android gradle, `Directory.Build.props`, mod `info.json`) and run `docs/SMOKE_TEST.md`.
 
 ## Data and services
-- Android: profiles and settings in app-private storage (`ProfileRepository.kt`, `CompanionClient.kt` settings: paired PC, favourites per vehicle model, tuning auto-apply, orientation, stacks).
+- Android: profiles and settings in app-private storage (`ProfileRepository.kt`, `CompanionClient.kt` settings: paired PC, favourites per vehicle model, tuning auto-apply, orientation, split view per profile).
 - Windows: `CompanionConfig` JSON under `%APPDATA%\SimDeck`; mod written to `...\BeamNG.drive\current\mods\simdeck.zip` (old copies renamed `*.disabled-by-simdeck`).
 - Network (no cloud, no accounts): WebSocket TCP 47800 (`/ws`, 6-digit PIN pairing), UDP 47801 (low-latency events), UDP 47802 (discovery broadcast; mDNS first), TCP 47803 on 127.0.0.1 (companion <-> BeamNG mod), UDP 4444 (OutGauge fallback).
 
@@ -63,7 +63,7 @@ Main features
 - Phone is the owner of profiles; the PC editor sends JSON the phone imports, and refuses while the phone's editor has that profile open.
 - Mod only sends readings the phones watch (keeps traffic low); tuning is applied by merging into the vehicle config and respawning, like the game's menu.
 - Companion installs the mod only while BeamNG is closed (the game keeps mod zips open) and disables old copies that would fight over port 47803.
-- A stack plays as one merged profile (`Stacks.combine` in core): bottom control ids get the `b~` prefix, each half keeps its own output route (`InputEngine.outputFor`), so the protocol and companion are unchanged.
+- Split view is UI only: both halves show pages of the one profile being played (`PlayState.splitPageIndex`), so values, feedback, the engine and the companion are unchanged. Two-profile stacks (1.6.0) were removed in 1.6.1.
 - Vehicle page uses one uniform compact button style with a label for what it does, groups + search + favourites keyed by vehicle model; no vehicle function is ever dropped.
 - Signing keys/passwords never go in the repo; keep review-cited regression tests (comments cite ids like A19, M1; see `docs/review/`).
 - Tooling note: `device_commit_files`-style size limits were why APK/zips were split earlier; irrelevant in GitHub, release assets come from CI.

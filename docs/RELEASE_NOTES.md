@@ -1,3 +1,15 @@
+# SimDeck 1.6.1 (phone app)
+
+- **Split view: two pages of a profile at once.** On a profile with more than one page, the split button on the play bar
+  shows two of its pages together: one above the other when the phone is upright, side by side when it's turned. Each
+  half has its own page tabs (a page-switch control turns the page of its own half); the play bar keeps the name, links,
+  lighting, rotate and Edit. Both halves are the same profile, so a control shown in both stays in step. Split view is
+  remembered per profile. Edit opens the page shown in the first half.
+- **Two-profile stacks from 1.6.0 are removed.** Split view replaces them: what was wanted was two pages of one profile.
+  Stacks you made are no longer shown; their profiles are untouched.
+- Portrait mode from 1.6.0 stays as it was.
+- Companion stays 1.4.1 and the mod 1.4.0.
+
 # SimDeck 1.6.0 (phone app)
 
 - **Portrait mode.** A rotate button on the play bar steps through **Landscape**, **Portrait** and **Auto** (turns with

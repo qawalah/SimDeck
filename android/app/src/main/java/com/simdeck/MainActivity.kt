@@ -81,7 +81,6 @@ private fun AppRoot(vm: AppViewModel) {
     val play by vm.playState.collectAsStateWithLifecycle()
     val editor by vm.editor.collectAsStateWithLifecycle()
     val notice by vm.notice.collectAsStateWithLifecycle()
-    val stacks by vm.stacks.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -150,13 +149,6 @@ private fun AppRoot(vm: AppViewModel) {
                     }
                 },
                 onOpenConnection = vm::openConnect,
-                stacks = stacks,
-                stackActions = remember {
-                    com.simdeck.ui.screens.StackActions(
-                        onOpen = vm::playStack, onCreate = vm::createStack, onRename = vm::renameStack,
-                        onSwap = vm::swapStack, onDelete = vm::deleteStack,
-                    )
-                },
             )
             Screen.Connect -> ConnectScreen(
                 connection = connection,
@@ -171,7 +163,7 @@ private fun AppRoot(vm: AppViewModel) {
                 onHidDisconnect = vm::disconnectHid,
                 onBack = vm::back,
             )
-            is Screen.Play, is Screen.Stack -> play?.let { state ->
+            is Screen.Play -> play?.let { state ->
                 val soundsOn = vm.controlSounds.collectAsStateWithLifecycle().value
                 androidx.compose.runtime.CompositionLocalProvider(
                     com.simdeck.ui.sim.LocalSimSound provides androidx.compose.runtime.remember(soundsOn) { if (soundsOn) { f: com.simdeck.ui.sim.Feel -> vm.simSounds.play(f) } else null },
@@ -181,9 +173,9 @@ private fun AppRoot(vm: AppViewModel) {
                     onControlValue = vm::onControlValue,
                     onRotaryStep = vm::onRotaryStep,
                     onPageChange = vm::onPageChange,
-                    onEdit = { vm.edit(state.profile.id) },
-                    onEditBottom = { state.stack?.let { vm.edit(it.bottom.id) } },
-                    onBottomPageChange = vm::onBottomPageChange,
+                    onEdit = { vm.edit(s.profileId) },
+                    onSplitPageChange = vm::onSplitPageChange,
+                    onToggleSplit = vm::toggleSplit,
                     orientation = vm.orientation.collectAsStateWithLifecycle().value,
                     onOrientation = vm::cycleOrientation,
                     onBack = vm::back,

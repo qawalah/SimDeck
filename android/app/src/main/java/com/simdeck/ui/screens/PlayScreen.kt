@@ -80,6 +80,8 @@ import com.simdeck.model.PlayState
 import com.simdeck.model.Profile
 import com.simdeck.ui.Orientation
 import androidx.compose.material.icons.rounded.ScreenRotation
+import androidx.compose.material.icons.rounded.VerticalSplit
+import androidx.compose.material.icons.rounded.ViewAgenda
 import androidx.compose.material.icons.rounded.StayCurrentLandscape
 import androidx.compose.material.icons.rounded.StayCurrentPortrait
 import com.simdeck.ui.components.BluetoothLinkBadge
@@ -117,8 +119,8 @@ fun gridMetrics(page: Page, width: Dp, height: Dp, gap: Dp = GridGap) = GridMetr
  * The control surface. Edge to edge: a slim HUD strip on top and the page's grid filling everything below, so
  * every control is as large as the layout allows. Upright, the HUD takes two rows (1.6).
  *
- * A stack (1.6) shows two profiles at once: one above the other in portrait, side by side in landscape, under
- * one shared HUD. Each half has its own name, pages, Edit and theme.
+ * Split view (1.6) shows two pages of the profile at once: one above the other upright, side by side when
+ * turned, under the one HUD. Each half has its own page tabs and theme.
  */
 @Composable
 fun PlayScreen(
@@ -130,7 +132,7 @@ fun PlayScreen(
     onBack: () -> Unit,
     imperialUnits: Boolean = false,
     onOpenConnection: (() -> Unit)? = null,
-    onPageControl: (controlId: String) -> Unit = {},
+    onPageControl: (controlId: String, second: Boolean) -> Unit = { _, _ -> },
     onDismissWarnings: () -> Unit = {},
     lighting: Lighting = Lighting.AUTO,
     onLighting: (Lighting) -> Unit = {},
@@ -140,14 +142,14 @@ fun PlayScreen(
     onFavourite: (String) -> Unit = {},
     orientation: Orientation = Orientation.LANDSCAPE,
     onOrientation: () -> Unit = {},
-    onBottomPageChange: (Int) -> Unit = {},
-    onEditBottom: () -> Unit = {},
+    onSplitPageChange: (Int) -> Unit = {},
+    onToggleSplit: () -> Unit = {},
 ) {
-    val pageIndex = state.pageIndex.coerceIn(0, (state.profile.pages.size - 1).coerceAtLeast(0))
+    val lastPage = (state.profile.pages.size - 1).coerceAtLeast(0)
+    val pageIndex = state.pageIndex.coerceIn(0, lastPage)
     val page = state.profile.pages.getOrNull(pageIndex)
-    val stack = state.stack
-    val bottomIndex = stack?.let { it.pageIndex.coerceIn(0, (it.bottom.pages.size - 1).coerceAtLeast(0)) } ?: 0
-    val bottomPage = stack?.bottom?.pages?.getOrNull(bottomIndex)
+    val splitIndex = state.splitPageIndex?.coerceIn(0, lastPage)
+    val splitPage = splitIndex?.let { state.profile.pages.getOrNull(it) }
     val night = when (lighting) {
         Lighting.NIGHT -> true
         Lighting.DAY -> false
@@ -155,9 +157,10 @@ fun PlayScreen(
     }
     // The lighting switch only means something on a themed page (docs/THEMES.md).
     val themed = Themes.resolve(state.profile, page, state.vehicle.category) != Themes.RACE ||
-        (stack != null && Themes.resolve(stack.bottom, bottomPage, state.vehicle.category) != Themes.RACE)
-    val surface: @Composable (Profile, Page?, () -> Unit, Modifier) -> Unit = { profile, pg, edit, mod ->
-        PlaySurface(state, profile, pg, night, edit, mod, onControlValue, onRotaryStep, onPageControl, tuning, tuningActions, favourites, onFavourite)
+        (splitPage != null && Themes.resolve(state.profile, splitPage, state.vehicle.category) != Themes.RACE)
+    val surface: @Composable (Page?, Boolean, Modifier) -> Unit = { pg, second, mod ->
+        PlaySurface(state, state.profile, pg, night, onEdit, mod, onControlValue, onRotaryStep, { id -> onPageControl(id, second) },
+            tuning, tuningActions, favourites, onFavourite)
     }
     BoxWithConstraints(
         Modifier
@@ -169,30 +172,31 @@ fun PlayScreen(
         Column(Modifier.fillMaxSize()) {
             PlayHud(state, pageIndex, imperialUnits, onPageChange, onEdit, onBack, onOpenConnection,
                 lighting = if (themed) lighting else null, onLighting = onLighting,
-                orientation = orientation, onOrientation = onOrientation, portrait = portrait)
+                orientation = orientation, onOrientation = onOrientation, portrait = portrait,
+                split = splitIndex != null, onToggleSplit = onToggleSplit)
             if (state.warnings.isNotEmpty()) WarningStrip(state.warnings, onDismissWarnings)
             if (state.bindHelper) BindHelperStrip()
-            if (stack == null) {
-                surface(state.profile, page, onEdit, Modifier.weight(1f).fillMaxWidth())
+            if (splitIndex == null) {
+                surface(page, false, Modifier.weight(1f).fillMaxWidth())
             } else {
-                val live = state.live
-                val half: @Composable (Profile, Int, (Int) -> Unit, () -> Unit, Modifier) -> Unit = { profile, index, onPage, edit, mod ->
+                val names = state.profile.pages.map { it.name }
+                val half: @Composable (Int, (Int) -> Unit, Boolean, Modifier) -> Unit = { index, onPage, second, mod ->
                     Column(mod) {
-                        HalfBar(profile, index, onPage, edit, live)
-                        surface(profile, profile.pages.getOrNull(index), edit, Modifier.weight(1f).fillMaxWidth())
+                        HalfBar(names, index, onPage)
+                        surface(state.profile.pages.getOrNull(index), second, Modifier.weight(1f).fillMaxWidth())
                     }
                 }
                 if (portrait) {
                     Column(Modifier.weight(1f).fillMaxWidth()) {
-                        half(state.profile, pageIndex, onPageChange, onEdit, Modifier.weight(1f).fillMaxWidth())
+                        half(pageIndex, onPageChange, false, Modifier.weight(1f).fillMaxWidth())
                         HalfDivider(vertical = false)
-                        half(stack.bottom, bottomIndex, onBottomPageChange, onEditBottom, Modifier.weight(1f).fillMaxWidth())
+                        half(splitIndex, onSplitPageChange, true, Modifier.weight(1f).fillMaxWidth())
                     }
                 } else {
                     Row(Modifier.weight(1f).fillMaxWidth()) {
-                        half(state.profile, pageIndex, onPageChange, onEdit, Modifier.weight(1f).fillMaxHeight())
+                        half(pageIndex, onPageChange, false, Modifier.weight(1f).fillMaxHeight())
                         HalfDivider(vertical = true)
-                        half(stack.bottom, bottomIndex, onBottomPageChange, onEditBottom, Modifier.weight(1f).fillMaxHeight())
+                        half(splitIndex, onSplitPageChange, true, Modifier.weight(1f).fillMaxHeight())
                     }
                 }
             }
@@ -288,9 +292,8 @@ fun ControlGrid(page: Page, modifier: Modifier = Modifier, panels: List<PanelGro
 }
 
 /**
- * The shared top strip. One profile: back, name, pages, game readouts, links, lighting, rotate and Edit; upright,
- * the pages and readouts move to a second row. A stack: back, the stack's name, readouts, links, lighting and
- * rotate; its pages and Edit are on each half's own bar ([HalfBar]).
+ * The top strip: back, name, pages, game readouts, links, lighting, split, rotate and Edit; upright, the pages and
+ * readouts move to a second row. In split view the pages are on each half's own bar ([HalfBar]).
  */
 @Composable
 private fun PlayHud(
@@ -306,11 +309,13 @@ private fun PlayHud(
     orientation: Orientation = Orientation.LANDSCAPE,
     onOrientation: () -> Unit = {},
     portrait: Boolean = false,
+    split: Boolean = false,
+    onToggleSplit: () -> Unit = {},
 ) {
     // While anything is linked the player is probably mid-game: Edit then needs a hold, and a
     // stray tap only says so, instead of dropping them into the editor.
     val live = state.live
-    val stacked = state.stack != null
+    // Split view: each half carries its own page tabs, so the HUD has none.
     var holdHint by remember { mutableStateOf(false) }
     // A dropped press (no link could carry it) flashes both badges red for 600ms with a double tick.
     var noLink by remember { mutableStateOf(false) }
@@ -329,10 +334,11 @@ private fun PlayHud(
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         // Link badges drop their "BT"/"PC" names only when the strip would otherwise overflow;
         // their status words, lamps, Edit and Back always stay.
-        val pages = if (stacked || portrait) 0 else state.profile.pages.size
-        val readoutsInRow = !portrait || stacked
+        val pages = if (split || portrait) 0 else state.profile.pages.size
+        val readoutsInRow = !portrait || split
+        val canSplit = state.profile.pages.size > 1
         val needed = 48.dp + 200.dp + (if (pages > 1) 112.dp * pages else 0.dp) +
-            (if (state.game.isNotEmpty() && readoutsInRow) 280.dp else 0.dp) + 300.dp + 130.dp + 48.dp
+            (if (state.game.isNotEmpty() && readoutsInRow) 280.dp else 0.dp) + 300.dp + 130.dp + 48.dp + (if (canSplit) 48.dp else 0.dp)
         val compact = maxWidth < needed
         // Narrowest phones (640dp class) and any phone held upright: lamp-only badges, no rpm, shorter name,
         // so Edit stays on screen.
@@ -341,7 +347,7 @@ private fun PlayHud(
         val rpmFits = maxWidth >= 400.dp
         val pageNames = state.profile.pages.map { it.name }
         val pageSwitch: @Composable () -> Unit = {
-            if (!stacked && pageNames.size > 1) {
+            if (!split && pageNames.size > 1) {
                 if (tight) {
                     // Smallest phones: a pager can't clip the way a scrolled tab row can.
                     PagePager(pageNames, pageIndex, onPageChange)
@@ -360,7 +366,7 @@ private fun PlayHud(
                 IconButton(onClick = onBack) {
                     Icon(Icons.Rounded.ArrowBack, contentDescription = "Back to profiles", tint = Race.InkMuted)
                 }
-                val name = state.stack?.name ?: state.profile.name
+                val name = state.profile.name
                 val nameWidth = if (portrait) Modifier.weight(1f) else
                     Modifier.widthIn(min = if (tight) 72.dp else 96.dp, max = if (tight) 100.dp else if (compact) 180.dp else 240.dp)
                 Column(nameWidth.padding(end = if (tight) 8.dp else 14.dp)) {
@@ -372,8 +378,8 @@ private fun PlayHud(
                         maxLines = if (tight) 2 else 1,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    // The game tag only adds information when the name doesn't already say it; a stack says STACK.
-                    val tag = if (stacked) "Stack" else state.profile.game.tag()
+                    // The game tag only adds information when the name doesn't already say it.
+                    val tag = state.profile.game.tag()
                     if (!tight && !name.contains(tag, ignoreCase = true) && !tag.contains(name, ignoreCase = true)) {
                         Text(tag.uppercase(), style = RaceType.unit, color = Race.InkFaint, maxLines = 1)
                     }
@@ -407,6 +413,16 @@ private fun PlayHud(
                         )
                     }
                 } else if (!tight) Spacer(Modifier.width(4.dp))
+                if (canSplit) {
+                    // Two pages at once (1.6): one above the other upright, side by side when turned.
+                    IconButton(onClick = onToggleSplit) {
+                        Icon(
+                            if (portrait) Icons.Rounded.ViewAgenda else Icons.Rounded.VerticalSplit,
+                            contentDescription = if (split) "Show one page" else "Show two pages",
+                            tint = if (split) Race.Electric else Race.InkMuted,
+                        )
+                    }
+                }
                 // Landscape, portrait, or follow the phone (1.6). The whole app turns with it.
                 IconButton(onClick = onOrientation) {
                     Icon(
@@ -419,20 +435,18 @@ private fun PlayHud(
                         tint = Race.InkMuted,
                     )
                 }
-                if (!stacked) {
-                    // Tight: Edit goes icon-only so the page pager keeps room for the page name.
-                    SlantButton(
-                        text = if (holdHint) "Hold" else if (tight) "" else "Edit",
-                        icon = Icons.Rounded.Tune,
-                        onClick = if (live) ({ holdHint = true }) else onEdit,
-                        onLongClick = if (live) onEdit else null,
-                        longClickLabel = "Edit layout",
-                        modifier = Modifier.widthIn(min = if (tight) 64.dp else 104.dp).semantics { contentDescription = "Edit layout" },
-                    )
-                }
+                // Tight: Edit goes icon-only so the page pager keeps room for the page name.
+                SlantButton(
+                    text = if (holdHint) "Hold" else if (tight) "" else "Edit",
+                    icon = Icons.Rounded.Tune,
+                    onClick = if (live) ({ holdHint = true }) else onEdit,
+                    onLongClick = if (live) onEdit else null,
+                    longClickLabel = "Edit layout",
+                    modifier = Modifier.widthIn(min = if (tight) 64.dp else 104.dp).semantics { contentDescription = "Edit layout" },
+                )
             }
             // Upright: the pages and the game readouts get their own row under the name, links and Edit.
-            if (portrait && !stacked && (pageNames.size > 1 || state.game.isNotEmpty())) {
+            if (portrait && !split && (pageNames.size > 1 || state.game.isNotEmpty())) {
                 Row(
                     Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(start = 4.dp, end = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -445,48 +459,19 @@ private fun PlayHud(
     }
 }
 
-/**
- * The bar over each half of a stack: the profile's name, its pages, and its own Edit (a hold while anything is
- * linked, like the HUD's).
- */
+/** The page tabs over each half of split view: each half turns its own page. */
 @Composable
-private fun HalfBar(profile: Profile, pageIndex: Int, onPageChange: (Int) -> Unit, onEdit: () -> Unit, live: Boolean) {
-    var holdHint by remember { mutableStateOf(false) }
-    LaunchedEffect(holdHint) { if (holdHint) { delay(1600); holdHint = false } }
+private fun HalfBar(names: List<String>, pageIndex: Int, onPageChange: (Int) -> Unit) {
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val narrow = maxWidth < 560.dp
-        val names = profile.pages.map { it.name }
-        Row(
-            Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(start = 16.dp, end = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                profile.name.uppercase(),
-                style = RaceType.capLabel,
-                color = Race.InkMuted,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.widthIn(max = if (narrow) 120.dp else 220.dp).padding(end = 10.dp),
-            )
-            Box(Modifier.weight(1f)) {
-                if (names.size > 1) {
-                    if (narrow) PagePager(names, pageIndex, onPageChange)
-                    else Box(Modifier.horizontalScroll(rememberScrollState())) { PageTabs(names, pageIndex, onPageChange) }
-                }
-            }
-            SlantButton(
-                text = if (holdHint) "Hold" else "",
-                icon = Icons.Rounded.Tune,
-                onClick = if (live) ({ holdHint = true }) else onEdit,
-                onLongClick = if (live) onEdit else null,
-                longClickLabel = "Edit ${profile.name}",
-                modifier = Modifier.widthIn(min = 56.dp).semantics { contentDescription = "Edit ${profile.name}" },
-            )
+        Box(Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(horizontal = 12.dp), contentAlignment = Alignment.CenterStart) {
+            if (narrow) PagePager(names, pageIndex, onPageChange)
+            else Box(Modifier.horizontalScroll(rememberScrollState())) { PageTabs(names, pageIndex, onPageChange) }
         }
     }
 }
 
-/** The seam between a stack's two halves. */
+/** The seam between the two halves of split view. */
 @Composable
 private fun HalfDivider(vertical: Boolean) {
     Box(

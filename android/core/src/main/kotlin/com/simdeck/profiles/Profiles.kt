@@ -224,8 +224,8 @@ object LayoutOps {
 
     /**
      * The page a PAGE control leads to from page [current] of [pages]: [target] is "next" (the default) or "prev",
-     * both wrapping, a page id, or a 1-based page number. An unknown target stays put. In a stack each half
-     * passes its own pages, so a page switch never leaves its half.
+     * both wrapping, a page id, or a 1-based page number. An unknown target stays put. In split view each half
+     * turns its own page.
      */
     fun pageAfter(pages: List<Page>, current: Int, target: String?): Int {
         if (pages.isEmpty()) return 0
