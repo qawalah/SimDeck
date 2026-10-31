@@ -22,6 +22,10 @@ import com.simdeck.model.VehicleFeaturePages
 import com.simdeck.model.VehicleFeatures
 import com.simdeck.model.PlayState
 import com.simdeck.model.Profile
+import com.simdeck.model.ProfileStack
+import com.simdeck.model.StackPlay
+import com.simdeck.model.StackedProfiles
+import com.simdeck.model.Stacks
 import com.simdeck.model.ReadingInfo
 import com.simdeck.model.Readings
 import com.simdeck.model.TuningState
@@ -53,6 +57,8 @@ sealed interface Screen {
     data object Profiles : Screen
     data object Connect : Screen
     data class Play(val profileId: String) : Screen
+    /** Two profiles at once (1.6). */
+    data class Stack(val stackId: String) : Screen
     data class Editor(val profileId: String) : Screen
 }
 
@@ -99,8 +105,15 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     private val clock = MutableStateFlow(0L) // ticks so pending indicators time out on screen
     private val linkDrops = MutableStateFlow(0)
     private val knownStateKeys = MutableStateFlow<Set<String>>(emptySet())
-    /** The profile as stored; [activeProfile] is this with its auto pages filled for the current vehicle. */
-    private var baseProfile: Profile? = null
+    /**
+     * What is played, as stored: one profile, or a stack's top and bottom. [activeProfile] is this with its auto pages
+     * filled for the current vehicle (and, for a stack, merged into one, see [StackedProfiles]).
+     */
+    private var base: List<Profile> = emptyList()
+    private var playingStack: ProfileStack? = null
+    private val stacked = MutableStateFlow<StackedProfiles?>(null)
+    /** The page shown in a stack's bottom half; [pageIndex] is the top half's. */
+    private val bottomPage = MutableStateFlow(0)
     private val vehicle = MutableStateFlow(VehicleFeatures())
     private val gameActions = MutableStateFlow<List<GameAction>>(emptyList())
     /** Problems the companion reported for the active profile, by notice code (vJoy set up too small...). */
@@ -119,14 +132,18 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         combine(game, pending, clock) { g, pe, t -> Triple(g, pe, t) },
         combine(companion.state, hid.state, linkDrops) { c, h, d -> Triple(c, h, d) },
         combine(warnings, vehicle, bindHelper) { w, veh, b -> Triple(w, veh, b) },
-    ) { (p, i, v), (g, pe, _), (c, h, d), (w, veh, b) ->
+        combine(stacked, bottomPage) { s, bp -> s to bp },
+    ) { (p, i, v), (g, pe, _), (c, h, d), (w, veh, b), (s, bp) ->
         p ?: return@combine null
         val now = System.currentTimeMillis()
+        // Feedback runs on the merged profile, so a stack's two halves light from one map of ids.
         val r = Feedback.resolve(p, v, g, pe, now)
+        val shown = s?.top ?: p
         PlayState(
-            profile = p, pageIndex = i.coerceIn(0, p.pages.lastIndex), values = v,
+            profile = shown, pageIndex = i.coerceIn(0, shown.pages.lastIndex), values = v,
             indicators = r.indicators, unavailable = r.unavailable, game = g, connection = c, hid = h,
             linkDrops = d, warnings = w.values.toList(), vehicle = veh, bindHelper = b,
+            stack = s?.let { StackPlay(it.stack.name, it.bottom, bp.coerceIn(0, it.bottom.pages.lastIndex)) },
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
@@ -320,25 +337,60 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun play(id: String) {
         val p = repo.get(id) ?: return
         settings.lastProfileId = id
+        startPlaying(listOf(p), null)
+        _screen.value = Screen.Play(id)
+    }
+
+    /** Plays a saved stack: its two profiles at once (1.6). */
+    fun playStack(stackId: String) {
+        val stack = _stacks.value.firstOrNull { it.id == stackId } ?: return
+        val top = repo.get(stack.top)
+        val bottom = repo.get(stack.bottom)
+        if (top == null || bottom == null) {
+            notify("A profile in ${stack.name} was deleted. Delete the stack and make it again.")
+            return
+        }
+        startPlaying(listOf(top, bottom), stack)
+        _screen.value = Screen.Stack(stackId)
+    }
+
+    private fun startPlaying(profiles: List<Profile>, stack: ProfileStack?) {
         stopPlaying()
-        baseProfile = p
-        val filled = VehicleFeaturePages.fill(p, vehicle.value)
+        base = profiles
+        playingStack = stack
+        val (filled, s) = filled(vehicle.value)!!
+        stacked.value = s
         activeProfile.value = filled
         pageIndex.value = 0
+        bottomPage.value = 0
         values.value = emptyMap()
         pending.value = emptyMap()
         warnings.value = emptyMap()
         stickLock.clear()
+        // Each half of a stack keeps its own output setting; set before the profile, which re-homes everything.
+        engine.outputFor = s?.let { it::outputOf }
         engine.profile = filled
         syncProfile()
-        _screen.value = Screen.Play(id)
+    }
+
+    /** [base] with its auto pages filled for [features]: the profile to play and, for a stack, its halves. */
+    private fun filled(features: VehicleFeatures): Pair<Profile, StackedProfiles?>? {
+        val stack = playingStack
+        val fill = { p: Profile -> VehicleFeaturePages.fill(p, features) }
+        if (stack == null) return base.firstOrNull()?.let { fill(it) to null }
+        val (top, bottom) = base.takeIf { it.size == 2 } ?: return null
+        val s = Stacks.combine(stack, fill(top), fill(bottom))
+        return s.merged to s
     }
 
     private fun stopPlaying() {
         engine.releaseAll()
         engine.profile = null
+        engine.outputFor = null
         activeProfile.value = null
-        baseProfile = null
+        stacked.value = null
+        base = emptyList()
+        playingStack = null
     }
 
     /**
@@ -349,14 +401,14 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         if (features == vehicle.value) return
         vehicle.value = features
         _editor.update { it?.copy(vehicleFeatures = features.list) }
-        val base = baseProfile ?: return
-        if (base.pages.none { it.auto == com.simdeck.model.Page.AUTO_BEAMNG_VEHICLE }) return
-        val filled = VehicleFeaturePages.fill(base, features)
+        if (base.none { p -> p.pages.any { it.auto == com.simdeck.model.Page.AUTO_BEAMNG_VEHICLE } }) return
+        val (filled, s) = filled(features) ?: return
         if (filled == activeProfile.value) return
         val autoIds = { pr: Profile? -> pr?.pages?.filter { it.auto != null }?.flatMap { pg -> pg.controls.map { it.id } }?.toSet() ?: emptySet() }
         val old = autoIds(activeProfile.value)
         values.update { v -> v.filterKeys { it !in old } }
         pending.update { pe -> pe.filterKeys { it !in old } }
+        stacked.value = s
         activeProfile.value = filled
         // Setting the profile releases everything held; replay what the hands still hold on the other pages.
         engine.profile = filled
@@ -371,11 +423,12 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         lastForeground = exe
         if (!settings.autoSwitch) return
         val current = _screen.value
-        if (current !is Screen.Play && current !is Screen.Profiles) return // never yank the user out of the editor
+        if (current !is Screen.Play && current !is Screen.Stack && current !is Screen.Profiles) return // never yank the user out of the editor
         val matches = repo.profiles.value.filter { p -> p.processNames.any { it.equals(exe, ignoreCase = true) } }
         if (matches.isEmpty()) return
-        val playing = (current as? Screen.Play)?.profileId
-        if (playing != null && matches.any { it.id == playing }) return
+        // A stack that holds a profile for this game already fits it.
+        val playing = base.map { it.id }
+        if (matches.any { it.id in playing }) return
         val pick = matches.firstOrNull { it.id == settings.lastProfileId } ?: matches.firstOrNull { !it.builtIn } ?: matches.first()
         play(pick.id)
         notify("${pick.name}: switched for ${exe.removeSuffix(".exe")}")
@@ -413,10 +466,20 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         companion.send(Protocol.profileSaved(id, true, "Saved on the phone"))
         notify("${p.name}: layout from the PC saved")
         // Playing it: show the new layout now, on the same page.
-        if ((_screen.value as? Screen.Play)?.profileId == id) {
-            val page = pageIndex.value
-            play(id)
-            pageIndex.value = page.coerceIn(0, p.pages.lastIndex)
+        when (val playing = _screen.value) {
+            is Screen.Play -> if (playing.profileId == id) {
+                val page = pageIndex.value
+                play(id)
+                pageIndex.value = page.coerceIn(0, p.pages.lastIndex)
+            }
+            is Screen.Stack -> if (base.any { it.id == id }) {
+                val top = pageIndex.value
+                val bottom = bottomPage.value
+                playStack(playing.stackId)
+                pageIndex.value = top
+                bottomPage.value = bottom
+            }
+            else -> Unit
         }
     }
 
@@ -482,23 +545,26 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         _tuning.update { it.copy(autoApply = on) }
     }
 
-    /** A PAGE control was tapped. */
+    /** A PAGE control was tapped. In a stack it turns the pages of its own half. */
     fun onPageControl(id: String) {
         val p = activeProfile.value ?: return
         val c = control(id) ?: return
-        val i = pageIndex.value
-        pageIndex.value = when (val t = c.pageTarget ?: "next") {
-            "next" -> (i + 1) % p.pages.size
-            "prev" -> (i - 1 + p.pages.size) % p.pages.size
-            else -> p.pages.indexOfFirst { it.id == t }.takeIf { it >= 0 } ?: t.toIntOrNull()?.minus(1)?.coerceIn(0, p.pages.lastIndex) ?: i
+        val s = stacked.value
+        val bottom = s != null && Stacks.isBottom(id)
+        val pages = when {
+            s == null -> p.pages
+            bottom -> s.bottom.pages
+            else -> s.top.pages
         }
+        val flow = if (bottom) bottomPage else pageIndex
+        flow.value = LayoutOps.pageAfter(pages, flow.value, c.pageTarget)
     }
 
     fun back() {
         when (_screen.value) {
             // The editor owns Back (EditorBackHandler asks to discard when dirty), so nothing to do here.
             is Screen.Editor -> Unit
-            is Screen.Play, Screen.Connect -> openProfiles()
+            is Screen.Play, is Screen.Stack, Screen.Connect -> openProfiles()
             Screen.Profiles -> Unit
         }
     }
@@ -604,6 +670,11 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun onPageChange(i: Int) {
         pageIndex.value = i
+    }
+
+    /** The page of a stack's bottom half. */
+    fun onBottomPageChange(i: Int) {
+        bottomPage.value = i
     }
 
     private fun applyGameState(update: Map<String, Any>, full: Boolean) {
@@ -725,9 +796,20 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     // ---- editor ----------------------------------------------------------------------------
 
+    /** The stack the editor was opened from: Done goes back to it. */
+    private var editReturnStack: String? = null
+
     fun edit(id: String) {
         val p = repo.get(id) ?: return
-        val page = if ((_screen.value as? Screen.Play)?.profileId == id) pageIndex.value else 0
+        val playing = _screen.value
+        val s = stacked.value
+        val page = when {
+            playing is Screen.Play && playing.profileId == id -> pageIndex.value
+            playing is Screen.Stack && s?.stack?.top == id -> pageIndex.value
+            playing is Screen.Stack && s?.stack?.bottom == id -> bottomPage.value
+            else -> 0
+        }
+        editReturnStack = (playing as? Screen.Stack)?.stackId
         stopPlaying()
         _editor.value = EditorState(
             profile = p, pageIndex = page.coerceIn(0, p.pages.lastIndex),
@@ -831,12 +913,59 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         val s = _editor.value ?: return openProfiles()
         if (s.dirty) repo.save(s.profile)
         _editor.value = null
-        play(s.profile.id)
+        val stack = editReturnStack?.takeIf { id -> _stacks.value.any { it.id == id } }
+        editReturnStack = null
+        if (stack != null) playStack(stack) else play(s.profile.id)
     }
 
     fun discardEditing() {
         _editor.value = null
+        editReturnStack = null
         openProfiles()
+    }
+
+    // ---- stacks (1.6) ----------------------------------------------------------------------
+
+    private val _stacks = MutableStateFlow(Stacks.decode(settings.stacks))
+    /** Saved stacks of two profiles, for the profile list. */
+    val stacks: StateFlow<List<ProfileStack>> = _stacks.asStateFlow()
+
+    private fun saveStacks(list: List<ProfileStack>) {
+        _stacks.value = list
+        settings.stacks = Stacks.encode(list)
+    }
+
+    /** Saves a new stack, [top] above [bottom], and plays it. */
+    fun createStack(top: String, bottom: String, name: String) {
+        if (top == bottom || repo.get(top) == null || repo.get(bottom) == null) return
+        val fallback = "${repo.get(top)?.name} + ${repo.get(bottom)?.name}"
+        val stack = ProfileStack(Stacks.newId(), name.trim().ifBlank { fallback }, top, bottom)
+        saveStacks(_stacks.value + stack)
+        playStack(stack.id)
+    }
+
+    fun renameStack(id: String, name: String) {
+        if (name.isBlank()) return
+        saveStacks(_stacks.value.map { if (it.id == id) it.copy(name = name.trim()) else it })
+    }
+
+    fun swapStack(id: String) = saveStacks(_stacks.value.map { if (it.id == id) it.swapped() else it })
+
+    fun deleteStack(id: String) {
+        saveStacks(_stacks.value.filterNot { it.id == id })
+        notify("Stack deleted. Its profiles are kept.")
+    }
+
+    // ---- orientation (1.6) -----------------------------------------------------------------
+
+    private val _orientation = MutableStateFlow(runCatching { com.simdeck.ui.Orientation.valueOf(settings.orientation) }.getOrDefault(com.simdeck.ui.Orientation.LANDSCAPE))
+    /** How the whole app is turned; the play bar's rotate button steps through the choices. */
+    val orientation: StateFlow<com.simdeck.ui.Orientation> = _orientation.asStateFlow()
+
+    fun cycleOrientation() {
+        val next = _orientation.value.next
+        _orientation.value = next
+        settings.orientation = next.name
     }
 
     override fun onCleared() {

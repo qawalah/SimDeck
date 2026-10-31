@@ -301,7 +301,15 @@ private fun EditorScreenBody(
             .windowInsetsPadding(WindowInsets.safeDrawing),
     ) {
         val wide = maxWidth >= WideEditor
+        // Upright (1.6): the page tabs get their own row under the title, so the name and Done keep their room.
+        val portrait = maxHeight > maxWidth
         val panelOpen = selected != null || (!wide && showSettings)
+        val pageTabs: @Composable (Modifier) -> Unit = { m ->
+            Row(m.horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically) {
+                SlantTabs(profile.pages.map { it.name }, pageIndex, onPageChange)
+                IconButton(onClick = onAddPage) { Icon(Icons.Rounded.Add, contentDescription = "Add page", tint = Race.InkMuted) }
+            }
+        }
         Column(Modifier.fillMaxSize()) {
             // Top bar.
             Row(
@@ -311,17 +319,15 @@ private fun EditorScreenBody(
                 IconButton(onClick = { if (state.dirty) confirmDiscard = true else onDiscard() }) {
                     Icon(Icons.Rounded.Close, contentDescription = "Close without saving", tint = Race.InkMuted)
                 }
-                Row(Modifier.widthIn(max = if (wide) 300.dp else 150.dp).padding(end = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                val nameWidth = if (portrait) Modifier.weight(1f) else Modifier.widthIn(max = if (wide) 300.dp else 150.dp)
+                Row(nameWidth.padding(end = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text(profile.name, style = RaceType.title, color = Race.Ink, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
                     if (wide) {
                         Spacer(Modifier.width(10.dp))
                         StateTag("Editing", quiet = true)
                     }
                 }
-                Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically) {
-                    SlantTabs(profile.pages.map { it.name }, pageIndex, onPageChange)
-                    IconButton(onClick = onAddPage) { Icon(Icons.Rounded.Add, contentDescription = "Add page", tint = Race.InkMuted) }
-                }
+                if (!portrait) pageTabs(Modifier.weight(1f))
                 if (!wide) {
                     IconButton(onClick = { onSelect(null); showSettings = !showSettings }) {
                         Icon(Icons.Rounded.Settings, contentDescription = "Page and profile settings", tint = if (showSettings) Race.Electric else Race.InkMuted)
@@ -332,6 +338,7 @@ private fun EditorScreenBody(
                 }
                 SlantButton("Done", onDone, style = SlantStyle.PRIMARY)
             }
+            if (portrait) pageTabs(Modifier.fillMaxWidth().padding(start = 4.dp, end = 12.dp))
             Row(Modifier.fillMaxSize()) {
                 Palette(
                     rail = !wide,

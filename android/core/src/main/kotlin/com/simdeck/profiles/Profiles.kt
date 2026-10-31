@@ -221,4 +221,18 @@ object LayoutOps {
         p.pages.forEachIndexed { i, pg -> Joystick.find(pg.controls, id)?.let { return i to it } }
         return null
     }
+
+    /**
+     * The page a PAGE control leads to from page [current] of [pages]: [target] is "next" (the default) or "prev",
+     * both wrapping, a page id, or a 1-based page number. An unknown target stays put. In a stack each half
+     * passes its own pages, so a page switch never leaves its half.
+     */
+    fun pageAfter(pages: List<Page>, current: Int, target: String?): Int {
+        if (pages.isEmpty()) return 0
+        return when (val t = target ?: "next") {
+            "next" -> (current + 1) % pages.size
+            "prev" -> (current - 1 + pages.size) % pages.size
+            else -> pages.indexOfFirst { it.id == t }.takeIf { it >= 0 } ?: t.toIntOrNull()?.minus(1)?.coerceIn(0, pages.lastIndex) ?: current
+        }
+    }
 }

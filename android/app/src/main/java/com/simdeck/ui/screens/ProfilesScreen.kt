@@ -70,6 +70,11 @@ import androidx.compose.material.icons.rounded.Computer
 import com.simdeck.model.GameId
 import com.simdeck.model.Page
 import com.simdeck.model.Profile
+import com.simdeck.model.ProfileStack
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.RadioButton
+import androidx.compose.ui.semantics.Role
 import com.simdeck.ui.components.Field
 import com.simdeck.ui.components.Gap
 import com.simdeck.ui.components.PcLinkBadge
@@ -85,6 +90,15 @@ import com.simdeck.ui.theme.SlantShape
 import com.simdeck.ui.theme.lit
 
 fun GameId.tag(): String = if (this == GameId.CUSTOM) "Any game" else displayName
+
+/** What the profile list does with stacks of two profiles (1.6). */
+class StackActions(
+    val onOpen: (stackId: String) -> Unit = {},
+    val onCreate: (top: String, bottom: String, name: String) -> Unit = { _, _, _ -> },
+    val onRename: (stackId: String, name: String) -> Unit = { _, _ -> },
+    val onSwap: (stackId: String) -> Unit = {},
+    val onDelete: (stackId: String) -> Unit = {},
+)
 
 /**
  * Profile select, laid out like a racing game's car select: each profile is a card carrying a
@@ -102,8 +116,13 @@ fun ProfilesScreen(
     onImport: () -> Unit,
     onExport: (String) -> Unit,
     onOpenConnection: () -> Unit,
+    stacks: List<ProfileStack> = emptyList(),
+    stackActions: StackActions = StackActions(),
 ) {
     var creating by remember { mutableStateOf(false) }
+    var stackFrom by remember { mutableStateOf<Profile?>(null) }
+    var renaming by remember { mutableStateOf<ProfileStack?>(null) }
+    var confirmStackDelete by remember { mutableStateOf<ProfileStack?>(null) }
     var confirmDelete by remember { mutableStateOf<Profile?>(null) }
     var confirmRestore by remember { mutableStateOf<Profile?>(null) }
     // First run, or both links down: the list leads with the way to reach Windows.
@@ -177,6 +196,18 @@ fun ProfilesScreen(
                     item(key = "new", span = { GridItemSpan(maxLineSpan) }) {
                         NewProfileRow { creating = true }
                     }
+                    // Stacks first: they are the user's own pairings, made for a session.
+                    items(stacks, key = { "stack:" + it.id }) { st ->
+                        StackCard(
+                            stack = st,
+                            top = profiles.firstOrNull { it.id == st.top },
+                            bottom = profiles.firstOrNull { it.id == st.bottom },
+                            onOpen = { stackActions.onOpen(st.id) },
+                            onSwap = { stackActions.onSwap(st.id) },
+                            onRename = { renaming = st },
+                            onDelete = { confirmStackDelete = st },
+                        )
+                    }
                     items(profiles, key = { it.id }) { p ->
                         ProfileCard(
                             profile = p,
@@ -184,6 +215,7 @@ fun ProfilesScreen(
                             onDuplicate = { onDuplicate(p.id) },
                             onExport = { onExport(p.id) },
                             onDelete = { if (p.builtIn) confirmRestore = p else confirmDelete = p },
+                            onStack = if (profiles.size > 1) ({ stackFrom = p }) else null,
                         )
                     }
                     item(key = "about", span = { GridItemSpan(maxLineSpan) }) {
@@ -205,6 +237,27 @@ fun ProfilesScreen(
 
     if (creating) {
         NewProfileDialog(onDismiss = { creating = false }, onCreate = { n, g -> creating = false; onCreate(n, g) })
+    }
+    stackFrom?.let { top ->
+        NewStackDialog(top, profiles, onDismiss = { stackFrom = null }, onCreate = { bottom, name ->
+            stackFrom = null
+            stackActions.onCreate(top.id, bottom, name)
+        })
+    }
+    renaming?.let { st ->
+        RenameStackDialog(st, onDismiss = { renaming = null }, onRename = { name -> renaming = null; stackActions.onRename(st.id, name) })
+    }
+    confirmStackDelete?.let { st ->
+        AlertDialog(
+            onDismissRequest = { confirmStackDelete = null },
+            title = { Text("Delete ${st.name}?") },
+            text = { Text("This removes the stack only. Both of its profiles stay on this phone.") },
+            confirmButton = {
+                TextButton(onClick = { confirmStackDelete = null; stackActions.onDelete(st.id) }) { Text("Delete", color = Race.Red) }
+            },
+            dismissButton = { TextButton(onClick = { confirmStackDelete = null }) { Text("Keep it") } },
+            containerColor = Race.PanelRaised,
+        )
     }
     confirmRestore?.let { p ->
         AlertDialog(
@@ -323,6 +376,7 @@ private fun ProfileCard(
     onDuplicate: () -> Unit,
     onExport: () -> Unit,
     onDelete: () -> Unit,
+    onStack: (() -> Unit)? = null,
 ) {
     var menu by remember { mutableStateOf(false) }
     val shape = CapShape(cut = 22.dp, radius = 8.dp)
@@ -354,6 +408,7 @@ private fun ProfileCard(
                         Icon(Icons.Rounded.MoreVert, contentDescription = "More for ${profile.name}", tint = Race.InkMuted)
                     }
                     DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                        if (onStack != null) DropdownMenuItem(text = { Text("Stack with…") }, onClick = { menu = false; onStack() })
                         DropdownMenuItem(text = { Text("Duplicate") }, onClick = { menu = false; onDuplicate() })
                         DropdownMenuItem(text = { Text("Export to file") }, onClick = { menu = false; onExport() })
                         DropdownMenuItem(
@@ -387,6 +442,151 @@ private fun ProfileCard(
             }
         }
     }
+}
+
+/**
+ * A stack of two profiles (1.6): both first pages as miniatures, one over the other, as they play upright. A stack
+ * whose profile was deleted says so and can't be opened.
+ */
+@Composable
+private fun StackCard(
+    stack: ProfileStack,
+    top: Profile?,
+    bottom: Profile?,
+    onOpen: () -> Unit,
+    onSwap: () -> Unit,
+    onRename: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    var menu by remember { mutableStateOf(false) }
+    val shape = CapShape(cut = 22.dp, radius = 8.dp)
+    val missing = top == null || bottom == null
+    val topName = top?.name ?: "Missing profile"
+    val bottomName = bottom?.name ?: "Missing profile"
+    Column(
+        Modifier
+            .clip(shape)
+            .background(Race.Panel)
+            .border(1.dp, if (missing) Race.Amber.copy(alpha = 0.5f) else Race.Line, shape)
+            .clickable(enabled = !missing, onClick = onOpen)
+            .semantics(mergeDescendants = true) { contentDescription = "Stack ${stack.name}: $topName with $bottomName" },
+    ) {
+        Column(Modifier.fillMaxWidth().height(120.dp).background(Race.Ground.copy(alpha = 0.6f)).padding(horizontal = 14.dp, vertical = 10.dp)) {
+            LayoutMiniature(top?.pages?.firstOrNull(), Modifier.fillMaxWidth().weight(1f))
+            Box(Modifier.fillMaxWidth().padding(vertical = 4.dp).height(1.dp).background(Race.LineStrong))
+            LayoutMiniature(bottom?.pages?.firstOrNull(), Modifier.fillMaxWidth().weight(1f))
+        }
+        Column(Modifier.padding(start = 18.dp, end = 4.dp, top = 6.dp, bottom = 14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    stack.name,
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = Race.Ink,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+                Box {
+                    IconButton(onClick = { menu = true }) {
+                        Icon(Icons.Rounded.MoreVert, contentDescription = "More for ${stack.name}", tint = Race.InkMuted)
+                    }
+                    DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                        DropdownMenuItem(text = { Text("Swap order") }, onClick = { menu = false; onSwap() })
+                        DropdownMenuItem(text = { Text("Rename") }, onClick = { menu = false; onRename() })
+                        DropdownMenuItem(text = { Text("Delete stack", color = Race.Red) }, onClick = { menu = false; onDelete() })
+                    }
+                }
+            }
+            Text(
+                "$topName  /  $bottomName",
+                style = MaterialTheme.typography.bodySmall,
+                color = Race.InkMuted,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(end = 14.dp),
+            )
+            Gap(10)
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(end = 14.dp)) {
+                StateTag("Stack")
+                if (missing) {
+                    Spacer(Modifier.width(8.dp))
+                    Text("PROFILE MISSING", style = RaceType.unit, color = Race.Amber)
+                }
+                Spacer(Modifier.weight(1f))
+                val pages = (top?.pages?.size ?: 0) + (bottom?.pages?.size ?: 0)
+                Stat(pages, if (pages == 1) "PAGE" else "PAGES")
+            }
+        }
+    }
+}
+
+/** Picks the second profile of a new stack, and its name. The profile it was opened from goes on top. */
+@Composable
+private fun NewStackDialog(top: Profile, profiles: List<Profile>, onDismiss: () -> Unit, onCreate: (bottom: String, name: String) -> Unit) {
+    val others = remember(profiles, top) { profiles.filter { it.id != top.id } }
+    var bottom by remember { mutableStateOf<Profile?>(null) }
+    var name by remember { mutableStateOf("") }
+    // Once the user types a name, picking another profile no longer replaces it.
+    var named by remember { mutableStateOf(false) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Race.PanelRaised,
+        title = { Text("Stack ${top.name} with…") },
+        text = {
+            Column {
+                Text(
+                    "Both play at once: ${top.name} on top and the one you pick below when the phone is upright, side by side when it's turned.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Race.InkMuted,
+                )
+                Gap(8)
+                Column(Modifier.heightIn(max = 240.dp).verticalScroll(rememberScrollState())) {
+                    for (p in others) {
+                        val on = bottom?.id == p.id
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 48.dp)
+                                .clip(SlantShape())
+                                .background(if (on) Race.Electric.copy(alpha = 0.14f) else Race.PanelRaised)
+                                .selectable(selected = on, role = Role.RadioButton) {
+                                    bottom = p
+                                    if (!named) name = "${top.name} + ${p.name}"
+                                }
+                                .padding(horizontal = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            RadioButton(selected = on, onClick = null)
+                            Spacer(Modifier.width(8.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text(p.name, style = MaterialTheme.typography.bodyLarge, color = Race.Ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text(p.game.tag().uppercase(), style = RaceType.unit, color = Race.InkFaint, maxLines = 1)
+                            }
+                        }
+                    }
+                }
+                Gap(8)
+                Field(name, { name = it; named = true }, "Name", hint = "For example: Truck + lights")
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { bottom?.let { onCreate(it.id, name.trim()) } }, enabled = bottom != null) { Text("Create stack") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
+}
+
+@Composable
+private fun RenameStackDialog(stack: ProfileStack, onDismiss: () -> Unit, onRename: (String) -> Unit) {
+    var name by remember { mutableStateOf(stack.name) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Race.PanelRaised,
+        title = { Text("Rename stack") },
+        text = { Field(name, { name = it }, "Name") },
+        confirmButton = { TextButton(onClick = { onRename(name.trim()) }, enabled = name.isNotBlank()) { Text("Rename") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
 }
 
 @Composable

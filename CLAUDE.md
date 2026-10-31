@@ -4,7 +4,7 @@ This file guides Claude Code (claude.ai/code), or any developer, working in this
 
 ## Status
 
-Version 1.0.0 has been released (the Reviewer signed off with 0 open comments, `docs/review/rc3.md`). 1.1.0 added the BeamNG Vehicle page, vJoy checks, automatic profile switching and more games; 1.2.0 added equipment themes (docs/THEMES.md); 1.3.0 added presets, copy and paste, the PC layout editor and the theme extras; 1.4.0 added live readings (gauges), the Tuning page and grouped, searchable pickers; 1.4.1 (companion) installs and updates the BeamNG mod by itself; 1.5.0 (this tree, phone) groups the Vehicle page with search and favourites. None of 1.1–1.5 is tested in game, see RELEASE_NOTES. The project overview for a new developer is in [docs/HANDOVER.md](docs/HANDOVER.md). Read it first.
+Version 1.0.0 has been released (the Reviewer signed off with 0 open comments, `docs/review/rc3.md`). 1.1.0 added the BeamNG Vehicle page, vJoy checks, automatic profile switching and more games; 1.2.0 added equipment themes (docs/THEMES.md); 1.3.0 added presets, copy and paste, the PC layout editor and the theme extras; 1.4.0 added live readings (gauges), the Tuning page and grouped, searchable pickers; 1.4.1 (companion) installs and updates the BeamNG mod by itself; 1.5.0 (phone) groups the Vehicle page with search and favourites; 1.6.0 (this tree, phone) adds portrait mode and stacks of two profiles. None of 1.1–1.6 is tested in game, see RELEASE_NOTES. The project overview for a new developer is in [docs/HANDOVER.md](docs/HANDOVER.md). Read it first.
 
 ## What this project is
 
