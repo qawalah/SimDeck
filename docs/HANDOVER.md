@@ -126,3 +126,5 @@ Unit tests cannot cover Bluetooth pairing, vJoy, ViGEm, SendInput, or BeamNG in 
 | A new preset | `core/.../profiles/Presets.kt` (generic ones), or the built-in profiles, whose controls become presets |
 | A new skin or theme | `core/.../model/Themes.kt`, `app/.../ui/sim`, THEMES.md, and `LayoutCatalog.cs` for the PC editor |
 | Connection or pairing bugs | `android/app/.../net/CompanionClient.kt` and `windows/src/Companion.Core/Net` |
+
+<!-- DevStore PR test build check -->
