@@ -520,10 +520,10 @@ class Settings(context: Context) {
         get() = prefs.getString("orientation", "LANDSCAPE") ?: "LANDSCAPE"
         set(v) = prefs.edit().putString("orientation", v).apply()
 
-    /** Saved stacks of two profiles, as JSON (Stacks.encode) (1.6). */
-    var stacks: String?
-        get() = prefs.getString("stacks", null)
-        set(v) = prefs.edit().putString("stacks", v).apply()
+    /** Profiles played in split view, two pages at once (1.6). */
+    var splitProfiles: Set<String>
+        get() = prefs.getStringSet("splitProfiles", emptySet())?.toSet() ?: emptySet()
+        set(v) = prefs.edit().putStringSet("splitProfiles", v.toSet()).apply()
 
     fun token(host: String): String? = prefs.getString("token:$host", null)
     fun saveToken(host: String, token: String) = prefs.edit().putString("token:$host", token).apply()

@@ -242,23 +242,21 @@ F4 Open the Bulldozer's editor (**Edit**), select the **Blade lift / tilt** stic
 
 ---
 
-## Part G: Portrait and stacks (5 min)
+## Part G: Portrait and split view (5 min)
 
 G1 Open **Generic gamepad** and tap the rotate button on the play bar: the app turns upright and the bar takes two rows
    (name, links, rotate and Edit on top; page tabs below). Go back to the profile list and open the editor: both stay upright.
    Tap rotate again for **Auto**: the app follows the phone (with the phone's auto-rotate on). Once more: back to landscape.
    Close and reopen the app: it opens the way you left it.
 
-G2 On the profile list open **Generic gamepad**'s menu, choose **Stack with…**, pick **Keyboard keys** and **Create stack**.
-   The stack opens: upright, the gamepad on top and the keyboard below; turned, side by side. Each half has its own name,
-   page tabs and Edit.
+G2 Open **BeamNG.drive** and tap the split button on the play bar: two pages show at once, one above the other upright and
+   side by side when turned. Each half has its own page tabs; changing one half's page leaves the other alone.
 
-G3 With joy.cpl and Notepad open, press a gamepad button in the top half and a key in the bottom half: both arrive. Switch
-   the page of one half: the other half doesn't move.
+G3 Put the same page in both halves and flip a toggle in one: the other half's copy flips too. A page-switch control turns
+   the page of the half it is in.
 
-G4 Hold the bottom half's Edit (or tap it when nothing is linked), move a control and tap **Done**: you are back in the stack.
-   On the profile list the stack card shows both layouts; **Swap order** puts the keyboard on top, **Rename** renames it,
-   **Delete stack** removes it and keeps both profiles.
+G4 Leave the profile and open it again: it is still split. Open another profile: it opens on one page. Tap split again on
+   BeamNG.drive: back to one page.
 
 ---
 
