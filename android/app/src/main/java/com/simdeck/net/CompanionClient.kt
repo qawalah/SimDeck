@@ -515,6 +515,16 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("tuningAutoApply", false)
         set(v) = prefs.edit().putBoolean("tuningAutoApply", v).apply()
 
+    /** Screen orientation of the whole app: LANDSCAPE, PORTRAIT or AUTO (1.6). */
+    var orientation: String
+        get() = prefs.getString("orientation", "LANDSCAPE") ?: "LANDSCAPE"
+        set(v) = prefs.edit().putString("orientation", v).apply()
+
+    /** Saved stacks of two profiles, as JSON (Stacks.encode) (1.6). */
+    var stacks: String?
+        get() = prefs.getString("stacks", null)
+        set(v) = prefs.edit().putString("stacks", v).apply()
+
     fun token(host: String): String? = prefs.getString("token:$host", null)
     fun saveToken(host: String, token: String) = prefs.edit().putString("token:$host", token).apply()
     fun clearToken(host: String) = prefs.edit().remove("token:$host").apply()

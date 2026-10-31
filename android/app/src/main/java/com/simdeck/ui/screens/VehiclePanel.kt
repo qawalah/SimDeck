@@ -84,7 +84,8 @@ fun VehiclePanel(
     data class Item(val control: Control, val feature: VehicleFeature, val group: String, val favourite: Boolean)
     val items = remember(controls, byId, favourites, vehicle.vehicle) {
         controls.mapNotNull { c ->
-            val id = c.id.removePrefix(VehicleFeaturePages.ID_PREFIX)
+            // A stack's bottom half carries its own prefix first (1.6); the feature id is the same either way.
+            val id = com.simdeck.model.Stacks.originalId(c.id).removePrefix(VehicleFeaturePages.ID_PREFIX)
             val f = byId[id] ?: VehicleFeature(id, c.label)
             Item(c, f, VehicleFeaturePages.groupFor(f), VehicleFeaturePages.favouriteKey(vehicle.vehicle, id) in favourites)
         }

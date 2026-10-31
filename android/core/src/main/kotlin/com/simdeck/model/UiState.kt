@@ -84,6 +84,16 @@ data class PlayState(
     val vehicle: VehicleFeatures = VehicleFeatures(),
     /** Bind helper: joysticks move one axis at a time, so a game's "move the axis" capture picks the right one. */
     val bindHelper: Boolean = false,
+    /** Playing a stack (1.6): its name and second profile. [profile] and [pageIndex] are then the top half's. */
+    val stack: StackPlay? = null,
+)
+
+/** The second half of a stack on the play surface. */
+data class StackPlay(
+    val name: String,
+    /** The bottom profile with its control ids prefixed ([Stacks.BOTTOM]), so [PlayState.values] and friends find them. */
+    val bottom: Profile,
+    val pageIndex: Int = 0,
 )
 
 /** Outcome of the last "Bind in game" request. */

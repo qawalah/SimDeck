@@ -1,3 +1,29 @@
+# SimDeck 1.6.0 (phone app)
+
+- **Portrait mode.** A rotate button on the play bar steps through **Landscape**, **Portrait** and **Auto** (turns with
+  the phone, and respects the phone's own auto-rotate switch). The choice is remembered and the whole app follows it:
+  profiles, connections, play and the editor.
+  - Upright, the play bar takes two rows: name, links, lighting, rotate and Edit on top; pages and speed/gear below.
+  - The editor moves its page tabs to their own row when upright; the add palette is a rail and the inspector slides
+    over the page, as on small phones.
+- **Stacks: two profiles at once.** In a profile's menu, **Stack with…** picks a second profile and names the pair. The
+  stack gets its own card in the profile list (both layouts as miniatures) with **Swap order**, **Rename** and
+  **Delete stack**.
+  - Upright, the first profile is on top and the second below; turned, they sit side by side.
+  - One shared bar holds Back, the stack's name, speed/gear, the links, lighting and rotate. Each half has its own bar
+    with the profile's name, its page tabs and its own Edit (a hold while anything is linked). Each half keeps its own
+    equipment theme.
+  - Both halves work together: lamps, dimmed controls, the Vehicle and Tuning pages, and a page-switch control turns the
+    pages of its own half. Each profile keeps its own output setting (Bluetooth, PC or automatic).
+  - The PC sees one combined profile (the second half's control ids start with `b~`), so the companion and the protocol
+    are unchanged. If both profiles use the same key or gamepad button, both halves press it.
+  - Done in the editor goes back to the stack. Deleting a profile leaves its stacks marked "Profile missing"; delete
+    them from their menu. Automatic profile switching leaves a stack alone when it already holds a profile for the game
+    in front.
+  - Stacks are kept on the phone with the other settings, not in profile files: the profile format is unchanged
+    (schema 6).
+- Companion stays 1.4.1 and the mod 1.4.0.
+
 # SimDeck 1.5.0 (phone app)
 
 - **The BeamNG Vehicle page is now a list you can find your way in.** Instead of filling the whole screen with a few
